@@ -306,7 +306,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/json, application/problem+json")]
         [Get("/staff/{staffId}")]
-        Task<IApiResponse<Staff>> GetStaff(int staffId, CancellationToken cancellationToken = default);
+        Task<IApiResponse<Staff>> GetStaff(System.Guid staffId, CancellationToken cancellationToken = default);
 
         /// <summary>Change a staff member's e-mail or role (admin)</summary>
         /// <remarks>
@@ -355,7 +355,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/json, application/problem+json", "Content-Type: application/json")]
         [Put("/staff/{staffId}")]
-        Task<IApiResponse<Staff>> UpdateStaff(int staffId, [Body] StaffUpdate body, CancellationToken cancellationToken = default);
+        Task<IApiResponse<Staff>> UpdateStaff(System.Guid staffId, [Body] StaffUpdate body, CancellationToken cancellationToken = default);
 
         /// <summary>Delete a staff member (admin)</summary>
         /// <remarks>Blocked with 422 if it would delete yourself or the last admin.</remarks>
@@ -392,7 +392,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/problem+json")]
         [Delete("/staff/{staffId}")]
-        Task<IApiResponse> DeleteStaff(int staffId, CancellationToken cancellationToken = default);
+        Task<IApiResponse> DeleteStaff(System.Guid staffId, CancellationToken cancellationToken = default);
 
         /// <summary>Change a staff member's password (admin)</summary>
         /// <remarks>
@@ -443,7 +443,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/problem+json", "Content-Type: application/json")]
         [Put("/staff/{staffId}/password")]
-        Task<IApiResponse> SetStaffPassword(int staffId, [Body] PasswordChange body, CancellationToken cancellationToken = default);
+        Task<IApiResponse> SetStaffPassword(System.Guid staffId, [Body] PasswordChange body, CancellationToken cancellationToken = default);
 
     }
 
@@ -542,7 +542,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/json, application/problem+json")]
         [Get("/projects/{projectId}")]
-        Task<IApiResponse<Project>> GetProject(int projectId, CancellationToken cancellationToken = default);
+        Task<IApiResponse<Project>> GetProject(System.Guid projectId, CancellationToken cancellationToken = default);
 
         /// <summary>Replace a project's editable fields (admin)</summary>
         /// <remarks>
@@ -596,7 +596,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/json, application/problem+json", "Content-Type: application/json")]
         [Put("/projects/{projectId}")]
-        Task<IApiResponse<Project>> UpdateProject(int projectId, [Body] ProjectInput body, [Header("If-Match")] string if_Match, CancellationToken cancellationToken = default);
+        Task<IApiResponse<Project>> UpdateProject(System.Guid projectId, [Body] ProjectInput body, [Header("If-Match")] string if_Match, CancellationToken cancellationToken = default);
 
         /// <summary>Delete a project (admin)</summary>
         /// <remarks>
@@ -633,7 +633,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/problem+json")]
         [Delete("/projects/{projectId}")]
-        Task<IApiResponse> DeleteProject(int projectId, CancellationToken cancellationToken = default);
+        Task<IApiResponse> DeleteProject(System.Guid projectId, CancellationToken cancellationToken = default);
 
     }
 
@@ -671,7 +671,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/json, application/problem+json")]
         [Get("/projects/{projectId}/versions")]
-        Task<IApiResponse<ICollection<VersionSummary>>> ListVersions(int projectId, CancellationToken cancellationToken = default);
+        Task<IApiResponse<ICollection<VersionSummary>>> ListVersions(System.Guid projectId, CancellationToken cancellationToken = default);
 
         /// <summary>Publish the project (admin)</summary>
         /// <remarks>
@@ -712,7 +712,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/json, application/problem+json")]
         [Post("/projects/{projectId}/versions")]
-        Task<IApiResponse<VersionSummary>> PublishVersion(int projectId, CancellationToken cancellationToken = default);
+        Task<IApiResponse<VersionSummary>> PublishVersion(System.Guid projectId, CancellationToken cancellationToken = default);
 
         /// <summary>Get the latest published version (kiosk, anonymous)</summary>
         /// <remarks>
@@ -745,7 +745,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/json, application/problem+json")]
         [Get("/projects/{projectId}/versions/latest")]
-        Task<IApiResponse<PublishedVersion>> GetLatestVersion(int projectId, [Header("If-None-Match")] string if_None_Match, CancellationToken cancellationToken = default);
+        Task<IApiResponse<PublishedVersion>> GetLatestVersion(System.Guid projectId, [Header("If-None-Match")] string if_None_Match, CancellationToken cancellationToken = default);
 
         /// <summary>Preview the unpublished project as the kiosk would render it (admin)</summary>
         /// <remarks>
@@ -788,7 +788,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/json, application/problem+json")]
         [Get("/projects/{projectId}/versions/draft")]
-        Task<IApiResponse<PublishedVersion>> GetDraftVersion(int projectId, CancellationToken cancellationToken = default);
+        Task<IApiResponse<PublishedVersion>> GetDraftVersion(System.Guid projectId, CancellationToken cancellationToken = default);
 
     }
 
@@ -935,7 +935,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/problem+json")]
         [Delete("/nickname-words/{nicknameWordId}")]
-        Task<IApiResponse> DeleteNicknameWord(int nicknameWordId, CancellationToken cancellationToken = default);
+        Task<IApiResponse> DeleteNicknameWord(System.Guid nicknameWordId, CancellationToken cancellationToken = default);
 
     }
 
@@ -1089,7 +1089,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/json")]
         [Get("/users")]
-        Task<IApiResponse<UserPage>> ListUsers([Query] int? moddedTemplateId, [Query] Sort? sort, [Query] int? page, [Query] int? pageSize, CancellationToken cancellationToken = default);
+        Task<IApiResponse<UserPage>> ListUsers([Query] System.Guid? moddedTemplateId, [Query] Sort? sort, [Query] int? page, [Query] int? pageSize, CancellationToken cancellationToken = default);
 
         /// <summary>Save a finished quiz result under a nickname (kiosk, anonymous)</summary>
         /// <remarks>
@@ -1167,7 +1167,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/json, application/problem+json")]
         [Get("/users/{userId}")]
-        Task<IApiResponse<User>> GetUser(int userId, CancellationToken cancellationToken = default);
+        Task<IApiResponse<User>> GetUser(System.Guid userId, CancellationToken cancellationToken = default);
 
         /// <summary>Delete a saved score (staff, admin role)</summary>
         /// <remarks>
@@ -1203,7 +1203,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/problem+json")]
         [Delete("/users/{userId}")]
-        Task<IApiResponse> DeleteUser(int userId, CancellationToken cancellationToken = default);
+        Task<IApiResponse> DeleteUser(System.Guid userId, CancellationToken cancellationToken = default);
 
         /// <summary>Delete all saved scores for a quiz (staff, admin role)</summary>
         /// <remarks>Clears the leaderboard of one quiz. Cannot be undone.</remarks>
@@ -1236,7 +1236,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/problem+json")]
         [Delete("/modded-templates/{moddedTemplateId}/users")]
-        Task<IApiResponse> DeleteModdedTemplateUsers(int moddedTemplateId, CancellationToken cancellationToken = default);
+        Task<IApiResponse> DeleteModdedTemplateUsers(System.Guid moddedTemplateId, CancellationToken cancellationToken = default);
 
     }
 
@@ -1267,7 +1267,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/json, application/problem+json")]
         [Get("/projects/{projectId}/statistics")]
-        Task<IApiResponse<ProjectStatistics>> GetProjectStatistics(int projectId, CancellationToken cancellationToken = default);
+        Task<IApiResponse<ProjectStatistics>> GetProjectStatistics(System.Guid projectId, CancellationToken cancellationToken = default);
 
         /// <summary>Delete all collected results for a project (admin)</summary>
         /// <remarks>
@@ -1304,7 +1304,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/problem+json")]
         [Delete("/projects/{projectId}/results")]
-        Task<IApiResponse> DeleteProjectResults(int projectId, CancellationToken cancellationToken = default);
+        Task<IApiResponse> DeleteProjectResults(System.Guid projectId, CancellationToken cancellationToken = default);
 
         /// <summary>Answer distribution for one question (admin)</summary>
         /// <param name="questionId">questionId parameter</param>
@@ -1336,7 +1336,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/json, application/problem+json")]
         [Get("/questions/{questionId}/statistics")]
-        Task<IApiResponse<QuestionStatistics>> GetQuestionStatistics(int questionId, CancellationToken cancellationToken = default);
+        Task<IApiResponse<QuestionStatistics>> GetQuestionStatistics(System.Guid questionId, CancellationToken cancellationToken = default);
 
         /// <summary>Reset the results for one question (admin)</summary>
         /// <remarks>Use when the meaning of a question changed and old statistics no longer apply.</remarks>
@@ -1369,7 +1369,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/problem+json")]
         [Delete("/questions/{questionId}/results")]
-        Task<IApiResponse> DeleteQuestionResults(int questionId, CancellationToken cancellationToken = default);
+        Task<IApiResponse> DeleteQuestionResults(System.Guid questionId, CancellationToken cancellationToken = default);
 
     }
 
@@ -1477,7 +1477,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/json, application/problem+json")]
         [Get("/projects/{projectId}/modded-templates")]
-        Task<IApiResponse<ICollection<ModdedTemplateSummary>>> ListModdedTemplates(int projectId, CancellationToken cancellationToken = default);
+        Task<IApiResponse<ICollection<ModdedTemplateSummary>>> ListModdedTemplates(System.Guid projectId, CancellationToken cancellationToken = default);
 
         /// <summary>Create a modded template from a template (admin)</summary>
         /// <param name="projectId">projectId parameter</param>
@@ -1518,7 +1518,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/json, application/problem+json", "Content-Type: application/json")]
         [Post("/projects/{projectId}/modded-templates")]
-        Task<IApiResponse<ModdedTemplate>> CreateModdedTemplate(int projectId, [Body] ModdedTemplateCreate body, CancellationToken cancellationToken = default);
+        Task<IApiResponse<ModdedTemplate>> CreateModdedTemplate(System.Guid projectId, [Body] ModdedTemplateCreate body, CancellationToken cancellationToken = default);
 
         /// <summary>Get a modded template with its items and questions (admin)</summary>
         /// <remarks>Admin representation, so answers include `isCorrect`.</remarks>
@@ -1551,7 +1551,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/json, application/problem+json")]
         [Get("/modded-templates/{moddedTemplateId}")]
-        Task<IApiResponse<ModdedTemplate>> GetModdedTemplate(int moddedTemplateId, CancellationToken cancellationToken = default);
+        Task<IApiResponse<ModdedTemplate>> GetModdedTemplate(System.Guid moddedTemplateId, CancellationToken cancellationToken = default);
 
         /// <summary>Update a modded template's title, appearance and order (admin)</summary>
         /// <remarks>The template type cannot be changed after creation. Requires `If-Match`.</remarks>
@@ -1598,7 +1598,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/json, application/problem+json", "Content-Type: application/json")]
         [Put("/modded-templates/{moddedTemplateId}")]
-        Task<IApiResponse<ModdedTemplate>> UpdateModdedTemplate(int moddedTemplateId, [Body] ModdedTemplateUpdate body, [Header("If-Match")] string if_Match, CancellationToken cancellationToken = default);
+        Task<IApiResponse<ModdedTemplate>> UpdateModdedTemplate(System.Guid moddedTemplateId, [Body] ModdedTemplateUpdate body, [Header("If-Match")] string if_Match, CancellationToken cancellationToken = default);
 
         /// <summary>Delete a modded template (admin)</summary>
         /// <remarks>
@@ -1638,7 +1638,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/problem+json")]
         [Delete("/modded-templates/{moddedTemplateId}")]
-        Task<IApiResponse> DeleteModdedTemplate(int moddedTemplateId, CancellationToken cancellationToken = default);
+        Task<IApiResponse> DeleteModdedTemplate(System.Guid moddedTemplateId, CancellationToken cancellationToken = default);
 
     }
 
@@ -1696,7 +1696,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/json, application/problem+json", "Content-Type: application/json")]
         [Put("/modded-templates/{moddedTemplateId}/items/{slotKey}")]
-        Task<IApiResponse<ModdedTemplateItem>> SetItem(int moddedTemplateId, string slotKey, [Body] ModdedTemplateItemInput body, CancellationToken cancellationToken = default);
+        Task<IApiResponse<ModdedTemplateItem>> SetItem(System.Guid moddedTemplateId, string slotKey, [Body] ModdedTemplateItemInput body, CancellationToken cancellationToken = default);
 
         /// <summary>Clear a slot (admin)</summary>
         /// <param name="moddedTemplateId">moddedTemplateId parameter</param>
@@ -1729,7 +1729,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/problem+json")]
         [Delete("/modded-templates/{moddedTemplateId}/items/{slotKey}")]
-        Task<IApiResponse> ClearItem(int moddedTemplateId, string slotKey, CancellationToken cancellationToken = default);
+        Task<IApiResponse> ClearItem(System.Guid moddedTemplateId, string slotKey, CancellationToken cancellationToken = default);
 
     }
 
@@ -1767,7 +1767,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/json, application/problem+json")]
         [Get("/modded-templates/{moddedTemplateId}/questions")]
-        Task<IApiResponse<ICollection<Question>>> ListQuestions(int moddedTemplateId, CancellationToken cancellationToken = default);
+        Task<IApiResponse<ICollection<Question>>> ListQuestions(System.Guid moddedTemplateId, CancellationToken cancellationToken = default);
 
         /// <summary>Add a question (admin)</summary>
         /// <remarks>Only allowed on modded templates whose template supports questions.</remarks>
@@ -1809,7 +1809,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/json, application/problem+json", "Content-Type: application/json")]
         [Post("/modded-templates/{moddedTemplateId}/questions")]
-        Task<IApiResponse<Question>> CreateQuestion(int moddedTemplateId, [Body] QuestionInput body, CancellationToken cancellationToken = default);
+        Task<IApiResponse<Question>> CreateQuestion(System.Guid moddedTemplateId, [Body] QuestionInput body, CancellationToken cancellationToken = default);
 
         /// <summary>Get a question with its answers (admin)</summary>
         /// <param name="questionId">questionId parameter</param>
@@ -1841,7 +1841,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/json, application/problem+json")]
         [Get("/questions/{questionId}")]
-        Task<IApiResponse<Question>> GetQuestion(int questionId, CancellationToken cancellationToken = default);
+        Task<IApiResponse<Question>> GetQuestion(System.Guid questionId, CancellationToken cancellationToken = default);
 
         /// <summary>Update a question (admin)</summary>
         /// <remarks>
@@ -1892,7 +1892,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/json, application/problem+json", "Content-Type: application/json")]
         [Put("/questions/{questionId}")]
-        Task<IApiResponse<Question>> UpdateQuestion(int questionId, [Body] QuestionInput body, [Header("If-Match")] string if_Match, CancellationToken cancellationToken = default);
+        Task<IApiResponse<Question>> UpdateQuestion(System.Guid questionId, [Body] QuestionInput body, [Header("If-Match")] string if_Match, CancellationToken cancellationToken = default);
 
         /// <summary>Remove a question (admin)</summary>
         /// <remarks>Soft delete (`IsActive = false`), so historical statistics survive.</remarks>
@@ -1925,7 +1925,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/problem+json")]
         [Delete("/questions/{questionId}")]
-        Task<IApiResponse> DeleteQuestion(int questionId, CancellationToken cancellationToken = default);
+        Task<IApiResponse> DeleteQuestion(System.Guid questionId, CancellationToken cancellationToken = default);
 
     }
 
@@ -1972,7 +1972,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/json, application/problem+json", "Content-Type: application/json")]
         [Post("/questions/{questionId}/answers")]
-        Task<IApiResponse<Answer>> CreateAnswer(int questionId, [Body] AnswerInput body, CancellationToken cancellationToken = default);
+        Task<IApiResponse<Answer>> CreateAnswer(System.Guid questionId, [Body] AnswerInput body, CancellationToken cancellationToken = default);
 
         /// <summary>Update an answer (admin)</summary>
         /// <remarks>
@@ -2013,7 +2013,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/json, application/problem+json", "Content-Type: application/json")]
         [Put("/answers/{answerId}")]
-        Task<IApiResponse<Answer>> UpdateAnswer(int answerId, [Body] AnswerInput body, CancellationToken cancellationToken = default);
+        Task<IApiResponse<Answer>> UpdateAnswer(System.Guid answerId, [Body] AnswerInput body, CancellationToken cancellationToken = default);
 
         /// <summary>Remove an answer (admin)</summary>
         /// <remarks>Soft delete (`IsActive = false`), so historical statistics survive.</remarks>
@@ -2046,7 +2046,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/problem+json")]
         [Delete("/answers/{answerId}")]
-        Task<IApiResponse> DeleteAnswer(int answerId, CancellationToken cancellationToken = default);
+        Task<IApiResponse> DeleteAnswer(System.Guid answerId, CancellationToken cancellationToken = default);
 
     }
 
@@ -2179,7 +2179,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: image/png, image/jpeg, image/webp, image/gif, video/mp4, video/webm, video/x-matroska, audio/mpeg, audio/wav, audio/mp4, application/problem+json")]
         [Get("/assets/{assetId}")]
-        Task<HttpResponseMessage> GetAsset(int assetId, [Header("Range")] string range, CancellationToken cancellationToken = default);
+        Task<HttpResponseMessage> GetAsset(System.Guid assetId, [Header("Range")] string range, CancellationToken cancellationToken = default);
 
         /// <summary>Delete a media file (admin)</summary>
         /// <remarks>
@@ -2221,7 +2221,7 @@ namespace Web.Api
         /// </returns>
         [Headers("Accept: application/problem+json")]
         [Delete("/assets/{assetId}")]
-        Task<IApiResponse> DeleteAsset(int assetId, CancellationToken cancellationToken = default);
+        Task<IApiResponse> DeleteAsset(System.Guid assetId, CancellationToken cancellationToken = default);
 
     }
 
@@ -2441,7 +2441,8 @@ public TokenRequestGrantType GrantType { get; set; }
         /// The quiz (or other game) whose result is saved
         /// </summary>
         [JsonPropertyName("moddedTemplateId")]
-        public int ModdedTemplateId { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid ModdedTemplateId { get; set; }
 
         [JsonPropertyName("nickname")]
         [System.ComponentModel.DataAnnotations.Required]
@@ -2466,14 +2467,16 @@ public TokenRequestGrantType GrantType { get; set; }
     {
 
         [JsonPropertyName("id")]
-        public int Id { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid Id { get; set; }
 
         [JsonPropertyName("nickname")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         public string Nickname { get; set; }
 
         [JsonPropertyName("moddedTemplateId")]
-        public int ModdedTemplateId { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid ModdedTemplateId { get; set; }
 
         [JsonPropertyName("score")]
         [System.ComponentModel.DataAnnotations.Required]
@@ -2592,7 +2595,8 @@ public StaffRole Role { get; set; }
     {
 
         [JsonPropertyName("id")]
-        public int Id { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid Id { get; set; }
 
         [JsonPropertyName("email")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -2680,7 +2684,7 @@ public StaffRole Role { get; set; }
         /// Start modded template of the kiosk (must belong to this project)
         /// </summary>
         [JsonPropertyName("mainModdedTemplateId")]
-        public int? MainModdedTemplateId { get; set; }
+        public System.Guid? MainModdedTemplateId { get; set; }
 
         [JsonPropertyName("appearance")]
         public Appearance Appearance { get; set; }
@@ -2701,7 +2705,8 @@ public StaffRole Role { get; set; }
     {
 
         [JsonPropertyName("id")]
-        public int Id { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid Id { get; set; }
 
         [JsonPropertyName("name")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -2711,7 +2716,7 @@ public StaffRole Role { get; set; }
         public Appearance Appearance { get; set; }
 
         [JsonPropertyName("mainModdedTemplateId")]
-        public int? MainModdedTemplateId { get; set; }
+        public System.Guid? MainModdedTemplateId { get; set; }
 
         [JsonPropertyName("latestVersionNumber")]
         public int? LatestVersionNumber { get; set; }
@@ -2815,7 +2820,8 @@ public StaffRole Role { get; set; }
     {
 
         [JsonPropertyName("projectId")]
-        public int ProjectId { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid ProjectId { get; set; }
 
         [JsonPropertyName("versionNumber")]
         public int VersionNumber { get; set; }
@@ -2827,7 +2833,8 @@ public StaffRole Role { get; set; }
         public Appearance Appearance { get; set; }
 
         [JsonPropertyName("mainModdedTemplateId")]
-        public int MainModdedTemplateId { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid MainModdedTemplateId { get; set; }
 
         [JsonPropertyName("moddedTemplates")]
         [System.ComponentModel.DataAnnotations.Required]
@@ -2849,7 +2856,8 @@ public StaffRole Role { get; set; }
     {
 
         [JsonPropertyName("id")]
-        public int Id { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid Id { get; set; }
 
         /// <summary>
         /// Selects which Blazor template component renders this modded template
@@ -2893,7 +2901,7 @@ public StaffRole Role { get; set; }
         public string Text { get; set; }
 
         [JsonPropertyName("assetId")]
-        public int? AssetId { get; set; }
+        public System.Guid? AssetId { get; set; }
 
         /// <summary>
         /// Present when assetId is set
@@ -2905,7 +2913,7 @@ public PublishedItemAssetKind AssetKind { get; set; }
         /// Modded template this button leads to
         /// </summary>
         [JsonPropertyName("targetModdedTemplateId")]
-        public int? TargetModdedTemplateId { get; set; }
+        public System.Guid? TargetModdedTemplateId { get; set; }
 
         private IDictionary<string, object> _additionalProperties;
 
@@ -2923,14 +2931,15 @@ public PublishedItemAssetKind AssetKind { get; set; }
     {
 
         [JsonPropertyName("id")]
-        public int Id { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid Id { get; set; }
 
         [JsonPropertyName("text")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         public string Text { get; set; }
 
         [JsonPropertyName("assetId")]
-        public int? AssetId { get; set; }
+        public System.Guid? AssetId { get; set; }
 
         [JsonPropertyName("assetKind")]
 public PublishedQuestionAssetKind AssetKind { get; set; }
@@ -2958,14 +2967,15 @@ public PublishedQuestionAssetKind AssetKind { get; set; }
     {
 
         [JsonPropertyName("id")]
-        public int Id { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid Id { get; set; }
 
         [JsonPropertyName("text")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         public string Text { get; set; }
 
         [JsonPropertyName("assetId")]
-        public int? AssetId { get; set; }
+        public System.Guid? AssetId { get; set; }
 
         [JsonPropertyName("assetKind")]
 public PublishedAnswerAssetKind AssetKind { get; set; }
@@ -3010,7 +3020,8 @@ public PublishedAnswerAssetKind AssetKind { get; set; }
     {
 
         [JsonPropertyName("id")]
-        public int Id { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid Id { get; set; }
 
         [JsonPropertyName("text")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -3063,10 +3074,12 @@ public PublishedAnswerAssetKind AssetKind { get; set; }
     {
 
         [JsonPropertyName("firstWordId")]
-        public int FirstWordId { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid FirstWordId { get; set; }
 
         [JsonPropertyName("secondWordId")]
-        public int SecondWordId { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid SecondWordId { get; set; }
 
         [JsonPropertyName("number")]
         [System.ComponentModel.DataAnnotations.Range(0, 99)]
@@ -3088,7 +3101,8 @@ public PublishedAnswerAssetKind AssetKind { get; set; }
     {
 
         [JsonPropertyName("projectId")]
-        public int ProjectId { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid ProjectId { get; set; }
 
         private IDictionary<string, object> _additionalProperties;
 
@@ -3110,7 +3124,8 @@ public PublishedAnswerAssetKind AssetKind { get; set; }
         public System.Guid Id { get; set; }
 
         [JsonPropertyName("projectId")]
-        public int ProjectId { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid ProjectId { get; set; }
 
         [JsonPropertyName("startedAt")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -3135,10 +3150,12 @@ public PublishedAnswerAssetKind AssetKind { get; set; }
     {
 
         [JsonPropertyName("questionId")]
-        public int QuestionId { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid QuestionId { get; set; }
 
         [JsonPropertyName("answerId")]
-        public int AnswerId { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid AnswerId { get; set; }
 
         private IDictionary<string, object> _additionalProperties;
 
@@ -3159,10 +3176,12 @@ public PublishedAnswerAssetKind AssetKind { get; set; }
     {
 
         [JsonPropertyName("questionId")]
-        public int QuestionId { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid QuestionId { get; set; }
 
         [JsonPropertyName("answerId")]
-        public int AnswerId { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid AnswerId { get; set; }
 
         [JsonPropertyName("isCorrect")]
         public bool IsCorrect { get; set; }
@@ -3171,7 +3190,8 @@ public PublishedAnswerAssetKind AssetKind { get; set; }
         /// Revealed only after the guest has answered
         /// </summary>
         [JsonPropertyName("correctAnswerId")]
-        public int CorrectAnswerId { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid CorrectAnswerId { get; set; }
 
         private IDictionary<string, object> _additionalProperties;
 
@@ -3232,7 +3252,8 @@ public PublishedAnswerAssetKind AssetKind { get; set; }
     {
 
         [JsonPropertyName("questionId")]
-        public int QuestionId { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid QuestionId { get; set; }
 
         [JsonPropertyName("totalAnswers")]
         public int TotalAnswers { get; set; }
@@ -3260,7 +3281,8 @@ public PublishedAnswerAssetKind AssetKind { get; set; }
     {
 
         [JsonPropertyName("projectId")]
-        public int ProjectId { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid ProjectId { get; set; }
 
         [JsonPropertyName("totalSessions")]
         public int TotalSessions { get; set; }
@@ -3453,10 +3475,12 @@ public AppearanceFieldDefinitionKind Kind { get; set; }
     {
 
         [JsonPropertyName("id")]
-        public int Id { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid Id { get; set; }
 
         [JsonPropertyName("projectId")]
-        public int ProjectId { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid ProjectId { get; set; }
 
         [JsonPropertyName("templateType")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -3488,10 +3512,12 @@ public AppearanceFieldDefinitionKind Kind { get; set; }
     {
 
         [JsonPropertyName("id")]
-        public int Id { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid Id { get; set; }
 
         [JsonPropertyName("projectId")]
-        public int ProjectId { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid ProjectId { get; set; }
 
         [JsonPropertyName("templateType")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -3539,13 +3565,13 @@ public AppearanceFieldDefinitionKind Kind { get; set; }
         /// Media file for this slot. Its kind must match the slot.
         /// </summary>
         [JsonPropertyName("assetId")]
-        public int? AssetId { get; set; }
+        public System.Guid? AssetId { get; set; }
 
         /// <summary>
         /// Modded template the button leads to (same project)
         /// </summary>
         [JsonPropertyName("targetModdedTemplateId")]
-        public int? TargetModdedTemplateId { get; set; }
+        public System.Guid? TargetModdedTemplateId { get; set; }
 
         private IDictionary<string, object> _additionalProperties;
 
@@ -3578,7 +3604,7 @@ public AppearanceFieldDefinitionKind Kind { get; set; }
         public string Text { get; set; }
 
         [JsonPropertyName("assetId")]
-        public int? AssetId { get; set; }
+        public System.Guid? AssetId { get; set; }
 
         [JsonPropertyName("sortOrder")]
         public int SortOrder { get; set; }
@@ -3599,17 +3625,19 @@ public AppearanceFieldDefinitionKind Kind { get; set; }
     {
 
         [JsonPropertyName("id")]
-        public int Id { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid Id { get; set; }
 
         [JsonPropertyName("moddedTemplateId")]
-        public int ModdedTemplateId { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid ModdedTemplateId { get; set; }
 
         [JsonPropertyName("text")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         public string Text { get; set; }
 
         [JsonPropertyName("assetId")]
-        public int? AssetId { get; set; }
+        public System.Guid? AssetId { get; set; }
 
         [JsonPropertyName("sortOrder")]
         public int SortOrder { get; set; }
@@ -3639,7 +3667,7 @@ public AppearanceFieldDefinitionKind Kind { get; set; }
         public string Text { get; set; }
 
         [JsonPropertyName("assetId")]
-        public int? AssetId { get; set; }
+        public System.Guid? AssetId { get; set; }
 
         [JsonPropertyName("isCorrect")]
         public bool IsCorrect { get; set; }
@@ -3663,10 +3691,12 @@ public AppearanceFieldDefinitionKind Kind { get; set; }
     {
 
         [JsonPropertyName("id")]
-        public int Id { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid Id { get; set; }
 
         [JsonPropertyName("questionId")]
-        public int QuestionId { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid QuestionId { get; set; }
 
     }
 
@@ -3694,7 +3724,8 @@ public AppearanceFieldDefinitionKind Kind { get; set; }
     {
 
         [JsonPropertyName("id")]
-        public int Id { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid Id { get; set; }
 
         [JsonPropertyName("kind")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -3879,7 +3910,8 @@ public AssetKind Kind { get; set; }
     {
 
         [JsonPropertyName("answerId")]
-        public int AnswerId { get; set; }
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public System.Guid AnswerId { get; set; }
 
         [JsonPropertyName("count")]
         public int Count { get; set; }

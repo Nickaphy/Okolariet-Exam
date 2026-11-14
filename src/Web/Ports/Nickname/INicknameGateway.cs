@@ -10,6 +10,6 @@ namespace Web.Ports.Nickname
         Task<IReadOnlyList<NicknameWord>> GetSuggestionsAsync(CancellationToken ct = default);
         Task<PagedResult<NicknameWord>> ListWordsAsync(int page = 1, int pageSize = 20, CancellationToken ct = default);
         Task<NicknameWord> CreateNicknameWord(NicknameWordInput body, CancellationToken cancellationToken = default);
-        Task DeleteNicknameWord(int nicknameWordId, CancellationToken cancellationToken = default);
+        Task DeleteNicknameWord(Guid nicknameWordId, CancellationToken cancellationToken = default);
     }
 }

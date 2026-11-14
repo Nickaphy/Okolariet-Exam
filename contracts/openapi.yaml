@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Økolariet Exhibition API
-  version: 1.0.1
+  version: 1.0.2
   contact:
     name: Økolariet project group
   description: |
@@ -794,7 +794,7 @@ paths:
           in: query
           required: false
           description: Only users who played this quiz
-          schema: { type: integer, format: int32, minimum: 1 }
+          schema: { type: string, format: uuid }
         - name: sort
           in: query
           required: false
@@ -1606,14 +1606,14 @@ components:
       name: projectId
       in: path
       required: true
-      schema: { type: integer, format: int32, minimum: 1 }
-      example: 1
+      schema: { type: string, format: uuid }
+      example: 5e528632-2b56-555f-8467-ed93e2a5ad60
     QuestionId:
       name: questionId
       in: path
       required: true
-      schema: { type: integer, format: int32, minimum: 1 }
-      example: 12
+      schema: { type: string, format: uuid }
+      example: c0bf18f4-edc3-530a-9de3-0a61b2932826
     SessionId:
       name: sessionId
       in: path
@@ -1640,38 +1640,38 @@ components:
       name: moddedTemplateId
       in: path
       required: true
-      schema: { type: integer, format: int32, minimum: 1 }
-      example: 1
+      schema: { type: string, format: uuid }
+      example: d96c6a5c-053f-594b-8552-329d96f1142b
     UserId:
       name: userId
       in: path
       required: true
-      schema: { type: integer, format: int32, minimum: 1 }
-      example: 15
+      schema: { type: string, format: uuid }
+      example: ee4b25bc-10af-546c-a425-a374b3c97a82
     StaffId:
       name: staffId
       in: path
       required: true
-      schema: { type: integer, format: int32, minimum: 1 }
-      example: 1
+      schema: { type: string, format: uuid }
+      example: 6078f301-c144-5d5f-a9ba-a55be9dbde22
     NicknameWordId:
       name: nicknameWordId
       in: path
       required: true
-      schema: { type: integer, format: int32, minimum: 1 }
-      example: 7
+      schema: { type: string, format: uuid }
+      example: d539bd3e-141b-552a-beb5-869106903a3a
     AnswerId:
       name: answerId
       in: path
       required: true
-      schema: { type: integer, format: int32, minimum: 1 }
-      example: 31
+      schema: { type: string, format: uuid }
+      example: 6ddb1856-5ac7-5dc7-b6c2-0b6f97577f98
     AssetId:
       name: assetId
       in: path
       required: true
-      schema: { type: integer, format: int32, minimum: 1 }
-      example: 42
+      schema: { type: string, format: uuid }
+      example: 2869fc10-8584-5962-a4a1-b2e88e2492db
     SlotKey:
       name: slotKey
       in: path
@@ -1742,7 +1742,7 @@ components:
       type: object
       required: [href]
       properties:
-        href: { type: string, example: /api/v1/projects/1 }
+        href: { type: string, example: /api/v1/projects/5e528632-2b56-555f-8467-ed93e2a5ad60 }
     Links:
       type: object
       description: |
@@ -1769,9 +1769,10 @@ components:
       properties:
         sessionId: { type: string, format: uuid, example: 3f2b8c1e-6a4d-4b0e-9d57-1c2a7e5f9a10 }
         moddedTemplateId:
-          type: integer
+          type: string
+          format: uuid
           description: The quiz (or other game) whose result is saved
-          example: 2
+          example: 3713b920-e4cf-53a9-8ba2-e474861cf069
         nickname:
           $ref: '#/components/schemas/NicknameInput'
     User:
@@ -1779,9 +1780,9 @@ components:
       description: A guest's saved result. Only nickname, quiz and score, no personal data.
       required: [id, nickname, moddedTemplateId, score]
       properties:
-        id: { type: integer, example: 15 }
+        id: { type: string, format: uuid, example: ee4b25bc-10af-546c-a425-a374b3c97a82 }
         nickname: { type: string, example: ModigRæv42 }
-        moddedTemplateId: { type: integer, example: 2 }
+        moddedTemplateId: { type: string, format: uuid, example: 3713b920-e4cf-53a9-8ba2-e474861cf069 }
         score:
           $ref: '#/components/schemas/Score'
     UserPage:
@@ -1821,7 +1822,7 @@ components:
       description: A staff member. Never contains the password or its hash.
       required: [id, email, role]
       properties:
-        id: { type: integer, example: 1 }
+        id: { type: string, format: uuid, example: 6078f301-c144-5d5f-a9ba-a55be9dbde22 }
         email: { type: string, format: email, example: anna@oekolariet.dk }
         role:
           $ref: '#/components/schemas/StaffRole'
@@ -1853,22 +1854,22 @@ components:
       properties:
         name: { type: string, minLength: 1, maxLength: 120, example: Havets Hemmeligheder }
         mainModdedTemplateId:
-          type: integer
-          format: int32
+          type: string
+          format: uuid
           nullable: true
           description: Start modded template of the kiosk (must belong to this project)
-          example: 1
+          example: d96c6a5c-053f-594b-8552-329d96f1142b
         appearance:
           $ref: '#/components/schemas/Appearance'
     Project:
       type: object
       required: [id, name]
       properties:
-        id: { type: integer, format: int32, example: 1 }
+        id: { type: string, format: uuid, example: 5e528632-2b56-555f-8467-ed93e2a5ad60 }
         name: { type: string, example: Havets Hemmeligheder }
         appearance:
           $ref: '#/components/schemas/Appearance'
-        mainModdedTemplateId: { type: integer, format: int32, nullable: true, example: 1 }
+        mainModdedTemplateId: { type: string, format: uuid, nullable: true, example: d96c6a5c-053f-594b-8552-329d96f1142b }
         latestVersionNumber: { type: integer, nullable: true, example: 3 }
         _links:
           $ref: '#/components/schemas/Links'
@@ -1903,12 +1904,12 @@ components:
       type: object
       required: [projectId, versionNumber, mainModdedTemplateId, moddedTemplates]
       properties:
-        projectId: { type: integer, example: 1 }
+        projectId: { type: string, format: uuid, example: 5e528632-2b56-555f-8467-ed93e2a5ad60 }
         versionNumber: { type: integer, example: 3 }
         publishedAt: { type: string, format: date-time, example: '2026-11-08T10:15:00Z' }
         appearance:
           $ref: '#/components/schemas/Appearance'
-        mainModdedTemplateId: { type: integer, example: 1 }
+        mainModdedTemplateId: { type: string, format: uuid, example: d96c6a5c-053f-594b-8552-329d96f1142b }
         moddedTemplates:
           type: array
           items:
@@ -1917,7 +1918,7 @@ components:
       type: object
       required: [id, templateType]
       properties:
-        id: { type: integer, example: 1 }
+        id: { type: string, format: uuid, example: d96c6a5c-053f-594b-8552-329d96f1142b }
         templateType:
           type: string
           description: Selects which Blazor template component renders this modded template
@@ -1939,23 +1940,24 @@ components:
       properties:
         slotKey: { type: string, example: button1 }
         text: { type: string, nullable: true, example: Quiz }
-        assetId: { type: integer, nullable: true, example: 42 }
+        assetId: { type: string, format: uuid, nullable: true, example: 2869fc10-8584-5962-a4a1-b2e88e2492db }
         assetKind:
           type: string
           enum: [image, video, audio]
           description: Present when assetId is set
         targetModdedTemplateId:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
           description: Modded template this button leads to
-          example: 2
+          example: 3713b920-e4cf-53a9-8ba2-e474861cf069
     PublishedQuestion:
       type: object
       required: [id, text, answers]
       properties:
-        id: { type: integer, example: 12 }
+        id: { type: string, format: uuid, example: c0bf18f4-edc3-530a-9de3-0a61b2932826 }
         text: { type: string, example: 'Hvor lang tid tager det en plastflaske at nedbrydes?' }
-        assetId: { type: integer, nullable: true }
+        assetId: { type: string, format: uuid, nullable: true }
         assetKind:
           type: string
           enum: [image, video, audio]
@@ -1968,9 +1970,9 @@ components:
       description: Deliberately has NO isCorrect property.
       required: [id, text, sortOrder]
       properties:
-        id: { type: integer, example: 31 }
+        id: { type: string, format: uuid, example: 6ddb1856-5ac7-5dc7-b6c2-0b6f97577f98 }
         text: { type: string, example: 450 år }
-        assetId: { type: integer, nullable: true }
+        assetId: { type: string, format: uuid, nullable: true }
         assetKind:
           type: string
           enum: [image, video, audio]
@@ -1986,7 +1988,7 @@ components:
       type: object
       required: [id, text]
       properties:
-        id: { type: integer, example: 7 }
+        id: { type: string, format: uuid, example: d539bd3e-141b-552a-beb5-869106903a3a }
         text: { type: string, example: Modig }
     NicknameWordPage:
       type: object
@@ -2004,40 +2006,41 @@ components:
       description: The guest's choice, picked from the 10 suggested words
       required: [firstWordId, secondWordId, number]
       properties:
-        firstWordId: { type: integer, example: 7 }
-        secondWordId: { type: integer, example: 52 }
+        firstWordId: { type: string, format: uuid, example: d539bd3e-141b-552a-beb5-869106903a3a }
+        secondWordId: { type: string, format: uuid, example: d27e1f33-f8a9-57d0-bc0b-0394887f2279 }
         number: { type: integer, minimum: 0, maximum: 99, example: 42 }
     SessionInput:
       type: object
       required: [projectId]
       properties:
-        projectId: { type: integer, example: 1 }
+        projectId: { type: string, format: uuid, example: 5e528632-2b56-555f-8467-ed93e2a5ad60 }
     Session:
       type: object
       required: [id, projectId, startedAt]
       properties:
         id: { type: string, format: uuid, example: 3f2b8c1e-6a4d-4b0e-9d57-1c2a7e5f9a10 }
-        projectId: { type: integer, example: 1 }
+        projectId: { type: string, format: uuid, example: 5e528632-2b56-555f-8467-ed93e2a5ad60 }
         startedAt: { type: string, format: date-time, example: '2026-11-08T10:20:00Z' }
     QuizResultInput:
       type: object
       description: The guest's choice of one answer option for one question
       required: [questionId, answerId]
       properties:
-        questionId: { type: integer, example: 12 }
-        answerId: { type: integer, example: 31 }
+        questionId: { type: string, format: uuid, example: c0bf18f4-edc3-530a-9de3-0a61b2932826 }
+        answerId: { type: string, format: uuid, example: 6ddb1856-5ac7-5dc7-b6c2-0b6f97577f98 }
     QuizResult:
       type: object
       description: One guest's answer to one question, with the server's verdict
       required: [questionId, answerId, isCorrect, correctAnswerId]
       properties:
-        questionId: { type: integer, example: 12 }
-        answerId: { type: integer, example: 31 }
+        questionId: { type: string, format: uuid, example: c0bf18f4-edc3-530a-9de3-0a61b2932826 }
+        answerId: { type: string, format: uuid, example: 6ddb1856-5ac7-5dc7-b6c2-0b6f97577f98 }
         isCorrect: { type: boolean, example: true }
         correctAnswerId:
-          type: integer
+          type: string
+          format: uuid
           description: Revealed only after the guest has answered
-          example: 31
+          example: 6ddb1856-5ac7-5dc7-b6c2-0b6f97577f98
     SessionSummary:
       type: object
       required: [id, totalQuestions, answered, correct, percentage, allGuestsAveragePercentage]
@@ -2062,7 +2065,7 @@ components:
       type: object
       required: [questionId, totalAnswers, correctPercentage, answers]
       properties:
-        questionId: { type: integer, example: 12 }
+        questionId: { type: string, format: uuid, example: c0bf18f4-edc3-530a-9de3-0a61b2932826 }
         totalAnswers: { type: integer, example: 1196 }
         correctPercentage: { type: number, format: double, example: 27.3 }
         answers:
@@ -2071,14 +2074,14 @@ components:
             type: object
             required: [answerId, count, percentage]
             properties:
-              answerId: { type: integer, example: 31 }
+              answerId: { type: string, format: uuid, example: 6ddb1856-5ac7-5dc7-b6c2-0b6f97577f98 }
               count: { type: integer, example: 328 }
               percentage: { type: number, format: double, example: 27.4 }
     ProjectStatistics:
       type: object
       required: [projectId, totalSessions, totalAnswers, averageCorrectPercentage]
       properties:
-        projectId: { type: integer, example: 1 }
+        projectId: { type: string, format: uuid, example: 5e528632-2b56-555f-8467-ed93e2a5ad60 }
         totalSessions: { type: integer, example: 120 }
         totalAnswers: { type: integer, example: 1196 }
         averageCorrectPercentage: { type: number, format: double, example: 62.4 }
@@ -2157,8 +2160,8 @@ components:
       type: object
       required: [id, projectId, templateType, title]
       properties:
-        id: { type: integer, example: 1 }
-        projectId: { type: integer, example: 1 }
+        id: { type: string, format: uuid, example: d96c6a5c-053f-594b-8552-329d96f1142b }
+        projectId: { type: string, format: uuid, example: 5e528632-2b56-555f-8467-ed93e2a5ad60 }
         templateType: { type: string, example: menu-ocean }
         title: { type: string, example: Vælg en aktivitet }
         sortOrder: { type: integer, example: 1 }
@@ -2168,8 +2171,8 @@ components:
       type: object
       required: [id, projectId, templateType, title]
       properties:
-        id: { type: integer, example: 1 }
-        projectId: { type: integer, example: 1 }
+        id: { type: string, format: uuid, example: d96c6a5c-053f-594b-8552-329d96f1142b }
+        projectId: { type: string, format: uuid, example: 5e528632-2b56-555f-8467-ed93e2a5ad60 }
         templateType: { type: string, example: menu-ocean }
         title: { type: string, example: Vælg en aktivitet }
         appearance:
@@ -2192,15 +2195,17 @@ components:
       properties:
         text: { type: string, nullable: true, maxLength: 500, example: Quiz }
         assetId:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
           description: Media file for this slot. Its kind must match the slot.
-          example: 42
+          example: 2869fc10-8584-5962-a4a1-b2e88e2492db
         targetModdedTemplateId:
-          type: integer
+          type: string
+          format: uuid
           nullable: true
           description: Modded template the button leads to (same project)
-          example: 2
+          example: 3713b920-e4cf-53a9-8ba2-e474861cf069
     ModdedTemplateItem:
       allOf:
         - type: object
@@ -2215,16 +2220,16 @@ components:
       required: [text]
       properties:
         text: { type: string, minLength: 1, maxLength: 500, example: 'Hvor lang tid tager det en plastflaske at nedbrydes?' }
-        assetId: { type: integer, nullable: true }
+        assetId: { type: string, format: uuid, nullable: true }
         sortOrder: { type: integer, example: 1 }
     Question:
       type: object
       required: [id, moddedTemplateId, text, answers]
       properties:
-        id: { type: integer, example: 12 }
-        moddedTemplateId: { type: integer, example: 2 }
+        id: { type: string, format: uuid, example: c0bf18f4-edc3-530a-9de3-0a61b2932826 }
+        moddedTemplateId: { type: string, format: uuid, example: 3713b920-e4cf-53a9-8ba2-e474861cf069 }
         text: { type: string, example: 'Hvor lang tid tager det en plastflaske at nedbrydes?' }
-        assetId: { type: integer, nullable: true }
+        assetId: { type: string, format: uuid, nullable: true }
         sortOrder: { type: integer, example: 1 }
         answers:
           type: array
@@ -2235,7 +2240,7 @@ components:
       required: [text, isCorrect]
       properties:
         text: { type: string, minLength: 1, maxLength: 200, example: 450 år }
-        assetId: { type: integer, nullable: true }
+        assetId: { type: string, format: uuid, nullable: true }
         isCorrect: { type: boolean, example: true }
         sortOrder: { type: integer, example: 3 }
     Answer:
@@ -2243,8 +2248,8 @@ components:
         - type: object
           required: [id, questionId]
           properties:
-            id: { type: integer, example: 31 }
-            questionId: { type: integer, example: 12 }
+            id: { type: string, format: uuid, example: 6ddb1856-5ac7-5dc7-b6c2-0b6f97577f98 }
+            questionId: { type: string, format: uuid, example: c0bf18f4-edc3-530a-9de3-0a61b2932826 }
         - $ref: '#/components/schemas/AnswerInput'
 
     # ---- assets
@@ -2256,14 +2261,14 @@ components:
       type: object
       required: [id, kind, originalName, contentType, sizeBytes, url]
       properties:
-        id: { type: integer, example: 42 }
+        id: { type: string, format: uuid, example: 2869fc10-8584-5962-a4a1-b2e88e2492db }
         kind:
           $ref: '#/components/schemas/AssetKind'
         originalName: { type: string, example: havskildpadde.png }
         contentType: { type: string, example: image/png }
         sizeBytes: { type: integer, format: int64, example: 183204 }
         uploadedAt: { type: string, format: date-time }
-        url: { type: string, example: /api/v1/assets/42 }
+        url: { type: string, example: /api/v1/assets/2869fc10-8584-5962-a4a1-b2e88e2492db }
     AssetPage:
       type: object
       required: [items, page, pageSize, totalCount]

@@ -23,7 +23,7 @@ namespace Web.Adapters.Nickname
         public async Task<NicknameWord> CreateNicknameWord(NicknameWordInput body, CancellationToken cancellationToken = default)
             => (await api.CreateNicknameWord(body, cancellationToken)).Unwrap();
 
-        public async Task DeleteNicknameWord(int nicknameWordId, CancellationToken cancellationToken = default)
+        public async Task DeleteNicknameWord(Guid nicknameWordId, CancellationToken cancellationToken = default)
             => (await api.DeleteNicknameWord(nicknameWordId, cancellationToken)).EnsureSuccess();
     }
 }
