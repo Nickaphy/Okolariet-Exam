@@ -1,0 +1,53 @@
+﻿@page "/nickname-test"
+@using Web.Api.Contracts
+@using Web.Exceptions
+@using Web.Ports.Helpers
+@using Web.Ports.Nickname
+@inject INicknameGateway Nicknames
+
+@*This page tests the nickname functionality. Extremely basic ui that relies on the PRISM mock database. Currently only tests a basic suggestion fetch and page functionality. Needs auth before testing*@
+
+@if (error is not null)
+{
+    <p>@error</p>
+}
+else if (result is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <ul>
+        @foreach (var w in result.Items)
+        {
+            <li>@w.Id: @w.Text</li>
+        }
+    </ul>
+
+    <button @onclick="Previous" disabled="@(!result.HasPrevious)">Previous</button>
+    <span>Page @result.Page of @result.TotalPages</span>
+    <button @onclick="Next" disabled="@(!result.HasNext)">Next</button>
+}
+
+@code {
+    private PagedResult<NicknameWord>? result;
+    private string? error;
+    private int page = 1;
+
+    protected override Task OnInitializedAsync() => Load();
+
+    private async Task Load()
+    {
+        try 
+        { 
+            result = await Nicknames.ListWordsAsync(20, 1);
+        }
+        catch (GatewayException ex) 
+        { 
+            error = $"API error: {(int)ex.StatusCode}"; 
+        }
+    }
+
+    private async Task Next() { page++; await Load(); }
+    private async Task Previous() { page--; await Load(); }
+}

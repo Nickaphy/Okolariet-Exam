@@ -1,0 +1,9 @@
+services:
+  mock-api:
+    image: stoplight/prism:4
+    command: mock -h 0.0.0.0 -p 4010 /spec/openapi.yaml
+    volumes:
+      - ./contracts:/spec:ro
+    ports:
+      - "4010:4010"
+    profiles: ["mock"]

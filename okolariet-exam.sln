@@ -1,5 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.10.12224.181 stable
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "src\Application\Application.csproj", "{C769779D-BA33-4BAD-A064-1C6EB6E8965F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "src\Domain\Domain.csproj", "{C86ED6F1-519D-4BC8-99E7-51098EE8C1D7}"
@@ -13,6 +16,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xUnitTests", "tests\xUnitTests\xUnitTests.csproj", "{35A56BF3-CBF1-4383-B00A-7FE467D41BA3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntegrationTests", "tests\IntegrationTests\IntegrationTests.csproj", "{DF53BA4A-435F-47F9-A5AC-321B84CAF774}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "contracts", "contracts", "{61554A9B-2C17-442F-A6CF-4673AA776073}"
+	ProjectSection(SolutionItems) = preProject
+		contracts\openapi.yaml = contracts\openapi.yaml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -48,5 +56,11 @@ Global
 		{DF53BA4A-435F-47F9-A5AC-321B84CAF774}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DF53BA4A-435F-47F9-A5AC-321B84CAF774}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DF53BA4A-435F-47F9-A5AC-321B84CAF774}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {30EBEF5E-4327-475F-8A36-76A906BC811C}
 	EndGlobalSection
 EndGlobal
