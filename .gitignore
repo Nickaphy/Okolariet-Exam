@@ -1,0 +1,74 @@
+
+# .NET Build Artifacts
+**/bin/
+**/obj/
+**/Debug/
+**/Release/
+artifacts/
+publish/
+
+# IDEs & Editors
+.vs/
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+
+# Test Results & Coverage
+**/TestResults/
+*.trx
+*.coverage
+*.coveragexml
+coverage/
+coverage-report/
+
+# Logs & Temporary Files
+*.log
+logs/
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# Secrets & Local Configuration
+.env
+.env.*
+!.env.example
+
+**/appsettings.Local.json
+**/appsettings.*.local.json
+**/appsettings.Development.json
+
+*.pfx
+*.p12
+*.key
+secrets/
+!secrets/.gitkeep
+
+# Docker & Local Data
+docker-data/
+sql-data/
+backups/
+
+# Local Database Files
+*.mdf
+*.ldf
+*.ndf
+*.db
+*.sqlite
+*.sqlite3
+
+# Generated Files
+**/node_modules/
+**/dist/
+**/build/
+**/wwwroot/lib/

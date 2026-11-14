@@ -1,0 +1,60 @@
+# Git & GitHub
+.git
+.gitignore
+.github/
+
+# IDEs & Editors
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.rsuser
+
+# .NET Build Artifacts
+**/bin/
+**/obj/
+**/TestResults/
+artifacts/
+publish/
+
+# Test Results & Coverage
+*.trx
+*.coverage
+*.coveragexml
+coverage/
+coverage-report/
+
+# Secrets & Environment Files
+**/.env
+**/.env.*
+**/appsettings.Local.json
+**/appsettings.*.local.json
+**/appsettings.Development.json
+**/*.pfx
+**/*.p12
+**/*.key
+**/secrets/
+
+# Docker & Local Data
+**/docker-data/
+**/sql-data/
+**/backups/
+
+# Logs & Temporary Files
+**/*.log
+**/logs/
+**/*.tmp
+**/*.bak
+**/*.swp
+**/.DS_Store
+**/Thumbs.db
+
+# Frontend Dependencies
+**/node_modules/
+**/dist/
+
+# Documentation & Misc
+docs/
+README.md
+LICENSE
