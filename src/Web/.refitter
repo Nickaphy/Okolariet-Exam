@@ -1,0 +1,9 @@
+{
+  "openApiPath": "../../contracts/openapi.yaml",
+  "namespace": "Web.Api",
+  "contractsNamespace": "Web.Api.Contracts",
+  "outputFolder": "Generated",
+  "multipleInterfaces": "ByTag",
+  "returnIApiResponse": true,
+  "useCancellationTokens": true
+}
