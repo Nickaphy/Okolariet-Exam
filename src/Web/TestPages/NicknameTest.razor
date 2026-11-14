@@ -1,0 +1,34 @@
+﻿@page "/nickname-test"
+@using Web.Api.Contracts
+@using Web.Exceptions
+@using Web.Ports.Nickname
+@inject INicknameGateway Nicknames
+
+@if (error is not null)
+{
+    <p>@error</p>
+}
+else if (words is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <ul>
+        @foreach (var w in words)
+        {
+            <li>@w.Id: @w.Text</li>
+        }
+    </ul>
+}
+
+@code {
+    private IReadOnlyList<NicknameWord>? words;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { words = await Nicknames.GetSuggestionsAsync(); }
+        catch (GatewayException ex) { error = $"API error: {(int)ex.StatusCode}"; }
+    }
+}
