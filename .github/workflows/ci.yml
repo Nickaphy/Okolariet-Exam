@@ -1,0 +1,65 @@
+
+name: CI
+
+on:
+  push:
+    branches: [Dev]
+  pull_request:
+    branches: [Dev]
+
+# Ensures the generated token only has read access to the repo
+permissions: 
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4 # Retrieve the source code of the repository
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4 # Set up the .NET environment
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore okolariet-exam.sln # Resolves NuGet dependencies for the solution
+
+      - name: Build solution
+        run: dotnet build okolariet-exam.sln --configuration Release --no-restore # Builds the solution in Release mode without restoring dependencies
+
+
+
+      # Tests
+      # - name: Run tests
+      #   run: dotnet test okolariet-exam.sln --configuration Release --no-build
+
+      # Docker
+      # - name: Build API image
+      #   run: docker build -f src/Api/Dockerfile -t okolariet-exam-api:ci .
+
+      # - name: Validate Docker Compose
+      #   run: docker compose config --quiet
+
+      # - name: Start containers
+      #   run: docker compose up -d --build --wait
+
+      # Diagnostics and cleanup
+      # - name: Docker logs on failure
+      #   if: failure()
+      #   run: docker compose logs --tail=150
+
+      # - name: Stop containers
+      #   if: always()
+      #   run: docker compose down -v
+
+      #Later Docker flow
+      # Build API Image
+      # Validate compose
+      # Start containers
+      # Run integration tests
+      # Collect failure logs
+      # Clean up Containers
+            
