@@ -1,4 +1,4 @@
-﻿using Application.Commands;
+﻿using Application.Commands.NicknameCommands;
 using Domain.Entities;
 using FluentResults;
 

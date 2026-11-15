@@ -6,16 +6,16 @@ namespace Domain.ValueObjects
 {
     public class PasswordPolicy
     {
-        public int MinLength { get; set; } = 8;
-        public int MaxLength { get; set; } = 128;
-        public bool RequireUppercase { get; set; } = true;
-        public bool RequireLowercase { get; set; } = true;
-        public bool RequireDigit { get; set; } = true;
-        public bool RequireSpecialChar { get; set; } = true;
-        public bool DisallowWhitespace { get; set; } = true;
-        public bool DisallowPersonalInfo { get; set; } = true;
-        public int MinPersonalInfoFragmentLength { get; set; } = 3;
-        public HashSet<string> DisallowedPasswords { get; set; } = new(StringComparer.OrdinalIgnoreCase)
+        public int MinLength { get; init; } = 8;
+        public int MaxLength { get; init; } = 128;
+        public bool RequireUppercase { get; init; } = true;
+        public bool RequireLowercase { get; init; } = true;
+        public bool RequireDigit { get; init; } = true;
+        public bool RequireSpecialChar { get; init; } = true;
+        public bool DisallowWhitespace { get; init; } = true;
+        public bool DisallowPersonalInfo { get; init; } = true;
+        public int MinPersonalInfoFragmentLength { get; init; } = 3;
+        public HashSet<string> DisallowedPasswords { get; init; } = new(StringComparer.OrdinalIgnoreCase)
         {
             "password",
             "password1",

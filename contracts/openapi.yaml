@@ -1711,9 +1711,9 @@ components:
           type: string
           enum: [password, refresh_token]
           example: password
-        email: { type: string, format: email, example: anna@oekolariet.dk }
-        password: { type: string, format: password, example: 'correct horse battery' }
-        refreshToken: { type: string, description: Only for the refresh_token grant }
+        email: { type: string, format: email, nullable: true, example: anna@oekolariet.dk }
+        password: { type: string, format: password, nullable: true, example: 'correct horse battery' }
+        refreshToken: { type: string, nullable: true, description: Only for the refresh_token grant }
     Token:
       type: object
       required: [accessToken, tokenType, expiresAt, refreshToken, refreshExpiresAt]
