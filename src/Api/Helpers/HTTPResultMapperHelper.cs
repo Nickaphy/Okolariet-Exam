@@ -1,5 +1,6 @@
 ﻿using Application.ErrorMessages;
 using FluentResults;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Helpers
@@ -14,7 +15,10 @@ namespace Api.Helpers
             {
                 NotFoundError => (StatusCodes.Status404NotFound, "Not Found"),
                 ConflictError => (StatusCodes.Status409Conflict, "Conflict"),
+                TooManyRequestsError => (StatusCodes.Status429TooManyRequests, "Too Many Requests"),
+                UnauthorizedError => (StatusCodes.Status401Unauthorized, "Unauthorized"),
                 BusinessRuleError => (StatusCodes.Status422UnprocessableEntity, "Unprocessable Entity"),
+                UnexpectedError => (StatusCodes.Status500InternalServerError, "Controlled Internal Server Error"),
                 _ => (StatusCodes.Status500InternalServerError, "Internal Server Error")
             };
 
