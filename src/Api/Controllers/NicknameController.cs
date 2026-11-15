@@ -2,7 +2,7 @@
 using Api.Helpers;
 using Api.Requests.NicknameRequests;
 using Api.Responses.NicknameResponse;
-using Application.Commands;
+using Application.Commands.NicknameCommands;
 using Application.InBoundPort.INicknameUseCases;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +16,9 @@ public class NicknameSuggestionsController(IGetSuggestionsAsync useCase) : Contr
     public async Task<ActionResult<IEnumerable<NicknameWordResponse>>> Get(CancellationToken ct)
     {
         var result = await useCase.GetSuggestionsAsync(ct);
-        if (result.IsFailed) return this.ToProblem(result);
+        if (result.IsFailed) 
+            return this.ToProblem(result);
+
         return Ok(result.Value.Select(NicknameWordResponse.From));
     }
 }
@@ -33,7 +35,8 @@ public class NicknameWordsController(IListWordsAsync listWordsUseCase, IAddWordA
         CancellationToken ct = default)
     {
         var result = await listWordsUseCase.ListWordsAsync(page, pageSize, ct);
-        if (result.IsFailed) return this.ToProblem(result);
+        if (result.IsFailed) 
+            return this.ToProblem(result);
 
         var p = result.Value;
         return Ok(new PagedResponse<NicknameWordResponse>(
@@ -45,7 +48,8 @@ public class NicknameWordsController(IListWordsAsync listWordsUseCase, IAddWordA
         [FromBody] NicknameWordRequest request, CancellationToken ct)
     {
         var result = await addWordUseCase.AddWordAsync(new AddNicknameWordCommand(request.Text), ct); //Overkill to use command, but keeps the system consistent. 
-        if (result.IsFailed) return this.ToProblem(result);          // 409 if it already exists
+        if (result.IsFailed) 
+            return this.ToProblem(result);          // 409 if it already exists
 
         var response = NicknameWordResponse.From(result.Value);
         return Created($"/api/v1/nickname-words/{response.Id}", response);

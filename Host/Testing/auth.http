@@ -1,0 +1,31 @@
+@host = https://localhost:7001
+
+### 1. Login -> 200
+# @name login
+POST {{host}}/auth/tokens
+Content-Type: application/json
+
+{ "email": "admin@okolariet.dk", "password": "YourSeedPassword1!" }
+
+### 2. Protected endpoint with the token -> 200 (without the header -> 401)
+GET {{host}}/staff
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+### 3. Refresh -> 200, new pair
+# @name refresh
+POST {{host}}/auth/tokens/refresh
+Content-Type: application/json
+
+{ "refreshToken": "{{login.response.body.$.refreshToken}}" }
+
+### 4. Reuse the FIRST refresh token -> 401, and the login is now revoked
+POST {{host}}/auth/tokens/refresh
+Content-Type: application/json
+
+{ "refreshToken": "{{login.response.body.$.refreshToken}}" }
+
+### 5. The new token from step 3 now also fails -> 401
+POST {{host}}/auth/tokens/refresh
+Content-Type: application/json
+
+{ "refreshToken": "{{refresh.response.body.$.refreshToken}}" }
