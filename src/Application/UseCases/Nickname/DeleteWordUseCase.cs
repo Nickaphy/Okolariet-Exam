@@ -1,8 +1,8 @@
-﻿using Application.Commands;
-using Application.ErrorMessages;
+﻿using Application.ErrorMessages;
 using Application.OutBoundPort.INicknameWordRepository;
 using Application.InBoundPort.INicknameUseCases;
 using FluentResults;
+using Application.Commands.NicknameCommands;
 
 namespace Application.UseCases.Nickname
 {

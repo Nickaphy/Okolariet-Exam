@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.10.12224.181 stable
+VisualStudioVersion = 18.10.12224.181
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "src\Application\Application.csproj", "{C769779D-BA33-4BAD-A064-1C6EB6E8965F}"
 EndProject
@@ -21,6 +21,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "contracts", "contracts", "{
 	ProjectSection(SolutionItems) = preProject
 		contracts\openapi.yaml = contracts\openapi.yaml
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Host", "Host\Host.csproj", "{B4A29BED-4015-445B-B574-F1601AF1A4D8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -56,6 +58,10 @@ Global
 		{DF53BA4A-435F-47F9-A5AC-321B84CAF774}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DF53BA4A-435F-47F9-A5AC-321B84CAF774}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DF53BA4A-435F-47F9-A5AC-321B84CAF774}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B4A29BED-4015-445B-B574-F1601AF1A4D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4A29BED-4015-445B-B574-F1601AF1A4D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4A29BED-4015-445B-B574-F1601AF1A4D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4A29BED-4015-445B-B574-F1601AF1A4D8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
