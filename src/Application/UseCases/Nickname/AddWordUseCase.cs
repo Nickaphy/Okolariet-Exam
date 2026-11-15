@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Application.Commands;
 using Application.ErrorMessages;
 using Application.OutBoundPort.INicknameWordRepository;
 using Application.InBoundPort.INicknameUseCases;
 using Domain.Entities;
 using FluentResults;
+using Application.Commands.NicknameCommands;
 
 namespace Application.UseCases.Nickname
 {

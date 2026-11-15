@@ -25,8 +25,6 @@ namespace Domain.Services
 
         PasswordValidationResult Validate(string? password, string? email, string? name);
 
-        //Validates and throws UserInvalidInputException if invalid with relevant messages
-        void ValidateAndThrow(string? password, string? email, string? name);
     }
 
     public class PasswordValidatorService : IPasswordValidatorService
@@ -120,14 +118,6 @@ namespace Domain.Services
 
             matchedFragment = string.Empty;
             return false;
-        }
-
-
-        public void ValidateAndThrow(string? password, string? email, string? name)
-        {
-            var result = Validate(password, email, name);
-            if (!result.IsValid)
-                throw new UserInvalidInputException(string.Join(" ", result.Errors));
         }
     }
 }

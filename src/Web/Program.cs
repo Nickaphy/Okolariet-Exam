@@ -1,11 +1,14 @@
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Refit;
 using Web;
 using Web.Adapters.Nickname;
 using Web.Api;
+using Web.Api.Contracts;
 using Web.Auth;
 using Web.Ports.Nickname;
+using Web.TestTokens;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 var baseUrl = new Uri(builder.Configuration["Api:BaseUrl"]!);
@@ -14,12 +17,28 @@ builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = baseUrl });
-builder.Services.AddSingleton<TokenStore>();
-builder.Services.AddTransient<AuthHandler>();
+// Turn back to real token when going into production !!!!!!!!!!
+builder.Services.AddSingleton<TokenStoreTest>();
+builder.Services.AddTransient<AuthHandlerTest>();
+
+// PRISM test URI
+var apiUrl = new Uri("http://localhost:4010");
 
 //Access token system, using JWT to ensure that a user doesn't get access to the editor, only staff memebers.
 builder.Services.AddRefitClient<IAuthApi>()
-    .ConfigureHttpClient(c => c.BaseAddress = baseUrl);
+    .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
+
+var jsonOptions = SystemTextJsonContentSerializer.GetDefaultJsonSerializerOptions();
+jsonOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+
+var refitSettings = new RefitSettings
+{
+    ContentSerializer = new SystemTextJsonContentSerializer(jsonOptions)
+};
+
+builder.Services.AddRefitClient<INicknamesApi>(refitSettings)
+    .ConfigureHttpClient(c => c.BaseAddress = apiUrl)
+    .AddHttpMessageHandler<AuthHandlerTest>();
 
 void AddApi<T>() where T : class =>
     builder.Services.AddRefitClient<T>()
@@ -66,5 +85,21 @@ AddApi<IStatisticsApi>();
 
 AddApi<IItemsApi>();
 
+var host = builder.Build();
 
-await builder.Build().RunAsync();
+if (builder.HostEnvironment.IsDevelopment()) // Test, only used in development. 
+{
+    var auth = host.Services.GetRequiredService<IAuthApi>();
+    var response = await auth.CreateToken(new TokenRequest
+    {
+        GrantType = TokenRequestGrantType.Password,
+        Email = "anna@oekolariet.dk",
+        Password = "correct horse battery"
+    });
+
+    if (response.IsSuccessStatusCode && response.Content is not null)
+        host.Services.GetRequiredService<TokenStoreTest>().Set(response.Content.TokenType);
+}
+
+await host.RunAsync();
+
