@@ -1,0 +1,53 @@
+﻿@page "/question-test"
+@using Web.Api.Contracts
+@using Web.Exceptions
+@using Web.Ports.Questions
+@inject IQuestionGateway Questions
+
+@* Tests the question gateway against PRISM. PRISM accepts any Guid and makes up the data. *@
+
+@if (error is not null)
+{
+    <p>@error</p>
+}
+else if (result is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <ul>
+        @foreach (var q in result)
+        {
+            <li>
+                @q.SortOrder. @q.Text
+                <ul>
+                    @foreach (var a in q.Answers)
+                    {
+                        <li>@a.Text @(a.IsCorrect ? "✔" : "")</li>
+                    }
+                </ul>
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private IReadOnlyList<Question>? result;
+    private string? error;
+
+    // PRISM doesn't care which id you send, so a random one is fine for testing
+    private readonly Guid moddedTemplateId = Guid.NewGuid();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            result = await Questions.ListQuestions(moddedTemplateId);
+        }
+        catch (GatewayException ex)
+        {
+            error = $"API error: {(int)ex.StatusCode}";
+        }
+    }
+}
