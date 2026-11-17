@@ -4,10 +4,16 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Refit;
 using Web;
 using Web.Adapters.Nickname;
+using Web.Adapters.Answers;
+using Web.Adapters.Questions;
+using Web.Adapters.Assets;
 using Web.Api;
 using Web.Api.Contracts;
 using Web.Auth;
 using Web.Ports.Nickname;
+using Web.Ports.Answers;
+using Web.Ports.Questions;
+using Web.Ports.Assets;
 using Web.TestTokens;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -63,12 +69,15 @@ AddApi<IStaffApi>();
 
 // The questions to a quiz
 AddApi<IQuestionsApi>();
+builder.Services.AddScoped<IQuestionGateway, QuestionGateway>();
 
 // Answers to a quiz
 AddApi<IAnswersApi>();
+builder.Services.AddScoped<IAnswerGateway, AnswerGateway>();
 
 // Assets are general items found in a tempalte, such as buttons, textfields, images, etc.
 AddApi<IAssetsApi>();
+builder.Services.AddScoped<IAssetGateway, AssetGateway>();
 
 // A collections of Assets, Questions or other items. Specifically unaltered by a staff member. A clean slate so to speak.
 AddApi<ITemplatesApi>();
