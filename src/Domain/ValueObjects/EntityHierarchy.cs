@@ -4,6 +4,8 @@ using System.Text;
 
 namespace Domain.ValueObjects
 {
+    // The shared base class for all entities in the domain.
+    // It provides an Id property to any entity that inherits the aggregate root.
     public abstract class Entity
     {
         public Guid Id { get; protected set; }
@@ -19,6 +21,8 @@ namespace Domain.ValueObjects
         public override int GetHashCode()
             => Id.GetHashCode();
     }
+
+    // The outlet your aggregate root inherits from : Aggregateroot. It provides the Id property to any aggregate root that inherits it.
     public abstract class Aggregateroot : Entity
     {
 
