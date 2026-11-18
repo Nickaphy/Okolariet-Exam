@@ -23,8 +23,8 @@ namespace Api.Controllers
             [FromBody] SessionRequest request,
             CancellationToken ct)
         {
-            var command = new CreateSessionCommand(request.ProjectId);
-            var result = await postSessionUsecase.PostSessionAsync(command, ct);
+            var command = new CreateSessionCommand(request.ProjectId); // Creates the application layer command record  
+            var result = await postSessionUsecase.PostSessionAsync(command, ct); // Calls the inbound port for the application
 
             if (result.IsFailed)
                 return this.ToProblem(result);
@@ -32,7 +32,7 @@ namespace Api.Controllers
             var session = result.Value;
             var response = new SessionResponse(session.Id, session.ProjectId, session.StartedAt);
 
-            return Created($"/api/v1/sessions/{response.Id}", response);
+            return Created($"/api/v1/sessions/{response.Id}", response); 
         }
 
     }
