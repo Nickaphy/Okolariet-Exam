@@ -9,6 +9,7 @@ namespace Application.OutBoundPort.IUserRepository
     public interface ICreateUserAsync
     {
         // Contract for persisting the created user entity to the database using the outbound port
-        Task CreateUserAsync(User user, CancellationToken ct);
+        // infra retruns true when saved, and false when the SessionId and ModdedTemplateId combination exists.
+        Task<bool> CreateUserAsync(User user, CancellationToken ct);
     }
 }
