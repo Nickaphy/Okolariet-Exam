@@ -2,7 +2,7 @@ using Api.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Application.InBoundPort;
-using Application.InBoundPort.ISessionUseCases;
+using Application.InBoundPort.ISessionUseCase;
 using Application.Commands.Sessions;
 using Api.Responses.SessionsResponses;
 using Api.Requests.SessionRequests;
