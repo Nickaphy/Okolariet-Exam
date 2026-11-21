@@ -79,12 +79,13 @@ namespace Application
 
             // User
             services.AddScoped<ICreateUserUseCase, CreateUserUseCase>();
+            services.AddScoped<IGetUserUseCase, GetUserUseCase>();
+            services.AddScoped<IDeleteUserUseCase, DeleteUserUseCase>();
+            services.AddScoped<IClearQuizLeaderboardUseCase, ClearQuizLeaderboardUseCase>();
+            services.AddScoped<IListUsersUseCase, ListUsersUseCase>();
 
             // Quiz
             services.AddScoped<ISubmitQuizResultUseCase, SubmitQuizResultUseCase>();
-
-            
-            
 
             return services;
         }
