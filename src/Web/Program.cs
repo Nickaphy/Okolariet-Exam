@@ -15,6 +15,10 @@ using Web.Ports.Answers;
 using Web.Ports.Questions;
 using Web.Ports.Assets;
 using Web.TestTokens;
+using Web.Adapters.Projects;
+using Web.Ports.Projects;
+using Web.Adapters.Versions;
+using Web.Ports.Versions;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 var baseUrl = new Uri(builder.Configuration["Api:BaseUrl"]!);
@@ -57,6 +61,7 @@ builder.Services.AddScoped<INicknameGateway, NicknameGateway>();
 
 // The collections of Templates
 AddApi<IProjectsApi>();
+builder.Services.AddScoped<IProjectGateway, ProjectGateway>();
 
 // A users access to a project
 AddApi<ISessionsApi>();
@@ -87,6 +92,7 @@ AddApi<IModdedTemplatesApi>();
 
 // Different published versions of projects, to ensure that a staff member only publishes a satisfactory whole, and not a half-finished project.
 AddApi<IVersionsApi>();
+builder.Services.AddScoped<IVersionGateway, VersionGateway>();
 
 // Statistics about the usage of the application, such as how many users have used it, quiz results etc.
 AddApi<IStatisticsApi>();
