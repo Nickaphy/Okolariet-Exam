@@ -70,6 +70,16 @@ namespace Infrastructure
             services.AddScoped<StaffSeeder>();
 
             return services;
+
+            // Read the connection string Aspire supplies under the name "okolariet".
+            var connectionString = configuration.GetConnectionString("okolariet")
+                ?? throw new InvalidOperationException(
+                    "The 'okolariet' database connection string is missing.");
+
+            // Give each request a database context connected to SQL Server.
+            services.AddDbContext<OkolarietDbContext>(options =>
+                options.UseSqlServer(connectionString));
+                return services;
         }
 
         public static async Task InitializeInfrastructureAsync(this IServiceProvider services, IConfiguration config)
