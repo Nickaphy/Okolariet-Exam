@@ -63,8 +63,6 @@ namespace Infrastructure
             services.AddSingleton<IGetRefreshTokenByHashAsync>(sp => sp.GetRequiredService<InMemoryAuthStore>());
             services.AddSingleton<IUpdateRefreshTokenAsync>(sp => sp.GetRequiredService<InMemoryAuthStore>());
 
-
-
             var connectionString = configuration.GetConnectionString("Okolariet")
                 ?? throw new InvalidOperationException("ConnectionStrings__Okolariet is missing. Fill it in in .env.");
 
