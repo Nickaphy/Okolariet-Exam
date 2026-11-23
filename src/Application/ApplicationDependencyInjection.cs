@@ -1,26 +1,36 @@
 ﻿using Application.Helpers;
 using Application.Helpers.Interfaces;
+using Application.InBoundPort;
 using Application.InBoundPort.AuthUseCases;
 using Application.InBoundPort.INicknameUseCases;
+using Application.InBoundPort.IProjectUseCases;
 using Application.InBoundPort.IStaffUseCases;
 using Application.InBoundPort.IAnswerUseCases;
 using Application.InBoundPort.IQuestionUseCases;
 using Application.InBoundPort.IAssetUseCases;
 using Application.InBoundPort.ITemplateUseCases;
 using Application.InBoundPort.IModdedTemplateUseCases;
+using Application.InBoundPort.IQuizResultUseCases;
+using Application.InBoundPort.IUserUsecases;
+using Application.InBoundPort.ISessionUseCase;
 using Application.UseCases.Auth;
 using Application.UseCases.Nickname;
+using Application.UseCases.Projects;
 using Application.UseCases.Staff;
 using Application.UseCases.Answers;
 using Application.UseCases.Questions;
 using Application.UseCases.Assets;
 using Application.UseCases.Templates;
 using Application.UseCases.ModdedTemplates;
+using Application.UseCases.QuizResults;
+using Application.UseCases.Users;
+using Application.UseCases.Sessions;
 using Domain.Services;
 using Domain.ValueObjects;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-
+using Application.InBoundPort.IVersionUseCases;
+using Application.UseCases.Versions;
 namespace Application
 {
     // Dependency Injection specifically for the applications layers Use Cases
@@ -51,6 +61,18 @@ namespace Application
             services.AddScoped<IRefreshTokensUseCase, RefreshTokensUseCase>();
             services.AddScoped<ILogoutUseCase, LogoutUseCase>();
 
+            //Project
+            services.AddScoped<IListProjectsUseCase, ListProjectsUseCase>();
+            services.AddScoped<IGetProjectUseCase, GetProjectUseCase>();
+            services.AddScoped<ICreateProjectUseCase, CreateProjectUseCase>();
+            services.AddScoped<IUpdateProjectUseCase, UpdateProjectUseCase>();
+            services.AddScoped<IDeleteProjectUseCase, DeleteProjectUseCase>();
+
+            //PublishedVersionProject
+            services.AddScoped<IListVersionsUseCase, ListVersionsUseCase>();
+            services.AddScoped<IPublishVersionUseCase, PublishVersionUseCase>();
+            services.AddScoped<IGetLatestVersionUseCase, GetLatestVersionUseCase>();
+            services.AddScoped<IGetDraftVersionUseCase, GetDraftVersionUseCase>();
             // Question use cases
             services.AddScoped<IListQuestionsUseCase, ListQuestionsUseCase>();
             services.AddScoped<IGetQuestionUseCase, GetQuestionUseCase>();
@@ -81,6 +103,20 @@ namespace Application
             services.AddScoped<IDeleteModdedTemplateUseCase, DeleteModdedTemplateUseCase>();
             services.AddScoped<ISetItemUseCase, SetItemUseCase>();
             services.AddScoped<IClearItemUseCase, ClearItemUseCase>();
+            // Session
+            services.AddScoped<IPostSessionAsync, AddSessionUseCase>();
+            services.AddScoped<IGetSessionUseCase, GetSessionUseCase>();
+
+
+            // User
+            services.AddScoped<ICreateUserUseCase, CreateUserUseCase>();
+            services.AddScoped<IGetUserUseCase, GetUserUseCase>();
+            services.AddScoped<IDeleteUserUseCase, DeleteUserUseCase>();
+            services.AddScoped<IClearQuizLeaderboardUseCase, ClearQuizLeaderboardUseCase>();
+            services.AddScoped<IListUsersUseCase, ListUsersUseCase>();
+
+            // Quiz
+            services.AddScoped<ISubmitQuizResultUseCase, SubmitQuizResultUseCase>();
 
             return services;
         }
