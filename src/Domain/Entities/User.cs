@@ -14,6 +14,7 @@ namespace Domain.Entities
         public Guid ModdedTemplateId {get; private set;} // Unique identifier for the modded template associated with the user
         public Guid SessionId {get; private set;} // Unique identifier for the user's session
         public Score Score {get; private set;} // Value object representing the user's score
+        public DateTimeOffset CreatedAt { get; private set; } // Timestamp for sorting
 
 
         // Private constructor to enforce the use of the factory method for creating User instances
@@ -23,6 +24,7 @@ namespace Domain.Entities
             ModdedTemplateId = moddedTemplateId;
             SessionId = sessionId;
             Score = score;
+            CreatedAt = DateTimeOffset.UtcNow;
 
         }
 
