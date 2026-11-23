@@ -1,31 +1,45 @@
-﻿namespace Web.Auth
+﻿using System.Text.Json;
+using Microsoft.JSInterop;
+using Web.Api;
+
+namespace Web.Auth;
+
+public sealed record StoredToken(
+    string AccessToken,
+    DateTimeOffset ExpiresAt,
+    string RefreshToken,
+    DateTimeOffset RefreshExpiresAt);
+
+/// <summary>
+/// Keeps the login in localStorage so it survives a page reload and is shared
+/// with other windows of the app. Registered as a singleton: HttpClientFactory
+/// resolves message handlers in its own scope, so per-scope state would not be shared.
+/// </summary>
+public sealed class TokenStore(IJSRuntime js)
 {
-    using Web.Api.Contracts;
+    private const string Key = "oekolariet.auth";
 
-    // The token store handles the access and refresh tokens, and their expiration time. Used by the AuthHandler to manage authentication state.
-    // Helps prevent a user from being logged out unexpectedly, and allows for automatic token refresh when needed.
-    public class TokenStore
+    // Always read from storage: another window may have rotated the refresh token,
+    // and re-using an old one revokes the whole login.
+    public async ValueTask<StoredToken?> GetAsync()
     {
-        public string? AccessToken { get; private set; } // A user may be logged in, but not have an access token -> some API calls use allowanonymous
-        public string? RefreshToken { get; private set; } // null if not logged in, or if the refresh token has been revoked
-        public DateTimeOffset ExpiresAt { get; private set; }
+        var json = await js.InvokeAsync<string?>("localStorage.getItem", Key);
+        if (string.IsNullOrEmpty(json)) return null;
 
-        public bool IsLoggedIn => AccessToken is not null;
-        public event Action? Changed;
-
-        public void Set(Token token)
+        try
         {
-            AccessToken = token.AccessToken;
-            RefreshToken = token.RefreshToken;
-            ExpiresAt = token.ExpiresAt;
-            Changed?.Invoke();
+            return JsonSerializer.Deserialize<StoredToken>(json, ApiJson.Options);
         }
-
-        public void Clear()
+        catch (JsonException)
         {
-            AccessToken = RefreshToken = null;
-            ExpiresAt = default;
-            Changed?.Invoke();
+            await ClearAsync();
+            return null;
         }
     }
+
+    public ValueTask SetAsync(StoredToken token) =>
+        js.InvokeVoidAsync("localStorage.setItem", Key, JsonSerializer.Serialize(token, ApiJson.Options));
+
+    public ValueTask ClearAsync() =>
+        js.InvokeVoidAsync("localStorage.removeItem", Key);
 }
