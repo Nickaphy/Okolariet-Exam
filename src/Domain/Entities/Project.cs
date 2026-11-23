@@ -17,7 +17,7 @@ namespace Domain.Entities
         public string Name { get; private set; } = "";
 
         // Udstillingens fælles udseende. Starter som et tomt udseende (alle felter ikke valgt).
-        public Appearance Appearance { get; private set; } = new();
+        public Appearance Appearance { get; private set; } = Appearance.Empty;
 
         // Id'et på den skærm, kiosken viser først (startskærmen). Null betyder, at ingen er valgt endnu,
         // hvilket er tilfældet for et nyt projekt, som endnu ikke har nogen skærme.
@@ -43,12 +43,12 @@ namespace Domain.Entities
         }
 
         // Eneste måde at oprette et nyt projekt på, så validering altid gennemføres.
-        // Udseendet er valgfrit: "appearance ?? new Appearance()" betyder "brug det angivne udseende,
+        // Udseendet er valgfrit: "appearance ?? Appearance.Empty" betyder "brug det angivne udseende,
         // eller et tomt udseende hvis intet er angivet". Appearance på et projekt er derfor aldrig null.
         public static Project Create(string name, Appearance? appearance = null)
         {
             Validate(name);
-            return new Project { Name = name.Trim(), Appearance = appearance ?? new Appearance() };
+            return new Project { Name = name.Trim(), Appearance = appearance ?? Appearance.Empty };
         }
 
         // Ændrer navn, startskærm og udseende. Navnet valideres igen.
@@ -60,7 +60,7 @@ namespace Domain.Entities
             Validate(name);
             Name = name.Trim();
             MainModdedTemplateId = mainModdedTemplateId;
-            Appearance = appearance ?? new Appearance();
+            Appearance = appearance ?? Appearance.Empty;
         }
 
         // Kaldes af PublishVersionUseCase, når projektet er publiceret, så projektet kender
