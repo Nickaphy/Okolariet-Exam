@@ -41,5 +41,15 @@ namespace Domain.Entities
             return new Asset { Kind = kind, OriginalName = originalName, StoredName = storedName,
                             ContentType = contentType, SizeBytes = sizeBytes, UploadedAt = now };
         }
+        
+        // Can this file go in a slot of this kind? (an audio file can't go in an image slot)
+        public bool FitsSlot(SlotKind slotKind) => (slotKind, Kind) switch
+        {
+            (SlotKind.Image, AssetKind.Image) => true,
+            (SlotKind.Video, AssetKind.Video) => true,
+            (SlotKind.Audio, AssetKind.Audio) => true,
+            _ => false   
+            // Text and Button slots don't take files, and any mismatch is false
+        };
     }
 }
