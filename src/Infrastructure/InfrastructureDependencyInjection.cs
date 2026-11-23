@@ -63,6 +63,17 @@ namespace Infrastructure
             services.AddSingleton<IGetRefreshTokenByHashAsync>(sp => sp.GetRequiredService<InMemoryAuthStore>());
             services.AddSingleton<IUpdateRefreshTokenAsync>(sp => sp.GetRequiredService<InMemoryAuthStore>());
 
+
+            // Read the connection string Aspire supplies under the name "okolariet".
+            var connectionString = configuration.GetConnectionString("okolariet")
+                ?? throw new InvalidOperationException(
+                    "The 'okolariet' database connection string is missing.");
+
+            // Give each request a database context connected to SQL Server.
+            services.AddDbContext<OkolarietDbContext>(options =>
+                options.UseSqlServer(connectionString));
+                return services;
+
             var connectionString = configuration.GetConnectionString("Okolariet")
                 ?? throw new InvalidOperationException("ConnectionStrings__Okolariet is missing. Fill it in in .env.");
             services.AddDbContext<OkolarietDbContext>(o => o.UseSqlServer(connectionString));
