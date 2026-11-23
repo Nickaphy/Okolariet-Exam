@@ -8,6 +8,8 @@ using Application.InBoundPort.IStaffUseCases;
 using Application.InBoundPort.IAnswerUseCases;
 using Application.InBoundPort.IQuestionUseCases;
 using Application.InBoundPort.IAssetUseCases;
+using Application.InBoundPort.ITemplateUseCases;
+using Application.InBoundPort.IModdedTemplateUseCases;
 using Application.InBoundPort.IQuizResultUseCases;
 using Application.InBoundPort.IUserUsecases;
 using Application.InBoundPort.ISessionUseCase;
@@ -18,6 +20,8 @@ using Application.UseCases.Staff;
 using Application.UseCases.Answers;
 using Application.UseCases.Questions;
 using Application.UseCases.Assets;
+using Application.UseCases.Templates;
+using Application.UseCases.ModdedTemplates;
 using Application.UseCases.QuizResults;
 using Application.UseCases.Users;
 using Application.UseCases.Sessions;
@@ -87,6 +91,18 @@ namespace Application
             services.AddScoped<IUploadAssetUseCase, UploadAssetUseCase>();
             services.AddScoped<IDeleteAssetUseCase, DeleteAssetUseCase>();
 
+            // Template use cases
+            services.AddScoped<IListTemplatesUseCase, ListTemplatesUseCase>();
+            services.AddScoped<IGetTemplateUseCase, GetTemplateUseCase>();
+
+            // ModdedTemplate use cases
+            services.AddScoped<IListModdedTemplatesUseCase, ListModdedTemplatesUseCase>();
+            services.AddScoped<IGetModdedTemplateUseCase, GetModdedTemplateUseCase>();
+            services.AddScoped<ICreateModdedTemplateUseCase, CreateModdedTemplateUseCase>();
+            services.AddScoped<IUpdateModdedTemplateUseCase, UpdateModdedTemplateUseCase>();
+            services.AddScoped<IDeleteModdedTemplateUseCase, DeleteModdedTemplateUseCase>();
+            services.AddScoped<ISetItemUseCase, SetItemUseCase>();
+            services.AddScoped<IClearItemUseCase, ClearItemUseCase>();
             // Session
             services.AddScoped<IPostSessionAsync, AddSessionUseCase>();
             services.AddScoped<IGetSessionUseCase, GetSessionUseCase>();
