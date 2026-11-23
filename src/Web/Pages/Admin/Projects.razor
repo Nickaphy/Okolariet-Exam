@@ -1,0 +1,98 @@
+@page "/admin/projects"
+@layout AdminLayout
+@attribute [Authorize]
+@inject IProjectsApi ProjectsApi
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<PageTitle>Udstillinger · Økolariet</PageTitle>
+
+<header class="page-head">
+    <h1 tabindex="-1">Udstillinger</h1>
+    <p class="lead">Start en udstilling på skærmen, ret i den, eller slet den.</p>
+</header>
+
+@if (notice is not null)
+{
+    <div class="notice notice-@notice.Kind" role="status">
+        <span>@notice.Text</span>
+        <button type="button" class="notice-close" aria-label="Luk beskeden" @onclick="() => notice = null">×</button>
+    </div>
+}
+
+@switch (state)
+{
+    case LoadState.Loading:
+        <ul class="project-list" aria-busy="true" aria-label="Henter udstillinger">
+            @for (var i = 0; i < 3; i++)
+            {
+                <li class="project-row skeleton" aria-hidden="true"></li>
+            }
+        </ul>
+        break;
+
+    case LoadState.Failed:
+        <div class="empty-state" role="alert">
+            <h2>Udstillingerne kunne ikke hentes</h2>
+            <p>@loadError</p>
+            <button type="button" class="btn btn-secondary" @onclick="LoadAsync">Prøv igen</button>
+        </div>
+        break;
+
+    default:
+        if (projects.Count == 0)
+        {
+            <div class="empty-state">
+                <h2>Der er ingen udstillinger endnu</h2>
+                <p>Når en udstilling er oprettet, kan du starte den herfra.</p>
+            </div>
+        }
+        else
+        {
+            <ul class="project-list">
+                @foreach (var project in projects)
+                {
+                    var isPublished = project.LatestVersionNumber is not null;
+                    <li class="project-row" @key="project.Id">
+                        <span class="swatch" style="@SwatchStyle(project)" aria-hidden="true"></span>
+
+                        <div class="project-info">
+                            <h2 class="project-name">@project.Name</h2>
+                            @if (isPublished)
+                            {
+                                <span class="status status-live"><span class="dot"></span>Udgivet · version @project.LatestVersionNumber</span>
+                            }
+                            else
+                            {
+                                <span class="status status-draft"><span class="dot"></span>Ikke udgivet endnu</span>
+                                <span class="hint">Udgiv den under Rediger, før den kan startes.</span>
+                            }
+                        </div>
+
+                        <div class="project-actions">
+                            <button type="button" class="btn btn-primary" disabled="@(!isPublished)"
+                                    aria-label="@($"Start {project.Name}")" @onclick="() => StartAsync(project)">
+                                <span aria-hidden="true">▶</span> Start
+                            </button>
+                            <button type="button" class="btn btn-secondary"
+                                    aria-label="@($"Rediger {project.Name}")" @onclick="() => Edit(project)">
+                                Rediger
+                            </button>
+                            <button type="button" class="btn btn-danger-ghost"
+                                    aria-label="@($"Slet {project.Name}")" @onclick="() => projectToDelete = project">
+                                Slet
+                            </button>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+        break;
+}
+
+@if (projectToDelete is not null)
+{
+    <DeleteProjectDialog Project="projectToDelete"
+                         OnCancel="() => projectToDelete = null"
+                         OnDeleted="OnProjectDeleted" />
+}

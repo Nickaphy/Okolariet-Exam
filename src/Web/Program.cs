@@ -1,129 +1,103 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Refit;
 using Web;
-using Web.Adapters.Nickname;
 using Web.Adapters.Answers;
-using Web.Adapters.Questions;
 using Web.Adapters.Assets;
-using Web.Adapters.Templates;
 using Web.Adapters.Items;
 using Web.Adapters.ModdedTemplates;
+using Web.Adapters.Nickname;
+using Web.Adapters.Projects;
+using Web.Adapters.Questions;
+using Web.Adapters.Staff;
+using Web.Adapters.Templates;
+using Web.Adapters.Versions;
 using Web.Api;
-using Web.Api.Contracts;
 using Web.Auth;
-using Web.Ports.Nickname;
 using Web.Ports.Answers;
-using Web.Ports.Questions;
 using Web.Ports.Assets;
-using Web.Ports.Templates;
 using Web.Ports.Items;
 using Web.Ports.ModdedTemplates;
-using Web.TestTokens;
-using Web.Adapters.Projects;
+using Web.Ports.Nickname;
 using Web.Ports.Projects;
-using Web.Adapters.Versions;
+using Web.Ports.Questions;
+using Web.Ports.Staff;
+using Web.Ports.Templates;
 using Web.Ports.Versions;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
-var baseUrl = new Uri(builder.Configuration["Api:BaseUrl"]!);
-
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = baseUrl });
-// Turn back to real token when going into production !!!!!!!!!!
-builder.Services.AddSingleton<TokenStoreTest>();
-builder.Services.AddTransient<AuthHandlerTest>();
+// wwwroot/appsettings.json → "Api:BaseUrl".
+// Prism mock: http://localhost:4010   Real Host: http://localhost:5101/api/v1
+var apiBaseUrl = new Uri(builder.Configuration["Api:BaseUrl"]
+    ?? throw new InvalidOperationException("Api:BaseUrl is missing in wwwroot/appsettings.json."));
 
-// PRISM test URI
-var apiUrl = new Uri("http://localhost:4010");
-
-//Access token system, using JWT to ensure that a user doesn't get access to the editor, only staff memebers.
-builder.Services.AddRefitClient<IAuthApi>()
-    .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
-
-var jsonOptions = SystemTextJsonContentSerializer.GetDefaultJsonSerializerOptions();
-jsonOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-
-var refitSettings = new RefitSettings
+// Enum values exactly as in openapi.yaml, and nulls left out (Prism rejects null for non-nullable fields).
+var jsonOptions = new JsonSerializerOptions(ApiJson.Options)
 {
-    ContentSerializer = new SystemTextJsonContentSerializer(jsonOptions)
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
 };
+var refitSettings = new RefitSettings(new SystemTextJsonContentSerializer(jsonOptions));
 
-builder.Services.AddRefitClient<INicknamesApi>(refitSettings)
-    .ConfigureHttpClient(c => c.BaseAddress = apiUrl)
-    .AddHttpMessageHandler<AuthHandlerTest>();
+// ---- Auth: JWT for staff. The kiosk only uses anonymous endpoints.
+builder.Services.AddSingleton<TokenStore>();
+builder.Services.AddSingleton<AuthService>();
+builder.Services.AddTransient<BearerTokenHandler>();
+builder.Services.AddTransient<AttachAccessTokenHandler>();
+builder.Services.AddScoped<JwtAuthStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<JwtAuthStateProvider>());
+builder.Services.AddAuthorizationCore();
+builder.Services.AddCascadingAuthenticationState();
 
-void AddApi<T>() where T : class =>
-    builder.Services.AddRefitClient<T>()
-        .ConfigureHttpClient(c => c.BaseAddress = baseUrl);
-        //.AddHttpMessageHandler<AuthHandler>();
+// IAuthApi must not use BearerTokenHandler: that handler depends on AuthService, which uses IAuthApi.
+builder.Services.AddRefitClient<IAuthApi>(refitSettings)
+    .ConfigureHttpClient(c => c.BaseAddress = apiBaseUrl)
+    .AddHttpMessageHandler<AttachAccessTokenHandler>();
 
-// User nicknames
+// ---- API clients + gateways (pages talk to the gateways, not to Refit)
 AddApi<INicknamesApi>();
 builder.Services.AddScoped<INicknameGateway, NicknameGateway>();
 
-// The collections of Templates
 AddApi<IProjectsApi>();
 builder.Services.AddScoped<IProjectGateway, ProjectGateway>();
 
-// A users access to a project
-AddApi<ISessionsApi>();
-
-// The guest = user
-AddApi<IUsersApi>();
-
-// Staff at Økolariet
-AddApi<IStaffApi>();
-
-// The questions to a quiz
-AddApi<IQuestionsApi>();
-builder.Services.AddScoped<IQuestionGateway, QuestionGateway>();
-
-// Answers to a quiz
-AddApi<IAnswersApi>();
-builder.Services.AddScoped<IAnswerGateway, AnswerGateway>();
-
-// Assets are general items found in a tempalte, such as buttons, textfields, images, etc.
-AddApi<IAssetsApi>();
-builder.Services.AddScoped<IAssetGateway, AssetGateway>();
-
-// A collections of Assets, Questions or other items. Specifically unaltered by a staff member. A clean slate so to speak.
-AddApi<ITemplatesApi>();
-builder.Services.AddScoped<ITemplateGateway, TemplateGateway>();
-
-// A Template that has been altered by a staff member
-AddApi<IModdedTemplatesApi>();
-builder.Services.AddScoped<IModdedTemplateGateway, ModdedTemplateGateway>();
-
-// Different published versions of projects, to ensure that a staff member only publishes a satisfactory whole, and not a half-finished project.
 AddApi<IVersionsApi>();
 builder.Services.AddScoped<IVersionGateway, VersionGateway>();
 
-// Statistics about the usage of the application, such as how many users have used it, quiz results etc.
-AddApi<IStatisticsApi>();
+AddApi<IStaffApi>();
+builder.Services.AddScoped<IStaffGateway, StaffGateway>();
 
+AddApi<IQuestionsApi>();
+builder.Services.AddScoped<IQuestionGateway, QuestionGateway>();
+
+AddApi<IAnswersApi>();
+builder.Services.AddScoped<IAnswerGateway, AnswerGateway>();
+
+AddApi<IAssetsApi>();
+builder.Services.AddScoped<IAssetGateway, AssetGateway>();
+
+AddApi<ITemplatesApi>();
+builder.Services.AddScoped<ITemplateGateway, TemplateGateway>();
+
+AddApi<IModdedTemplatesApi>();
+builder.Services.AddScoped<IModdedTemplateGateway, ModdedTemplateGateway>();
 
 AddApi<IItemsApi>();
 builder.Services.AddScoped<IItemGateway, ItemGateway>();
 
-var host = builder.Build();
+// No gateways yet
+AddApi<ISessionsApi>();
+AddApi<IUsersApi>();
+AddApi<IStatisticsApi>();
 
-if (builder.HostEnvironment.IsDevelopment()) // Test, only used in development. 
-{
-    var auth = host.Services.GetRequiredService<IAuthApi>();
-    var response = await auth.CreateToken(new TokenRequest
-    {
-        GrantType = TokenRequestGrantType.Password,
-        Email = "anna@oekolariet.dk",
-        Password = "correct horse battery"
-    });
+await builder.Build().RunAsync();
 
-    if (response.IsSuccessStatusCode && response.Content is not null)
-        host.Services.GetRequiredService<TokenStoreTest>().Set(response.Content.TokenType);
-}
-
-await host.RunAsync();
-
+void AddApi<T>() where T : class =>
+    builder.Services.AddRefitClient<T>(refitSettings)
+        .ConfigureHttpClient(c => c.BaseAddress = apiBaseUrl)
+        .AddHttpMessageHandler<BearerTokenHandler>();

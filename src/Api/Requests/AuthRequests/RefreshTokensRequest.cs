@@ -2,5 +2,5 @@
 
 namespace Api.Requests.AuthRequests
 {
-    public sealed record RefreshTokensRequest([property: Required] string RefreshToken);
+    public sealed record RefreshTokensRequest([Required] string RefreshToken);
 }

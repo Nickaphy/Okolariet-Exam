@@ -1,0 +1,48 @@
+@page "/admin/login"
+@layout BlankLayout
+@inject AuthService Auth
+@inject AuthenticationStateProvider AuthState
+@inject NavigationManager Nav
+
+<PageTitle>Log ind · Økolariet</PageTitle>
+
+<main class="login-page">
+    <section class="login-card" aria-labelledby="login-title">
+        <span class="tag">ØKOLARIET · ADMIN</span>
+        <h1 id="login-title" tabindex="-1">Log ind</h1>
+
+        @if (errorMessage is not null)
+        {
+            <div class="form-alert" role="alert">@errorMessage</div>
+        }
+
+        <EditForm Model="model" OnValidSubmit="LoginAsync" novalidate>
+            <DataAnnotationsValidator />
+
+            <div class="field">
+                <label for="email">E-mail</label>
+                <InputText id="email" type="email" class="input" @bind-Value="model.Email"
+                           autocomplete="username" inputmode="email" disabled="@busy" />
+                <ValidationMessage For="() => model.Email" />
+            </div>
+
+            <div class="field">
+                <label for="password">Adgangskode</label>
+                <div class="password-wrap">
+                    <InputText id="password" type="@(showPassword ? "text" : "password")" class="input"
+                               @bind-Value="model.Password" autocomplete="current-password" disabled="@busy" />
+                    <button type="button" class="reveal" aria-controls="password"
+                            aria-pressed="@(showPassword ? "true" : "false")"
+                            @onclick="() => showPassword = !showPassword">
+                        @(showPassword ? "Skjul" : "Vis")
+                    </button>
+                </div>
+                <ValidationMessage For="() => model.Password" />
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg btn-block" disabled="@busy">
+                @(busy ? "Logger ind…" : "Log ind")
+            </button>
+        </EditForm>
+    </section>
+</main>
