@@ -19,7 +19,7 @@ namespace Api.Controllers
             [FromServices] ILoginUseCase useCase, CancellationToken ct)
         {
             var result = await useCase.ExecuteAsync(new LoginCommand(request.Email, request.Password), ct);
-            return result.IsFailed ? this.ToProblem(result) : NoContent();
+            return result.IsFailed ? this.ToProblem(result) : Tokens(result.Value);
         }
 
         [HttpPost("refresh"), AllowAnonymous, EnableRateLimiting("auth")]
@@ -27,7 +27,7 @@ namespace Api.Controllers
             [FromServices] IRefreshTokensUseCase useCase, CancellationToken ct)
         {
             var result = await useCase.ExecuteAsync(new RefreshTokenCommand(request.RefreshToken), ct);
-            return result.IsFailed ? this.ToProblem(result) : NoContent();
+            return result.IsFailed ? this.ToProblem(result) : Tokens(result.Value);
         }
 
         [HttpDelete("current"), Authorize]   // any logged-in user

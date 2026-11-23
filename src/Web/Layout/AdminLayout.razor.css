@@ -1,0 +1,109 @@
+.admin-shell {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: 100vh;
+}
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 1.75rem 1.5rem;
+    background: var(--bg);
+    border-right: 2px solid var(--ink);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+}
+
+.brand {
+    display: block;
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    color: var(--ink);
+    text-decoration: none;
+}
+
+.nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+/* NavLink and the spans are rendered here, so no ::deep needed for the spans,
+   but NavLink is a child component → ::deep. */
+.nav ::deep .nav-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    min-height: 48px;
+    padding: 0 1rem;
+    border-radius: 10px;
+    color: var(--ink);
+    font-size: 1.1rem;
+    text-decoration: none;
+}
+
+.nav ::deep a.nav-item:hover {
+    background: var(--surface-sunk);
+}
+
+.nav ::deep a.nav-item.active {
+    background: var(--ink);
+    color: #fff;
+    font-weight: 700;
+}
+
+.nav-soon {
+    color: var(--muted) !important;
+    cursor: default;
+}
+
+.nav-soon small {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.sidebar-foot {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.signed-in {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    font-size: 0.9rem;
+    min-width: 0;
+}
+
+.signed-in-label {
+    color: var(--muted);
+}
+
+.signed-in-email {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-main {
+    padding: 2.5rem 3rem 4rem;
+    min-width: 0;
+}
+
+@media (max-width: 900px) {
+    .admin-shell { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; border-right: 0; border-bottom: 2px solid var(--ink); }
+    .nav { flex-direction: row; flex-wrap: wrap; }
+    .sidebar-foot { margin: 0 0 0 auto; flex-direction: row; align-items: center; }
+    .admin-main { padding: 1.5rem; }
+}

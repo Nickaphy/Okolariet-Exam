@@ -13,6 +13,8 @@ using Infrastructure.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using NicknamePorts = Application.OutBoundPort.INicknameWordRepository;
+using Infrastructure.Adapters.Nickname;
 
 namespace Infrastructure
 {
@@ -32,7 +34,22 @@ namespace Infrastructure
             services.AddSingleton<IHashToken, HashTokenAdapter>();
 
             // Staff DI
+            services.AddScoped<IAddAsync, AddStaffAdapter>();
+            services.AddScoped<IAnyAsync, AnyStaffAdapter>();
+            services.AddScoped<ICountAdminsAsync, CountAdminsAdapter>();
+            services.AddScoped<IDeleteAsync, DeleteStaffAdapter>();
+            services.AddScoped<IEmailExistsAsync, StaffEmailExistsAdapter>();
             services.AddScoped<IGetByEmailAsync, GetStaffByEmailAdapter>();
+            services.AddScoped<IGetByIdAsync, GetStaffByIdAdapter>();
+            services.AddScoped<IListAsync, ListStaffAdapter>();
+            services.AddScoped<IUpdateAsync, UpdateStaffAdapter>();
+
+            // Nickname DI
+            services.AddScoped<NicknamePorts.IAddAsync, AddNicknameWordAdapter>();
+            services.AddScoped<NicknamePorts.IExistsAsync, NicknameWordExistsAdapter>();
+            services.AddScoped<NicknamePorts.IGetAsync, GetNicknameWordAdapter>();
+            services.AddScoped<NicknamePorts.IRemoveAsync, RemoveNicknameWordAdapter>();
+            services.AddScoped<NicknamePorts.ICountActiveAsync, CountActiveNicknameWordsAdapter>();
 
             // TEMPORARY: one shared instance behind all nine ports (singleton, so data survives between requests)
             services.AddSingleton<InMemoryAuthStore>();
@@ -45,6 +62,14 @@ namespace Infrastructure
             services.AddSingleton<IAddRefreshTokenAsync>(sp => sp.GetRequiredService<InMemoryAuthStore>());
             services.AddSingleton<IGetRefreshTokenByHashAsync>(sp => sp.GetRequiredService<InMemoryAuthStore>());
             services.AddSingleton<IUpdateRefreshTokenAsync>(sp => sp.GetRequiredService<InMemoryAuthStore>());
+
+            var connectionString = configuration.GetConnectionString("Okolariet")
+                ?? throw new InvalidOperationException("ConnectionStrings__Okolariet is missing. Fill it in in .env.");
+
+            // Give each request a database context connected to SQL Server.
+            services.AddDbContext<OkolarietDbContext>(options =>
+                options.UseSqlServer(connectionString));
+
             return services;
         }
 
@@ -52,8 +77,8 @@ namespace Infrastructure
         {
             using var scope = services.CreateScope();
             await scope.ServiceProvider.GetRequiredService<OkolarietDbContext>().Database.MigrateAsync();
-           // await scope.ServiceProvider.GetRequiredService<StaffSeeder>()
-           //  .SeedAsync(config["SeedAdmin:Email"], config["SeedAdmin:Password"]);
+            await scope.ServiceProvider.GetRequiredService<StaffSeeder>()
+              .SeedAsync(config["SeedAdmin:Email"], config["SeedAdmin:Password"]);
         }
     }
 }

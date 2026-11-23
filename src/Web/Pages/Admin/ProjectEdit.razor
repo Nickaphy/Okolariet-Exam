@@ -1,0 +1,47 @@
+@page "/admin/projects/{ProjectId:guid}"
+@layout AdminLayout
+@attribute [Authorize]
+@inject IProjectsApi ProjectsApi
+
+@* Placeholder so "Rediger" has somewhere to go. The editor is the next step. *@
+
+<PageTitle>Rediger · Økolariet</PageTitle>
+
+<p><a href="admin/projects">← Udstillinger</a></p>
+
+@if (project is not null)
+{
+    <h1 tabindex="-1">@project.Name</h1>
+}
+else if (errorMessage is not null)
+{
+    <h1 tabindex="-1">Udstillingen kunne ikke hentes</h1>
+    <p>@errorMessage</p>
+}
+else
+{
+    <p class="page-loading">Indlæser…</p>
+}
+
+<p>Redigering af udstillingen bygges i næste trin.</p>
+
+@code {
+    [Parameter] public Guid ProjectId { get; set; }
+
+    private Project? project;
+    private string? errorMessage;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            var response = await ProjectsApi.GetProject(ProjectId);
+            if (response.IsSuccessStatusCode) project = response.Content;
+            else errorMessage = ApiErrors.Describe(response);
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = ApiErrors.Offline;
+        }
+    }
+}

@@ -1,0 +1,70 @@
+@page "/kiosk/{ProjectId:guid}"
+@layout BlankLayout
+@inject IVersionsApi VersionsApi
+@inject IJSRuntime JS
+
+@* Opened in its own window from Admin → Udstillinger → Start. Anonymous: uses only public endpoints.
+   Placeholder until the kiosk renderer is built; it already loads the published snapshot and
+   handles full screen, so staff don't need to know about F11. *@
+
+<PageTitle>Økolariet</PageTitle>
+
+<main class="kiosk">
+    @if (version is not null)
+    {
+        <span class="tag">ØKOLARIET</span>
+        <h1 tabindex="-1">Udstillingen er klar</h1>
+        <p>Version @version.VersionNumber · @version.ModdedTemplates.Count sider. Selve kioskvisningen bygges i næste trin.</p>
+    }
+    else if (errorMessage is not null)
+    {
+        <h1 tabindex="-1">@errorMessage</h1>
+    }
+    else
+    {
+        <p class="page-loading">Indlæser udstillingen…</p>
+    }
+
+    @if (!isFullscreen)
+    {
+        <button type="button" class="fullscreen-overlay" @onclick="EnterFullscreenAsync">
+            <span class="overlay-title">Tryk for at starte</span>
+            <span class="overlay-sub">Udstillingen fylder hele skærmen</span>
+        </button>
+    }
+</main>
+
+@code {
+    [Parameter] public Guid ProjectId { get; set; }
+
+    private PublishedVersion? version;
+    private string? errorMessage;
+    private bool isFullscreen;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            // If-None-Match is optional; Refit leaves the header out when the value is null.
+            var response = await VersionsApi.GetLatestVersion(ProjectId, null!);
+            if (response.IsSuccessStatusCode && response.Content is not null)
+                version = response.Content;
+            else if (response.StatusCode == HttpStatusCode.NotFound)
+                errorMessage = "Udstillingen er ikke udgivet endnu.";
+            else
+                errorMessage = "Udstillingen kunne ikke hentes. Prøv at genindlæse siden.";
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Ingen forbindelse til serveren.";
+        }
+    }
+
+    private async Task EnterFullscreenAsync()
+    {
+        // Must run from a tap/click: browsers only allow full screen after a user gesture.
+        // If the browser refuses, the overlay is still hidden so the kiosk stays usable.
+        await JS.InvokeAsync<bool>("oekolariet.enterFullscreen");
+        isFullscreen = true;
+    }
+}

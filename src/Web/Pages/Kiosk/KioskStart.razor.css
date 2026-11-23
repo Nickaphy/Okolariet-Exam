@@ -1,0 +1,49 @@
+.kiosk {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 2rem;
+    background: var(--surface);
+    text-align: center;
+    user-select: none;
+}
+
+h1 {
+    margin: 0;
+    font-size: 3rem;
+    font-weight: 800;
+}
+
+p {
+    font-size: 1.3rem;
+    color: var(--ink-soft);
+}
+
+.fullscreen-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    border: 0;
+    background: var(--ink);
+    color: #fff;
+    font: inherit;
+    cursor: pointer;
+}
+
+.overlay-title {
+    font-size: 4rem;
+    font-weight: 800;
+}
+
+.overlay-sub {
+    font-size: 1.5rem;
+    opacity: 0.75;
+}
