@@ -1,0 +1,46 @@
+@inherits LayoutComponentBase
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+<div class="admin-shell">
+    <aside class="sidebar">
+        <a class="brand" href="admin/projects">ØKOLARIET</a>
+
+        <nav class="nav" aria-label="Hovedmenu">
+            <NavLink class="nav-item" href="admin/projects" Match="NavLinkMatch.Prefix">Udstillinger</NavLink>
+            @* Not built yet. Shown so staff can see what is coming, but not clickable. *@
+            <span class="nav-item nav-soon" aria-disabled="true">Highscores <small>snart</small></span>
+            <span class="nav-item nav-soon" aria-disabled="true">Mediebibliotek <small>snart</small></span>
+            <span class="nav-item nav-soon" aria-disabled="true">Indstillinger <small>snart</small></span>
+        </nav>
+
+        <div class="sidebar-foot">
+            <AuthorizeView>
+                <Authorized>
+                    <p class="signed-in">
+                        <span class="signed-in-label">Logget ind som</span>
+                        <span class="signed-in-email">@context.User.Identity?.Name</span>
+                    </p>
+                </Authorized>
+            </AuthorizeView>
+            <button type="button" class="link-button" @onclick="LogoutAsync" disabled="@loggingOut">
+                @(loggingOut ? "Logger ud…" : "Log ud")
+            </button>
+        </div>
+    </aside>
+
+    <main class="admin-main">
+        @Body
+    </main>
+</div>
+
+@code {
+    private bool loggingOut;
+
+    private async Task LogoutAsync()
+    {
+        loggingOut = true;
+        await Auth.LogoutAsync();
+        Nav.NavigateTo("admin/login", replace: true);
+    }
+}

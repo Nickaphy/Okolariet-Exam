@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Økolariet Exhibition API
-  version: 1.0.2
+  version: 1.0.3
   contact:
     name: Økolariet project group
   description: |
@@ -1712,7 +1712,7 @@ components:
           enum: [password, refresh_token]
           example: password
         email: { type: string, format: email, nullable: true, example: anna@oekolariet.dk }
-        password: { type: string, format: password, nullable: true, example: 'correct horse battery' }
+        password: { type: string, format: password, nullable: true, maxLength: 128, example: 'correct horse battery' }
         refreshToken: { type: string, nullable: true, description: Only for the refresh_token grant }
     Token:
       type: object
@@ -1720,11 +1720,11 @@ components:
       properties:
         accessToken:
           type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.signature
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MDc4ZjMwMS1jMTQ0LTVkNWYtYTliYS1hNTViZTlkYmRlMjIiLCJlbWFpbCI6ImFubmFAb2Vrb2xhcmlldC5kayIsInJvbGUiOiJBZG1pbiIsInNpZCI6IjBkNmIyYTY0LTFkMmUtNGY3ZS05YTUxLTNjMWYyYjdhOGU5MCIsImV4cCI6MTkyNDk5MjAwMH0.mock-signature
         tokenType: { type: string, example: Bearer }
-        expiresAt: { type: string, format: date-time, example: '2026-11-12T19:15:00Z' }
+        expiresAt: { type: string, format: date-time, example: '2030-12-31T23:00:00Z' }
         refreshToken: { type: string, example: 9f8d2c7a41b64e0d8f3a5c1e7b2d6a90 }
-        refreshExpiresAt: { type: string, format: date-time, example: '2026-11-13T03:00:00Z' }
+        refreshExpiresAt: { type: string, format: date-time, example: '2030-12-31T23:59:00Z' }
     PasswordResetRequest:
       type: object
       required: [email]
@@ -1735,7 +1735,7 @@ components:
       required: [resetToken, newPassword]
       properties:
         resetToken: { type: string, description: The single-use token from the e-mail link }
-        newPassword: { type: string, format: password, minLength: 12, example: 'a much longer passphrase' }
+        newPassword: { type: string, format: password, minLength: 12, maxLength: 128, example: 'a much longer passphrase' }
 
     # ---- hypermedia (added incrementally; optional in v1)
     Link:
@@ -1807,7 +1807,7 @@ components:
       required: [email, password, role]
       properties:
         email: { type: string, format: email, maxLength: 254, example: anna@oekolariet.dk }
-        password: { type: string, format: password, minLength: 12, example: 'correct horse battery' }
+        password: { type: string, format: password, minLength: 12, maxLength: 128, example: 'correct horse battery' }
         role:
           $ref: '#/components/schemas/StaffRole'
     StaffUpdate:
@@ -1844,8 +1844,10 @@ components:
         currentPassword:
           type: string
           format: password
-          description: Required when changing your own password
-        newPassword: { type: string, format: password, minLength: 12, example: 'a much longer passphrase' }
+          nullable: true
+          maxLength: 128
+          description: Required when changing your own password. Leave out (or null) when an admin resets someone else's password.
+        newPassword: { type: string, format: password, minLength: 12, maxLength: 128, example: 'a much longer passphrase' }
 
     # ---- projects
     ProjectInput:

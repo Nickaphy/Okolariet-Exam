@@ -1,0 +1,117 @@
+@inject IProjectsApi ProjectsApi
+
+@* Deleting a project removes everything under it and cannot be undone (see DELETE /projects/{id}),
+   so the staff member has to type the project's name before the delete button unlocks. *@
+
+<div class="backdrop">
+    <div class="dialog" role="alertdialog" aria-modal="true"
+         aria-labelledby="delete-title" aria-describedby="delete-warning"
+         @onkeydown="OnKeyDown">
+
+        <div class="dialog-head">
+            <span class="warn-icon" aria-hidden="true">!</span>
+            <h2 id="delete-title">Slet «@Project.Name»?</h2>
+        </div>
+
+        <p id="delete-warning" class="danger-callout">
+            <strong>Det kan ikke fortrydes.</strong>
+            Udstillingen og alt dens indhold bliver slettet for altid.
+        </p>
+
+        @if (IsPublished)
+        {
+            <p class="warning-callout">
+                Udstillingen er udgivet (version @Project.LatestVersionNumber).
+                Hvis den kører på en touchskærm lige nu, holder den op med at virke.
+            </p>
+        }
+
+        <p class="list-intro">Dette bliver slettet:</p>
+        <ul class="consequences">
+            <li>Alle sider, quizzer, spørgsmål og svar</li>
+            <li>Alle udgivne versioner</li>
+            <li>Alle highscores og kaldenavne</li>
+            <li>Al statistik over gæsternes svar</li>
+        </ul>
+        <p class="keep-note">Billeder, lyd og video i mediebiblioteket bliver ikke slettet.</p>
+
+        <label for="confirm-name" class="confirm-label">
+            Skriv <strong>@Project.Name</strong> for at bekræfte
+        </label>
+        <input id="confirm-name" class="input" @ref="confirmInput"
+               @bind="typedName" @bind:event="oninput"
+               autocomplete="off" spellcheck="false" disabled="@busy" />
+
+        @if (errorMessage is not null)
+        {
+            <p class="form-error" role="alert">@errorMessage</p>
+        }
+
+        <div class="dialog-actions">
+            <button type="button" class="btn btn-secondary" disabled="@busy" @onclick="CancelAsync">
+                Annuller
+            </button>
+            <button type="button" class="btn btn-danger" disabled="@(!CanDelete)" @onclick="DeleteAsync">
+                @(busy ? "Sletter…" : "Slet for altid")
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Project Project { get; set; } = default!;
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback<Project> OnDeleted { get; set; }
+
+    private ElementReference confirmInput;
+    private string typedName = string.Empty;
+    private bool busy;
+    private string? errorMessage;
+
+    private bool IsPublished => Project.LatestVersionNumber is not null;
+
+    // Forgiving about case and surrounding spaces, strict about the name itself.
+    private bool CanDelete =>
+        !busy && string.Equals(typedName.Trim(), Project.Name.Trim(), StringComparison.CurrentCultureIgnoreCase);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) await confirmInput.FocusAsync();
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape" && !busy) await CancelAsync();
+    }
+
+    private Task CancelAsync() => OnCancel.InvokeAsync();
+
+    private async Task DeleteAsync()
+    {
+        if (!CanDelete) return;
+
+        busy = true;
+        errorMessage = null;
+        try
+        {
+            var response = await ProjectsApi.DeleteProject(Project.Id);
+
+            // 404: someone else already deleted it. The end result is what the user wanted.
+            if (response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.NotFound)
+            {
+                await OnDeleted.InvokeAsync(Project);
+                return;
+            }
+
+            errorMessage = ApiErrors.Describe(response);
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = ApiErrors.Offline;
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+}
