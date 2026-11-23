@@ -13,6 +13,8 @@ using Infrastructure.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using NicknamePorts = Application.OutBoundPort.INicknameWordRepository;
+using Infrastructure.Adapters.Nickname;
 
 namespace Infrastructure
 {
@@ -32,7 +34,22 @@ namespace Infrastructure
             services.AddSingleton<IHashToken, HashTokenAdapter>();
 
             // Staff DI
+            services.AddScoped<IAddAsync, AddStaffAdapter>();
+            services.AddScoped<IAnyAsync, AnyStaffAdapter>();
+            services.AddScoped<ICountAdminsAsync, CountAdminsAdapter>();
+            services.AddScoped<IDeleteAsync, DeleteStaffAdapter>();
+            services.AddScoped<IEmailExistsAsync, StaffEmailExistsAdapter>();
             services.AddScoped<IGetByEmailAsync, GetStaffByEmailAdapter>();
+            services.AddScoped<IGetByIdAsync, GetStaffByIdAdapter>();
+            services.AddScoped<IListAsync, ListStaffAdapter>();
+            services.AddScoped<IUpdateAsync, UpdateStaffAdapter>();
+
+            // Nickname DI
+            services.AddScoped<NicknamePorts.IAddAsync, AddNicknameWordAdapter>();
+            services.AddScoped<NicknamePorts.IExistsAsync, NicknameWordExistsAdapter>();
+            services.AddScoped<NicknamePorts.IGetAsync, GetNicknameWordAdapter>();
+            services.AddScoped<NicknamePorts.IRemoveAsync, RemoveNicknameWordAdapter>();
+            services.AddScoped<NicknamePorts.ICountActiveAsync, CountActiveNicknameWordsAdapter>();
 
             // TEMPORARY: one shared instance behind all nine ports (singleton, so data survives between requests)
             services.AddSingleton<InMemoryAuthStore>();
