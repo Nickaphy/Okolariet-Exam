@@ -7,6 +7,9 @@ using Web.Adapters.Nickname;
 using Web.Adapters.Answers;
 using Web.Adapters.Questions;
 using Web.Adapters.Assets;
+using Web.Adapters.Templates;
+using Web.Adapters.Items;
+using Web.Adapters.ModdedTemplates;
 using Web.Api;
 using Web.Api.Contracts;
 using Web.Auth;
@@ -14,6 +17,9 @@ using Web.Ports.Nickname;
 using Web.Ports.Answers;
 using Web.Ports.Questions;
 using Web.Ports.Assets;
+using Web.Ports.Templates;
+using Web.Ports.Items;
+using Web.Ports.ModdedTemplates;
 using Web.TestTokens;
 using Web.Adapters.Projects;
 using Web.Ports.Projects;
@@ -86,9 +92,11 @@ builder.Services.AddScoped<IAssetGateway, AssetGateway>();
 
 // A collections of Assets, Questions or other items. Specifically unaltered by a staff member. A clean slate so to speak.
 AddApi<ITemplatesApi>();
+builder.Services.AddScoped<ITemplateGateway, TemplateGateway>();
 
 // A Template that has been altered by a staff member
 AddApi<IModdedTemplatesApi>();
+builder.Services.AddScoped<IModdedTemplateGateway, ModdedTemplateGateway>();
 
 // Different published versions of projects, to ensure that a staff member only publishes a satisfactory whole, and not a half-finished project.
 AddApi<IVersionsApi>();
@@ -99,6 +107,7 @@ AddApi<IStatisticsApi>();
 
 
 AddApi<IItemsApi>();
+builder.Services.AddScoped<IItemGateway, ItemGateway>();
 
 var host = builder.Build();
 
