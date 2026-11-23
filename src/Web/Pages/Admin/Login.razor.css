@@ -1,0 +1,78 @@
+.login-page {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 2rem 1rem;
+    background: var(--bg);
+}
+
+.login-card {
+    width: min(100%, 560px);
+    padding: 3rem 3.5rem;
+    background: var(--surface);
+    border: 2px solid var(--ink);
+    border-radius: var(--radius-lg);
+}
+
+h1 {
+    margin: 1.75rem 0 1.5rem;
+    font-size: 2.5rem;
+    font-weight: 800;
+}
+
+.field {
+    margin-bottom: 1.4rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.45rem;
+    font-weight: 700;
+    color: var(--ink-soft);
+}
+
+.password-wrap {
+    position: relative;
+}
+
+.password-wrap ::deep .input {
+    padding-right: 5rem;
+}
+
+.reveal {
+    position: absolute;
+    top: 50%;
+    right: 0.5rem;
+    transform: translateY(-50%);
+    min-height: 40px;
+    padding: 0 0.85rem;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink-soft);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.reveal:hover {
+    background: var(--surface-sunk);
+}
+
+.form-alert {
+    margin-bottom: 1.4rem;
+    padding: 0.9rem 1.1rem;
+    border: 2px solid var(--danger);
+    border-radius: var(--radius);
+    background: var(--danger-bg);
+    color: var(--danger);
+    font-weight: 600;
+}
+
+.btn-block {
+    margin-top: 0.5rem;
+}
+
+@media (max-width: 520px) {
+    .login-card { padding: 2rem 1.5rem; }
+}

@@ -62,6 +62,13 @@ namespace Infrastructure
             services.AddSingleton<IAddRefreshTokenAsync>(sp => sp.GetRequiredService<InMemoryAuthStore>());
             services.AddSingleton<IGetRefreshTokenByHashAsync>(sp => sp.GetRequiredService<InMemoryAuthStore>());
             services.AddSingleton<IUpdateRefreshTokenAsync>(sp => sp.GetRequiredService<InMemoryAuthStore>());
+
+            var connectionString = configuration.GetConnectionString("Okolariet")
+                ?? throw new InvalidOperationException("ConnectionStrings__Okolariet is missing. Fill it in in .env.");
+            services.AddDbContext<OkolarietDbContext>(o => o.UseSqlServer(connectionString));
+
+            services.AddScoped<StaffSeeder>();
+
             return services;
         }
 
@@ -69,8 +76,8 @@ namespace Infrastructure
         {
             using var scope = services.CreateScope();
             await scope.ServiceProvider.GetRequiredService<OkolarietDbContext>().Database.MigrateAsync();
-           // await scope.ServiceProvider.GetRequiredService<StaffSeeder>()
-           //  .SeedAsync(config["SeedAdmin:Email"], config["SeedAdmin:Password"]);
+            await scope.ServiceProvider.GetRequiredService<StaffSeeder>()
+              .SeedAsync(config["SeedAdmin:Email"], config["SeedAdmin:Password"]);
         }
     }
 }
