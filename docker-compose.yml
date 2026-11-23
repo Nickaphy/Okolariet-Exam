@@ -1,9 +1,66 @@
+# docker compose file defines how to run the API and SQL server CONTAINERS.
+# The dockerfile was responsible for defining the images.
+# The compose file defines how to run the containers TOGETHER, it defines ports,
+# configuration, network and storage.
+#
 services:
+  # Run a service called "sql" using Microsoft's SQL Server 2022 image.
+  sql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      # Reads the password from the environment variable set in .env
+      # :? = error message if password not found
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env}"
+    ports:
+      # PORT MAPPING!, 127.0.0.1 = localhost (only allow connections on your own computer)
+      # 14330 = port on your computer. (It would be this port a database tool on your computer listens)
+      # 1433 = port inside the container (The API listens on this port)
+      - "127.0.0.1:14330:1433"
+    volumes:
+      # sql-data is a named volume that persists data across container restarts
+      - sql-data:/var/opt/mssql
+    healthcheck:
+      # Can SQL Server actually accept a connection and execute a query?
+      test:
+        - CMD-SHELL
+        # "-S localhost -U sa" = connects to this container as the sa user
+        # "-C" = trust its local certificate
+        # "-b" = report failure if SQL encounters an error
+        # "-Q SELECT 1" = executes a tiny query
+        # -o /dev/null" = discard query output
+        - 'SQLCMDPASSWORD="$${MSSQL_SA_PASSWORD}" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -C -b -Q "SELECT 1" -o /dev/null'
+      interval: 10s # Check every 10 seconds
+      timeout: 5s # Fail after 5 seconds
+      retries: 12 # Retry up to 12 times
+      start_period: 30s # Wait 30 seconds before starting
+
+  api:
+    # Build the API image from the Dockerfile at the repository root.
+    build:
+      context: . # making the repo root available to the build
+      dockerfile: Dockerfile # "The build recipe" our Dockerfile
+    ports: # Port forwarding
+      - "127.0.0.1:5080:8080" # Browser -> localhost:5080 -> container port 8080.
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development # Runs ASP.NET Core in Development mode
+      ASPNETCORE_HTTP_PORTS: "8080" # Makes the API listen on port 8080
+      JwtSettings__Secret: "${JwtSettings__Secret:?Set JwtSettings__Secret in .env}" # Supplies the JWT signing secret from .env
+      # Tell the API how to connect to the database
+      ConnectionStrings__okolariet: "Server=sql,1433;Database=okolariet;User Id=sa;Password=${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env};Encrypt=True;TrustServerCertificate=True"
+    depends_on:
+      sql:
+        condition: service_healthy # Wait for SQL to pass its healthcheck before starting the API
+
   mock-api:
     image: stoplight/prism:4
     command: mock -h 0.0.0.0 -p 4010 /spec/openapi.yaml
     volumes:
       - ./contracts:/spec:ro
     ports:
-      - "4010:4010"
+      - "127.0.0.1:4010:4010"
     profiles: ["mock"]
+
+volumes:
+  sql-data:
