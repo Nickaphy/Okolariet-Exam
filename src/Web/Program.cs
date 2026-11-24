@@ -27,6 +27,7 @@ using Web.Ports.Questions;
 using Web.Ports.Staff;
 using Web.Ports.Templates;
 using Web.Ports.Versions;
+using Web.Services.Editor;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -94,6 +95,10 @@ builder.Services.AddScoped<IItemGateway, ItemGateway>();
 AddApi<ISessionsApi>();
 AddApi<IUsersApi>();
 AddApi<IStatisticsApi>();
+
+// Register UI Services
+builder.Services.AddScoped<ExhibitionLoader>();
+builder.Services.AddScoped<ExhibitionEditor>();
 
 await builder.Build().RunAsync();
 

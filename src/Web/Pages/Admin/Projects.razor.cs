@@ -18,6 +18,7 @@ namespace Web.Pages.Admin
         private string? loadError;
         private Notice? notice;
         private Project? projectToDelete;
+        private bool showNewDialog;
 
         protected override Task OnInitializedAsync() => LoadAsync();
 
@@ -65,6 +66,13 @@ namespace Web.Pages.Admin
         }
 
         private void Edit(Project project) => Nav.NavigateTo($"admin/projects/{project.Id}");
+
+        // A new exhibition is empty, so go straight to the editor where it gets its content.
+        private void OnProjectCreated(Project project)
+        {
+            showNewDialog = false;
+            Nav.NavigateTo($"admin/projects/{project.Id}");
+        }
 
         private void OnProjectDeleted(Project project)
         {

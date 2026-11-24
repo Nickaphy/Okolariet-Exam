@@ -1,0 +1,33 @@
+﻿
+@* "Type a name" dialog: Reusable naming dialog -> name/rename a Template, Project or Item
+   Extra content (e.g. a template picker) goes in <Extra>; pass Valid="false" to keep the button locked until that extra part is filled in. *@
+
+<DialogShell Title="@Title" Busy="busy" OnClose="CancelAsync">
+    <ChildContent>
+        <form id="@formId" @onsubmit="SubmitAsync" @onsubmit:preventDefault>
+            <label for="@inputId" class="field-label">@Label</label>
+            <input id="@inputId" class="input" @ref="nameInput"
+                   @bind="text" @bind:event="oninput"
+                   maxlength="@MaxLength" placeholder="@Placeholder"
+                   autocomplete="off" disabled="@busy" />
+            @if (Hint is not null)
+            {
+                <p class="field-hint">@Hint</p>
+            }
+        </form>
+
+        @Extra
+
+        @if (error is not null)
+        {
+            <p class="form-error" role="alert">@error</p>
+        }
+    </ChildContent>
+    <Actions>
+        <button type="button" class="btn btn-secondary" disabled="@busy" @onclick="CancelAsync">Annuller</button>
+        @* Sits outside the <form> in the page, but "form" ties it to it, so Enter in the field also submits. *@
+        <button type="submit" form="@formId" class="btn btn-primary" disabled="@(!CanSubmit)">
+            @(busy ? BusyText : SubmitText)
+        </button>
+    </Actions>
+</DialogShell>

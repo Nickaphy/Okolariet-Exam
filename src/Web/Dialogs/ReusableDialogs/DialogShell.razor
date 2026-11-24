@@ -1,0 +1,23 @@
+﻿
+@* The frame every dialog shares: dark backdrop, title, body, button row, Escape to close. Specific dialogs (ConfirmDialog, NameDialog) put their content inside this one,
+   so the look and the keyboard behaviour only exist in one place. *@
+
+<div class="backdrop">
+    <div class="dialog dialog-@Tone.ToString().ToLowerInvariant()"
+         role="@(Tone == DialogTone.Danger ? "alertdialog" : "dialog")"
+         aria-modal="true" aria-labelledby="@titleId"
+         @onkeydown="OnKeyDown">
+
+        <div class="dialog-head">
+            @if (Tone != DialogTone.Normal)
+            {
+                <span class="tone-icon" aria-hidden="true">!</span>
+            }
+            <h2 id="@titleId">@Title</h2>
+        </div>
+
+        <div class="dialog-body">@ChildContent</div>
+
+        <div class="dialog-actions">@Actions</div>
+    </div>
+</div>
