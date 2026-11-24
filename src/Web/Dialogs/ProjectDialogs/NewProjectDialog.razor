@@ -1,0 +1,12 @@
+﻿@inject IProjectsApi ProjectsApi
+
+@* "Ny udstilling": only a name is needed. Everything else is set up in the editor. *@
+
+<NameDialog Title="Ny udstilling"
+            Label="Hvad skal udstillingen hedde?"
+            Placeholder="Fx Havet og klimaet"
+            Hint="Navnet kan altid ændres senere."
+            SubmitText="Opret udstilling" BusyText="Opretter…"
+            Submit="CreateAsync"
+            OnDone="OnNamed"
+            OnCancel="OnCancel" />
