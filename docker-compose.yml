@@ -49,6 +49,15 @@ services:
       JwtSettings__Secret: "${JwtSettings__Secret:?Set JwtSettings__Secret in .env}" # Supplies the JWT signing secret from .env
       # Tell the API how to connect to the database
       ConnectionStrings__okolariet: "Server=sql,1433;Database=okolariet;User Id=sa;Password=${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env};Encrypt=True;TrustServerCertificate=True"
+      # The first admin, created by StaffSeeder when the Staff table is empty.
+      # Without these two values the API throws on its first start, because nobody could log in.
+      SeedAdmin__Email: "${SeedAdmin__Email:?Set SeedAdmin__Email in .env}"
+      SeedAdmin__Password: "${SeedAdmin__Password:?Set SeedAdmin__Password in .env}"
+      # Folder inside the container where uploaded files are stored (backed by the "uploads" volume below)
+      FileStorage__RootPath: /app/uploads
+    volumes:
+      # uploads is a named volume, so uploaded files survive container restarts and rebuilds
+      - uploads:/app/uploads
     depends_on:
       sql:
         condition: service_healthy # Wait for SQL to pass its healthcheck before starting the API
@@ -64,3 +73,4 @@ services:
 
 volumes:
   sql-data:
+  uploads:

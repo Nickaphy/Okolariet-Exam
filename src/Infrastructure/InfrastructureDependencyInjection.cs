@@ -15,6 +15,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NicknamePorts = Application.OutBoundPort.INicknameWordRepository;
 using Infrastructure.Adapters.Nickname;
+using Application.OutBoundPort.IProjectRepository;
+using Application.OutBoundPort.IVersionRepository;
+using Infrastructure.Adapters.Projects;
+using Infrastructure.Adapters.Versions;
+using Infrastructure.Storage;
+using Microsoft.Extensions.Options;
 
 namespace Infrastructure
 {
@@ -51,6 +57,22 @@ namespace Infrastructure
             services.AddScoped<NicknamePorts.IRemoveAsync, RemoveNicknameWordAdapter>();
             services.AddScoped<NicknamePorts.ICountActiveAsync, CountActiveNicknameWordsAdapter>();
 
+            // Project DI
+            services.AddScoped<IAddProjectAsync, AddProjectAdapter>();
+            services.AddScoped<IGetProjectByIdAsync, GetProjectByIdAdapter>();
+            services.AddScoped<IListProjectsAsync, ListProjectsAdapter>();
+            services.AddScoped<IUpdateProjectAsync, UpdateProjectAdapter>();
+            services.AddScoped<IDeleteProjectAsync, DeleteProjectAdapter>();
+            services.AddScoped<IModdedTemplateBelongsToProjectAsync, ModdedTemplateBelongsToProjectAdapter>();
+            services.AddScoped<IProjectExistsAsync, ProjectExistsAdapter>();
+            services.AddScoped<IIsMainModdedTemplateAsync, IsMainModdedTemplateAdapter>();
+
+            // Version DI
+            services.AddScoped<IAddVersionAsync, AddVersionAdapter>();
+            services.AddScoped<IListVersionsAsync, ListVersionsAdapter>();
+            services.AddScoped<IGetLatestVersionAsync, GetLatestVersionAdapter>();
+            services.AddScoped<IBuildSnapshotAsync, BuildSnapshotAdapter>();
+
             // TEMPORARY: one shared instance behind all nine ports (singleton, so data survives between requests)
             services.AddSingleton<InMemoryAuthStore>();
             services.AddSingleton<IGetLoginLockoutAsync>(sp => sp.GetRequiredService<InMemoryAuthStore>());
@@ -62,6 +84,14 @@ namespace Infrastructure
             services.AddSingleton<IAddRefreshTokenAsync>(sp => sp.GetRequiredService<InMemoryAuthStore>());
             services.AddSingleton<IGetRefreshTokenByHashAsync>(sp => sp.GetRequiredService<InMemoryAuthStore>());
             services.AddSingleton<IUpdateRefreshTokenAsync>(sp => sp.GetRequiredService<InMemoryAuthStore>());
+
+            // File storage DI
+            // The adapter that reads and writes the files belongs to the Asset feature.
+            services.Configure<FileStorageSettings>(configuration.GetSection("FileStorage"));
+
+            // Seed data DI
+            services.AddScoped<StaffSeeder>();
+            services.AddScoped<NicknameWordSeeder>();
 
             var connectionString = configuration.GetConnectionString("Okolariet")
                 ?? throw new InvalidOperationException("ConnectionStrings__Okolariet is missing. Fill it in in .env.");
@@ -76,9 +106,15 @@ namespace Infrastructure
         public static async Task InitializeInfrastructureAsync(this IServiceProvider services, IConfiguration config)
         {
             using var scope = services.CreateScope();
-            await scope.ServiceProvider.GetRequiredService<OkolarietDbContext>().Database.MigrateAsync();
+            // Creates the database and tables if they don't exist. It never updates an existing database,
+            // so after a change to an entity or configuration the database must be dropped (docker compose down -v).
+            await scope.ServiceProvider.GetRequiredService<OkolarietDbContext>().Database.EnsureCreatedAsync();
+
+            Directory.CreateDirectory(scope.ServiceProvider.GetRequiredService<IOptions<FileStorageSettings>>().Value.FullRootPath);
+
             await scope.ServiceProvider.GetRequiredService<StaffSeeder>()
               .SeedAsync(config["SeedAdmin:Email"], config["SeedAdmin:Password"]);
+            await scope.ServiceProvider.GetRequiredService<NicknameWordSeeder>().SeedAsync();
         }
     }
 }
