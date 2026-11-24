@@ -1,0 +1,33 @@
+﻿@inject IProjectsApi ProjectsApi
+
+@* Deleting a project removes everything under it and cannot be undone (see DELETE /projects/{id}), so the staff member has to type the project's name for safety, before the delete button unlocks. *@
+
+<ConfirmDialog Title="@($"Slet «{Project.Name}»?")"
+               Tone="DialogTone.Danger"
+               RequireTyped="@Project.Name"
+               ConfirmText="Slet for altid" BusyText="Sletter…"
+               Run="DeleteAsync"
+               OnDone="() => OnDeleted.InvokeAsync(Project)"
+               OnCancel="OnCancel">
+    <p class="callout callout-danger">
+        <strong>Det kan ikke fortrydes.</strong>
+        Udstillingen og alt dens indhold bliver slettet for altid.
+    </p>
+
+    @if (Project.LatestVersionNumber is not null)
+    {
+        <p class="callout callout-warn">
+            Udstillingen er udgivet (version @Project.LatestVersionNumber).
+            Hvis den kører på en touchskærm lige nu, holder den op med at virke.
+        </p>
+    }
+
+    <p class="list-intro">Dette bliver slettet:</p>
+    <ul class="consequences">
+        <li>Alle sider, quizzer, spørgsmål og svar</li>
+        <li>Alle udgivne versioner</li>
+        <li>Alle highscores og kaldenavne</li>
+        <li>Al statistik over gæsternes svar</li>
+    </ul>
+    <p class="keep-note">Billeder, lyd og video i mediebiblioteket bliver ikke slettet.</p>
+</ConfirmDialog>

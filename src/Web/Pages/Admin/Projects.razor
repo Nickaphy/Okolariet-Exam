@@ -8,16 +8,18 @@
 <PageTitle>Udstillinger · Økolariet</PageTitle>
 
 <header class="page-head">
-    <h1 tabindex="-1">Udstillinger</h1>
-    <p class="lead">Start en udstilling på skærmen, ret i den, eller slet den.</p>
+    <div>
+        <h1 tabindex="-1">Udstillinger</h1>
+        <p class="lead">Start en udstilling på skærmen, ret i den, eller slet den.</p>
+    </div>
+    <button type="button" class="btn btn-primary btn-lg" @onclick="() => showNewDialog = true">
+        + Ny udstilling
+    </button>
 </header>
 
 @if (notice is not null)
 {
-    <div class="notice notice-@notice.Kind" role="status">
-        <span>@notice.Text</span>
-        <button type="button" class="notice-close" aria-label="Luk beskeden" @onclick="() => notice = null">×</button>
-    </div>
+    <NoticeBar Kind="@notice.Kind" Text="@notice.Text" OnClose="() => notice = null" />
 }
 
 @switch (state)
@@ -44,7 +46,10 @@
         {
             <div class="empty-state">
                 <h2>Der er ingen udstillinger endnu</h2>
-                <p>Når en udstilling er oprettet, kan du starte den herfra.</p>
+                <p>Opret den første, så kan du starte den herfra.</p>
+                <button type="button" class="btn btn-primary" @onclick="() => showNewDialog = true">
+                    + Ny udstilling
+                </button>
             </div>
         }
         else
@@ -88,6 +93,11 @@
             </ul>
         }
         break;
+}
+
+@if (showNewDialog)
+{
+    <NewProjectDialog OnCancel="() => showNewDialog = false" OnCreated="OnProjectCreated" />
 }
 
 @if (projectToDelete is not null)

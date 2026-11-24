@@ -1,4 +1,10 @@
 .page-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    max-width: 1100px;
     margin-bottom: 2rem;
 }
 

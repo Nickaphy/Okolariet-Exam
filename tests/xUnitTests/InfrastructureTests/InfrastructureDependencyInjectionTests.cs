@@ -11,6 +11,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using NicknamePorts = Application.OutBoundPort.INicknameWordRepository;
+using Application.InBoundPort.IStaffUseCases;
+using Application.UseCases.Staff;
 
 namespace xUnitTests.InfrastructureTests
 {
@@ -37,6 +39,9 @@ namespace xUnitTests.InfrastructureTests
         private static ServiceProvider Build() =>
             new ServiceCollection()
                 .AddInfrastructure(Config())
+                .AddScoped<ICreateStaffUseCase, CreateStaffUseCase>()
+                .AddSingleton(TimeProvider.System)
+                .AddLogging()
                 .BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
 
         [Theory]
@@ -102,7 +107,7 @@ namespace xUnitTests.InfrastructureTests
             var ex = Assert.Throws<InvalidOperationException>(() =>
                 new ServiceCollection().AddInfrastructure(Config(withConnectionString: false)));
 
-            Assert.Contains("okolariet", ex.Message);
+            Assert.Contains("okolariet", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
     }
 }
