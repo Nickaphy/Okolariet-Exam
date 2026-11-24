@@ -37,6 +37,10 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 
+# Create the upload folder and give it to the non-root user before switching to that user.
+# Docker copies this ownership into the "uploads" volume the first time it is mounted.
+RUN mkdir -p /app/uploads && chown $APP_UID /app/uploads
+
 # Sets and enviroment variable inside the container ASP uses its 8080 port-value as the one the API listens on.
 ENV ASPNETCORE_HTTP_PORTS=8080
 # Goofy syntax alert! (8080 doesnt get exposed here, its only here to document) 8080 gets exposed in compose
