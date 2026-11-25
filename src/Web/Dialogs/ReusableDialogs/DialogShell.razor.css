@@ -1,4 +1,4 @@
-.backdrop {
+﻿.backdrop {
     position: fixed;
     inset: 0;
     z-index: 100;
@@ -26,17 +26,24 @@
     margin-bottom: 1.25rem;
 }
 
-.warn-icon {
+.tone-icon {
     flex: none;
     display: grid;
     place-items: center;
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: var(--danger);
     color: #fff;
     font-size: 1.5rem;
     font-weight: 800;
+}
+
+.dialog-danger .tone-icon {
+    background: var(--danger);
+}
+
+.dialog-warning .tone-icon {
+    background: var(--warn);
 }
 
 h2 {
@@ -44,57 +51,6 @@ h2 {
     font-size: 1.6rem;
     font-weight: 800;
     overflow-wrap: anywhere;
-}
-
-.danger-callout,
-.warning-callout {
-    margin: 0 0 1rem;
-    padding: 0.9rem 1.1rem;
-    border-radius: var(--radius);
-}
-
-.danger-callout {
-    border: 2px solid var(--danger);
-    background: var(--danger-bg);
-    color: var(--danger);
-}
-
-.warning-callout {
-    border: 2px solid var(--warn);
-    background: var(--warn-bg);
-    color: var(--warn-ink);
-    font-weight: 600;
-}
-
-.list-intro {
-    margin: 1.25rem 0 0.4rem;
-    font-weight: 700;
-}
-
-.consequences {
-    margin: 0 0 0.75rem;
-    padding-left: 1.4rem;
-}
-
-.consequences li {
-    margin: 0.25rem 0;
-}
-
-.keep-note {
-    margin: 0 0 1.5rem;
-    color: var(--ink-soft);
-    font-size: 0.95rem;
-}
-
-.confirm-label {
-    display: block;
-    margin-bottom: 0.45rem;
-}
-
-.form-error {
-    margin: 0.75rem 0 0;
-    color: var(--danger);
-    font-weight: 600;
 }
 
 .dialog-actions {

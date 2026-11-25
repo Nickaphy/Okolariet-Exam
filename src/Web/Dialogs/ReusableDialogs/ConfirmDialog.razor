@@ -1,0 +1,35 @@
+﻿
+@* "Are you sure?" dialog. The content is whatever you put between the tags. Run does the actual work and returns null on success or a Danish error message,
+   which the dialog shows in place. Set RequireTyped to make the user type a word (e.g. the project name) before the button unlocks. *@
+
+<DialogShell Title="@Title" Tone="Tone" Busy="busy" OnClose="CancelAsync">
+    <ChildContent>
+        @ChildContent
+
+        @if (RequireTyped is not null)
+        {
+            <label for="@inputId" class="field-label">
+                Skriv <strong>@RequireTyped</strong> for at bekræfte
+            </label>
+            <input id="@inputId" class="input" @ref="typedInput"
+                   @bind="typed" @bind:event="oninput"
+                   @onkeydown="OnTypedKeyDown"
+                   autocomplete="off" spellcheck="false" disabled="@busy" />
+        }
+
+        @if (error is not null)
+        {
+            <p class="form-error" role="alert">@error</p>
+        }
+    </ChildContent>
+    <Actions>
+        <button type="button" class="btn btn-secondary" @ref="cancelButton"
+                disabled="@busy" @onclick="CancelAsync">
+            @CancelText
+        </button>
+        <button type="button" class="btn @(Tone == DialogTone.Danger ? "btn-danger" : "btn-primary")"
+                disabled="@(!CanConfirm)" @onclick="ConfirmAsync">
+            @(busy ? BusyText : ConfirmText)
+        </button>
+    </Actions>
+</DialogShell>

@@ -1,47 +1,264 @@
 @page "/admin/projects/{ProjectId:guid}"
 @layout AdminLayout
 @attribute [Authorize]
-@inject IProjectsApi ProjectsApi
+@inject ExhibitionLoader Loader
+@inject ExhibitionEditor Editing
 
-@* Placeholder so "Rediger" has somewhere to go. The editor is the next step. *@
+<PageTitle>@(model?.Project.Name ?? "Rediger") · Økolariet</PageTitle>
 
-<PageTitle>Rediger · Økolariet</PageTitle>
+<p class="back"><a href="admin/projects">← Alle udstillinger</a></p>
 
-<p><a href="admin/projects">← Udstillinger</a></p>
-
-@if (project is not null)
+@if (model is null)
 {
-    <h1 tabindex="-1">@project.Name</h1>
-}
-else if (errorMessage is not null)
-{
-    <h1 tabindex="-1">Udstillingen kunne ikke hentes</h1>
-    <p>@errorMessage</p>
+    if (loadError is null)
+    {
+        <p class="page-loading" aria-busy="true">Indlæser udstillingen…</p>
+    }
+    else
+    {
+        <div class="empty-state" role="alert">
+            <h1 tabindex="-1">Udstillingen kunne ikke hentes</h1>
+            <p>@loadError</p>
+            <button type="button" class="btn btn-secondary" @onclick="ReloadAsync">Prøv igen</button>
+        </div>
+    }
 }
 else
 {
-    <p class="page-loading">Indlæser…</p>
-}
+    <header class="edit-head">
+        <div class="title-block">
+            <h1 tabindex="-1">@model.Project.Name</h1>
+            <div class="title-meta">
+                @if (model.Project.LatestVersionNumber is { } version)
+                {
+                    <span class="status status-live"><span class="dot"></span>Udgivet · version @version</span>
+                }
+                else
+                {
+                    <span class="status status-draft"><span class="dot"></span>Ikke udgivet endnu</span>
+                }
+                <button type="button" class="link-button" @onclick="() => Open(DialogKind.Rename)">Skift navn</button>
+            </div>
+        </div>
 
-<p>Redigering af udstillingen bygges i næste trin.</p>
+        <button type="button" class="btn btn-primary btn-lg" disabled="@(model.Menu is null)"
+                @onclick="() => Open(DialogKind.Publish)">
+            Udgiv
+        </button>
+    </header>
 
-@code {
-    [Parameter] public Guid ProjectId { get; set; }
-
-    private Project? project;
-    private string? errorMessage;
-
-    protected override async Task OnParametersSetAsync()
+    @if (notice is not null)
     {
-        try
-        {
-            var response = await ProjectsApi.GetProject(ProjectId);
-            if (response.IsSuccessStatusCode) project = response.Content;
-            else errorMessage = ApiErrors.Describe(response);
-        }
-        catch (HttpRequestException)
-        {
-            errorMessage = ApiErrors.Offline;
-        }
+        <NoticeBar Kind="@notice.Kind" Text="@notice.Text" OnClose="() => notice = null" />
+    }
+
+    @if (model.Menu is null)
+    {
+        <section class="section" aria-labelledby="menu-heading">
+            <h2 id="menu-heading">Hovedmenu</h2>
+
+            @if (MenuTemplates.Count == 0)
+            {
+                <p class="section-lead">Serveren har ingen menu-skabeloner endnu, så hovedmenuen kan ikke oprettes.</p>
+            }
+            else
+            {
+                <p class="section-lead">
+                    Alle udstillinger starter med en hovedmenu. Vælg, hvordan den skal se ud.
+                </p>
+
+                <fieldset class="template-picker">
+                    <legend class="visually-hidden">Vælg menu</legend>
+                    @foreach (var template in MenuTemplates)
+                    {
+                        <label class="template-option">
+                            <input type="radio" name="menu-template"
+                                   checked="@(SelectedMenuType == template.Type)"
+                                   @onchange="() => selectedMenuType = template.Type" />
+                            <span>@template.DisplayName</span>
+                        </label>
+                    }
+                </fieldset>
+
+                <button type="button" class="btn btn-primary" disabled="@busy" @onclick="CreateMenuAsync">
+                    @(busy ? "Opretter…" : "Opret hovedmenu")
+                </button>
+            }
+        </section>
+    }
+    else
+    {
+        <section class="section" aria-labelledby="menu-heading">
+            <h2 id="menu-heading">Hovedmenu</h2>
+            <p class="section-lead">
+                Det er det første, gæsterne ser. Hver knap fører ind i et forløb af sider, der vises efter hinanden.
+            </p>
+
+            @if (model.Buttons.Count == 0)
+            {
+                <p class="section-lead">Den valgte menu har ingen knapper.</p>
+            }
+
+            <ol class="buttons">
+                @foreach (var button in model.Buttons)
+                {
+                    <li class="button-card" @key="button.Slot.Key">
+                        <div class="button-top">
+                            <span class="button-badge">@button.Slot.Label</span>
+                            <div>
+                                <label for="@LabelId(button)" class="field-label">Tekst på knappen</label>
+                                <input id="@LabelId(button)" class="input" value="@button.Label"
+                                       maxlength="@(button.Slot.MaxLength ?? 500)"
+                                       autocomplete="off" disabled="@busy"
+                                       @onchange="e => SaveLabelAsync(button, e.Value?.ToString() ?? string.Empty)" />
+                            </div>
+                        </div>
+
+                        <div class="path">
+                            @if (button.Pages.Count == 0)
+                            {
+                                <p class="path-empty">Knappen fører ikke nogen steder hen endnu.</p>
+                            }
+                            else
+                            {
+                                <ol class="steps" aria-label="@($"Forløb for {button.Slot.Label}")">
+                                    @for (var i = 0; i < button.Pages.Count; i++)
+                                    {
+                                        var index = i;
+                                        var moddedTemplate = button.Pages[i];
+                                        <li class="step" @key="moddedTemplate.Id">
+                                            <span class="step-no" aria-hidden="true">@(index + 1)</span>
+                                            <div class="step-info">
+                                                <strong>@moddedTemplate.Title</strong>
+                                                <small>@model.DisplayNameOf(moddedTemplate.TemplateType)</small>
+                                            </div>
+                                            @* Editing the contents of a template is the next step. *@
+                                            <button type="button" class="btn btn-secondary btn-sm" disabled
+                                                    title="Kommer i næste trin">
+                                                Indhold <small>snart</small>
+                                            </button>
+                                            <button type="button" class="btn btn-danger-ghost btn-sm"
+                                                    aria-label="@($"Fjern {moddedTemplate.Title}")"
+                                                    @onclick="() => AskRemove(button, index)">
+                                                Fjern
+                                            </button>
+                                        </li>
+                                    }
+                                </ol>
+                            }
+
+                            <button type="button" class="btn btn-secondary" disabled="@busy"
+                                    @onclick="() => AskAdd(button)">
+                                + Tilføj side
+                            </button>
+                        </div>
+                    </li>
+                }
+            </ol>
+        </section>
+    }
+
+    @if (model.Orphans.Count > 0)
+    {
+        <section class="section" aria-labelledby="orphans-heading">
+            <h2 id="orphans-heading">Sider uden knap</h2>
+            <p class="section-lead">
+                Disse sider er ikke koblet til nogen knap, så gæsterne kan ikke nå dem. Slet dem, hvis de ikke skal bruges.
+            </p>
+            <ul class="steps">
+                @foreach (var moddedTemplate in model.Orphans)
+                {
+                    <li class="step step-orphan" @key="moddedTemplate.Id">
+                        <div class="step-info">
+                            <strong>@moddedTemplate.Title</strong>
+                            <small>@model.DisplayNameOf(moddedTemplate.TemplateType)</small>
+                        </div>
+                        <button type="button" class="btn btn-danger-ghost btn-sm"
+                                aria-label="@($"Slet {moddedTemplate.Title}")" @onclick="() => AskDeleteOrphan(moddedTemplate)">
+                            Slet
+                        </button>
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+
+    @switch (dialog)
+    {
+        case DialogKind.Rename:
+            <NameDialog Title="Skift navn på udstillingen" Label="Nyt navn"
+                        Value="@model.Project.Name" SubmitText="Gem navn"
+                        Submit="name => Editing.RenameProjectAsync(model!, name)"
+                        OnDone="OnRenamed" OnCancel="CloseDialog" />
+            break;
+
+        case DialogKind.AddPage when activeButton is not null:
+            <NameDialog Title="@($"Tilføj side til «{activeButton.Slot.Label}»")"
+                        Label="Hvad skal siden hedde?" Placeholder="Fx Fakta om havet"
+                        SubmitText="Tilføj side" BusyText="Tilføjer…"
+                        Valid="@(selectedPageType is not null)"
+                        Submit="title => Editing.AddPageAsync(model!, activeButton!, selectedPageType!, title)"
+                        OnDone="OnPageAdded" OnCancel="CloseDialog">
+                <Extra>
+                    <fieldset class="template-picker">
+                        <legend>Hvilken slags side?</legend>
+                        @foreach (var group in PageTemplates.GroupBy(t => t.Category))
+                        {
+                            <p class="template-group">@CategoryName(group.Key)</p>
+                            @foreach (var template in group)
+                            {
+                                <label class="template-option">
+                                    <input type="radio" name="page-template"
+                                           checked="@(selectedPageType == template.Type)"
+                                           @onchange="() => selectedPageType = template.Type" />
+                                    <span>@template.DisplayName</span>
+                                </label>
+                            }
+                        }
+                    </fieldset>
+                </Extra>
+            </NameDialog>
+            break;
+
+        case DialogKind.RemovePage when activeButton is not null:
+            <ConfirmDialog Title="@($"Fjern «{activeButton.Pages[removeIndex].Title}»?")"
+                           Tone="DialogTone.Danger" ConfirmText="Fjern og slet siden" BusyText="Fjerner…"
+                           Run="() => Editing.RemovePageAsync(model!, activeButton!, removeIndex)"
+                           OnDone="OnPageRemoved" OnCancel="CloseDialog">
+                <p class="callout callout-danger">
+                    <strong>Det kan ikke fortrydes.</strong>
+                    Siden bliver slettet med alt, der står på den.
+                </p>
+                <p>De øvrige sider i forløbet rykker op, så forløbet stadig hænger sammen.</p>
+            </ConfirmDialog>
+            break;
+
+        case DialogKind.DeleteOrphan when orphan is not null:
+            <ConfirmDialog Title="@($"Slet «{orphan.Title}»?")"
+                           Tone="DialogTone.Danger" ConfirmText="Slet siden" BusyText="Sletter…"
+                           Run="() => Editing.DeletePageAsync(orphan!)"
+                           OnDone="OnOrphanDeleted" OnCancel="CloseDialog">
+                <p class="callout callout-danger">
+                    <strong>Det kan ikke fortrydes.</strong>
+                    Siden bliver slettet med alt, der står på den.
+                </p>
+            </ConfirmDialog>
+            break;
+
+        case DialogKind.Publish:
+            <ConfirmDialog Title="@($"Udgiv «{model.Project.Name}»?")"
+                           ConfirmText="Udgiv" BusyText="Udgiver…"
+                           Run="PublishAsync" OnDone="OnPublished" OnCancel="CloseDialog">
+                @if (model.Project.LatestVersionNumber is { } current)
+                {
+                    <p>Der bliver lavet en ny version (nu er den nyeste version @current). De gamle versioner ligger stadig gemt.</p>
+                }
+                else
+                {
+                    <p>Det er første gang, udstillingen udgives. Bagefter kan den startes på skærmen.</p>
+                }
+                <p>En skærm, der allerede kører udstillingen, skal startes forfra for at vise den nye udgave.</p>
+            </ConfirmDialog>
+            break;
     }
 }

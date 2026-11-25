@@ -162,3 +162,47 @@ a { color: var(--ink); }
 }
 
 #blazor-error-ui .dismiss { float: right; cursor: pointer; }
+
+.field-label {
+    display: block;
+    margin-bottom: 0.45rem;
+    font-weight: 600;
+}
+
+.field-hint {
+    margin: 0.5rem 0 0;
+    color: var(--muted);
+    font-size: 0.95rem;
+}
+
+.form-error {
+    margin: 0.75rem 0 0;
+    color: var(--danger);
+    font-weight: 600;
+}
+
+.callout {
+    margin: 0 0 1rem;
+    padding: 0.9rem 1.1rem;
+    border: 2px solid;
+    border-radius: var(--radius);
+}
+
+.callout-danger {
+    border-color: var(--danger);
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+.callout-warn {
+    border-color: var(--warn);
+    background: var(--warn-bg);
+    color: var(--warn-ink);
+    font-weight: 600;
+}
+
+.btn-sm {
+    min-height: 40px;
+    padding: 0 1rem;
+    font-size: 0.95rem;
+}

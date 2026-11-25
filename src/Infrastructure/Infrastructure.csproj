@@ -23,6 +23,8 @@
       <Folder Include="Adapters\Auth\Lockout\" />
       <Folder Include="Adapters\Auth\Logins\" />
       <Folder Include="Adapters\Auth\RefreshTokens\" />
+      <Folder Include="Adapters\Versions\" />
+      <Folder Include="Adapters\Projects\" />
     </ItemGroup>
 
     <ItemGroup>

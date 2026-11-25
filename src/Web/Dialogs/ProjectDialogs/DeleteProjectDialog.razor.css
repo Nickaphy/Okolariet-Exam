@@ -1,0 +1,19 @@
+﻿.list-intro {
+    margin: 1.25rem 0 0.4rem;
+    font-weight: 700;
+}
+
+.consequences {
+    margin: 0 0 0.75rem;
+    padding-left: 1.4rem;
+}
+
+    .consequences li {
+        margin: 0.25rem 0;
+    }
+
+.keep-note {
+    margin: 0 0 1.5rem;
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+}
