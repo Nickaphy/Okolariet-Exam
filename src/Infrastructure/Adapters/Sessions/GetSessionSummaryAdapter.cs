@@ -5,50 +5,67 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Adapters.Sessions
 {
-    // Read model for GET /sessions/{id}: the guest's progress plus a comparison with all guests in the project.
     public sealed class GetSessionSummaryAdapter(OkolarietDbContext db) : IGetSessionSummaryAsync
     {
         public async Task<SessionSummary?> GetSummaryAsync(Guid sessionId, CancellationToken ct)
         {
-            var session = await db.Sessions
-                .AsNoTracking()
-                .Where(s => s.Id == sessionId)
-                .Select(s => new { s.Id, s.ProjectId, s.StartedAt })
-                .FirstOrDefaultAsync(ct);
+            // The session gives us the project ID and the start time for the summary.
+            var session = await db.Sessions.FindAsync([sessionId], ct);
 
             if (session is null)
-                return null;   // -> 404 in the use case
+                return null;
 
-            // The X in "7 of X": active questions on all of the project's modded templates.
-            var totalQuestions = await db.Questions
-                .Where(q => q.IsActive
-                         && db.ModdedTemplates.Any(m => m.Id == q.ModdedTemplateId && m.ProjectId == session.ProjectId))
-                .CountAsync(ct);
+            // Retrieve the project's template ID to filter questions.
+            var projectTemplateIds = db.ModdedTemplates
+                .Where(template => template.ProjectId == session.ProjectId)
+                .Select(template => template.Id);
 
-            // This guest's results.
-            var answered = await db.QuizResults.CountAsync(r => r.SessionId == sessionId, ct);
-            var correct = await db.QuizResults.CountAsync(r => r.SessionId == sessionId && r.IsCorrect, ct);
+            // Retrieve the project's active question IDs to filter results.
+            var projectQuestionIds = db.Questions
+                .Where(question => question.IsActive &&
+                    projectTemplateIds.Contains(question.ModdedTemplateId))
+                .Select(question => question.Id);
 
-            // Correct answers per guest in the same project. Only guests who answered at least
-            // one question are counted, so people who never played don't pull the average down.
-            var averageCorrect = await db.QuizResults
-                .Where(r => db.Sessions.Any(s => s.Id == r.SessionId && s.ProjectId == session.ProjectId))
-                .GroupBy(r => r.SessionId)
-                .Select(g => (double?)g.Count(r => r.IsCorrect))
-                .AverageAsync(ct);   // null when nobody has answered yet
+            // Retrieve the project's quiz results to calculate scores.
+            var projectResults = db.QuizResults
+                .Where(result => projectQuestionIds.Contains(result.QuestionId));
 
+            // Retrieve the session's results to calculate scores.
+            var sessionResults = projectResults
+                .Where(result => result.SessionId == session.Id);
+
+
+            var totalQuestions = await projectQuestionIds.CountAsync(ct); // Count the total number of active questions in the project.
+            var answered = await sessionResults.CountAsync(ct); // Count the number of questions answered by the session.
+            var correct = await sessionResults.CountAsync(result => result.IsCorrect, ct); // Count the number of correct answers.
+
+            // Calculate the percentage of correct answers.
+            var percentage = totalQuestions == 0 ? 0 : 100.0 * correct / totalQuestions;
+
+            // Count every session in this project, including guests who have yet to answer.
+            var projectSessionIds = db.Sessions
+                .Where(guest => guest.ProjectId == session.ProjectId)
+                .Select(guest => guest.Id);
+
+            var guestCount = await projectSessionIds.CountAsync(ct); // Count the number of guest sessions in the project.
+            var allGuestsCorrect = await projectResults.LongCountAsync( // Count the number of correct answers by guest sessions.
+                result => result.IsCorrect && projectSessionIds.Contains(result.SessionId), ct); // Count the number of correct answers by guest sessions.
+
+            // Divide all correct answers by the number of guests to get the average correct count.
+            // Divide that count by the shared question total to get the average percentage.
+            var allGuestsAveragePercentage = totalQuestions == 0 || guestCount == 0
+                ? 0
+                : 100.0 * allGuestsCorrect / guestCount / totalQuestions;
+
+            // Pass the loaded and calculated values to the summary returned by the use case.
             return new SessionSummary(
                 session.Id,
                 session.StartedAt,
                 totalQuestions,
                 answered,
                 correct,
-                Percent(correct, totalQuestions),
-                Percent(averageCorrect ?? 0, totalQuestions));
+                percentage,
+                allGuestsAveragePercentage);
         }
-
-        // Avoids dividing by zero when the project has no questions yet. Rounded to one decimal, like 62.4.
-        private static double Percent(double correct, int total) =>
-            total == 0 ? 0 : Math.Round(correct / total * 100, 1);
     }
 }
