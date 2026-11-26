@@ -7,10 +7,21 @@ using Application.OutBoundPort.IPasswordHash;
 using Application.OutBoundPort.ISessionRepository;
 using Application.OutBoundPort.IStaffRepository;
 using Application.OutBoundPort.IUserRepository;
+using Application.OutBoundPort.IAssetRepository;
+using Application.OutBoundPort.IFileStorage;
+using Application.OutBoundPort.IModdedTemplateRepository;
+using Application.OutBoundPort.IQuestionRepository;
+using Application.OutBoundPort.IQuizResultRepository;
+using Application.OutBoundPort.ITemplateRepository;
 using Infrastructure.Adapters.Auth;
 using Infrastructure.Adapters.Sessions;
 using Infrastructure.Adapters.Staff;
 using Infrastructure.Adapters.Users;
+using Infrastructure.Adapters.Assets;
+using Infrastructure.Adapters.ModdedTemplates;
+using Infrastructure.Adapters.Questions;
+using Infrastructure.Adapters.QuizResults;
+using Infrastructure.Adapters.Templates;
 using Infrastructure.Database;
 using Infrastructure.Security;
 using Infrastructure.Testing;
@@ -50,12 +61,6 @@ namespace Infrastructure
             services.AddScoped<IDeleteAssetAsync, DeleteAssetAdapter>();
             services.AddScoped<IGetAssetByIdAsync, GetAssetByIdAdapter>();
             services.AddScoped<IListAssetsAsync, ListAssetsAdapter>();
-
-            // Session DI
-            services.AddScoped<ICreateSessionAsync, CreateSessionAdapter>();
-            services.AddScoped<IGetSessionByIdAsync, GetSessionByIdAdapter>();
-            services.AddScoped<IGetSessionSummaryAsync, GetSessionSummaryAdapter>();
-            services.AddScoped<IProjectExists, ProjectExistsAdapter>();
 
             // File storage DI (one shared instance behind all three ports)
             services.AddSingleton<LocalFileStorageAdapter>();

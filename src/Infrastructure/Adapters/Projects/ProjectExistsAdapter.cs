@@ -2,7 +2,6 @@ using Application.OutBoundPort.IProjectRepository;
 using Application.OutBoundPort.ISessionRepository;
 using Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
-using Application.OutBoundPort.ISessionRepository;
 
 namespace Infrastructure.Adapters.Projects
 {
