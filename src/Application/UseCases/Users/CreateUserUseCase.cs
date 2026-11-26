@@ -27,6 +27,8 @@ public class CreateUserUseCase(
     IListQuestionsByTemplateAsync listQuestions,
     IListQuizResultsBySessionAsync listResults) : ICreateUserUseCase
 {
+    private static readonly SemaphoreSlim SaveLock = new(1, 1);
+
     public async Task<Result<User>> PostUserAsync(
         CreateUserCommand command,
         CancellationToken ct)
@@ -117,11 +119,21 @@ public class CreateUserUseCase(
             session.Id,
             score);
 
-        if (!await createUser.CreateUserAsync(user, ct))
-            return Result.Fail<User>(
-                new ConflictError(
-                    "This session has already saved a score for this quiz."));
+        // SemaphoreSlim Lock to ensure that only one leaderboard entry can be saved at a time.
+        // This prevents race conditions where 2 entries see that the entry is not in the database and
+        // both try to save it at the same time causing a dupelicate.
+        await SaveLock.WaitAsync(ct);
+        try
+        {
+            if (!await createUser.CreateUserAsync(user, ct))
+                return Result.Fail<User>(
+                    new ConflictError(
+                        "This session has already saved a score for this quiz."));
 
-        return Result.Ok(user);
-    }
+            return Result.Ok(user);
+        }
+        finally
+        {
+            SaveLock.Release();
+        }
 }

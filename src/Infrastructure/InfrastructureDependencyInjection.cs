@@ -4,9 +4,13 @@ using Application.OutBoundPort.AuthRepository.Logins;
 using Application.OutBoundPort.AuthRepository.RefreshToken;
 using Application.OutBoundPort.AuthRepository.Tokens;
 using Application.OutBoundPort.IPasswordHash;
+using Application.OutBoundPort.ISessionRepository;
 using Application.OutBoundPort.IStaffRepository;
+using Application.OutBoundPort.IUserRepository;
 using Infrastructure.Adapters.Auth;
+using Infrastructure.Adapters.Sessions;
 using Infrastructure.Adapters.Staff;
+using Infrastructure.Adapters.Users;
 using Infrastructure.Database;
 using Infrastructure.Security;
 using Infrastructure.Testing;
@@ -66,6 +70,18 @@ namespace Infrastructure
             services.AddScoped<IModdedTemplateBelongsToProjectAsync, ModdedTemplateBelongsToProjectAdapter>();
             services.AddScoped<IProjectExistsAsync, ProjectExistsAdapter>();
             services.AddScoped<IIsMainModdedTemplateAsync, IsMainModdedTemplateAdapter>();
+
+            // Session DI
+            services.AddScoped<IProjectExists, ProjectExistsAdapter>();
+            services.AddScoped<ICreateSessionAsync, CreateSessionAdapter>();
+            services.AddScoped<IGetSessionByIdAsync, GetSessionByIdAdapter>();
+            services.AddScoped<IGetSessionSummaryAsync, GetSessionSummaryAdapter>();
+
+            // User DI
+            services.AddScoped<IClearQuizLeaderboardAsync, ClearQuizLeaderboardAdapter>();
+            services.AddScoped<IDeleteUserAsync, DeleteUserAdapter>();
+            services.AddScoped<IGetUserByIdAsync, GetUserByIdAdapter>();
+            services.AddScoped<IListUsersAsync, ListUsersAdapter>();
 
             // Version DI
             services.AddScoped<IAddVersionAsync, AddVersionAdapter>();
