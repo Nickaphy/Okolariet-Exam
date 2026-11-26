@@ -33,8 +33,8 @@ namespace Domain.Entities
             answers.Add(a);
             return a;
         }
-
-        public void Deactivate() => IsActive = false;   // "Delete" is a soft delete, according to Output.cs
+        // "Delete" is a soft delete, according to Output.cs
+        public void Deactivate() => IsActive = false;
 
         public bool HasExactlyOneCorrectAnswer() => answers.Count(a => a.IsActive && a.IsCorrect) == 1;
 

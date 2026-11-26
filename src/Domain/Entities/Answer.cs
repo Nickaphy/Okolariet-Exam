@@ -33,12 +33,12 @@ namespace Domain.Entities
             Validate(text);
             Text = text; IsCorrect = isCorrect; AssetId = assetId; SortOrder = sortOrder;
         }
-
-        public void Deactivate() => IsActive = false;   // soft delete, just like Question
+        // soft delete, just like Question
+        public void Deactivate() => IsActive = false;
 
         private static void Validate(string text)
-        {
-            if (string.IsNullOrWhiteSpace(text) || text.Length > 200)   // 200 comes from AnswerInput in Output.cs
+        {   // 200 comes from AnswerInput in Output.cs
+            if (string.IsNullOrWhiteSpace(text) || text.Length > 200)
                 throw new ArgumentException("Answer text must be 1-200 characters.", nameof(text));
         }
     }
