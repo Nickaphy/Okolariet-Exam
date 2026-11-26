@@ -4,9 +4,24 @@ using Application.OutBoundPort.AuthRepository.Logins;
 using Application.OutBoundPort.AuthRepository.RefreshToken;
 using Application.OutBoundPort.AuthRepository.Tokens;
 using Application.OutBoundPort.IPasswordHash;
+using Application.OutBoundPort.ISessionRepository;
 using Application.OutBoundPort.IStaffRepository;
+using Application.OutBoundPort.IUserRepository;
+using Application.OutBoundPort.IAssetRepository;
+using Application.OutBoundPort.IFileStorage;
+using Application.OutBoundPort.IModdedTemplateRepository;
+using Application.OutBoundPort.IQuestionRepository;
+using Application.OutBoundPort.IQuizResultRepository;
+using Application.OutBoundPort.ITemplateRepository;
 using Infrastructure.Adapters.Auth;
+using Infrastructure.Adapters.Sessions;
 using Infrastructure.Adapters.Staff;
+using Infrastructure.Adapters.Users;
+using Infrastructure.Adapters.Assets;
+using Infrastructure.Adapters.ModdedTemplates;
+using Infrastructure.Adapters.Questions;
+using Infrastructure.Adapters.QuizResults;
+using Infrastructure.Adapters.Templates;
 using Infrastructure.Database;
 using Infrastructure.Security;
 using Infrastructure.Testing;
@@ -39,6 +54,46 @@ namespace Infrastructure
             services.AddSingleton<IGenerateRefreshToken, GenerateRefreshTokenAdapter>();
             services.AddSingleton<IHashToken, HashTokenAdapter>();
 
+            // Asset DI
+            services.AddScoped<IAddAssetAsync, AddAssetAdapter>();
+            services.AddScoped<IAssetExistsAsync, AssetExistsAdapter>();
+            services.AddScoped<IAssetInUseAsync, AssetInUseAdapter>();
+            services.AddScoped<IDeleteAssetAsync, DeleteAssetAdapter>();
+            services.AddScoped<IGetAssetByIdAsync, GetAssetByIdAdapter>();
+            services.AddScoped<IListAssetsAsync, ListAssetsAdapter>();
+
+            // File storage DI (one shared instance behind all three ports)
+            services.AddSingleton<LocalFileStorageAdapter>();
+            services.AddSingleton<ISaveFileAsync>(sp => sp.GetRequiredService<LocalFileStorageAdapter>());
+            services.AddSingleton<IOpenFileAsync>(sp => sp.GetRequiredService<LocalFileStorageAdapter>());
+            services.AddSingleton<IDeleteFileAsync>(sp => sp.GetRequiredService<LocalFileStorageAdapter>());
+
+            // Template DI (catalog in code)
+            services.AddSingleton<TemplateCatalogAdapter>();
+            services.AddSingleton<IGetTemplateByTypeAsync>(sp => sp.GetRequiredService<TemplateCatalogAdapter>());
+            services.AddSingleton<IListTemplatesAsync>(sp => sp.GetRequiredService<TemplateCatalogAdapter>());
+
+            // ModdedTemplate DI
+            services.AddScoped<IAddModdedTemplateAsync, AddModdedTemplateAdapter>();
+            services.AddScoped<IDeleteModdedTemplateAsync, DeleteModdedTemplateAdapter>();
+            services.AddScoped<IGetModdedTemplateByIdAsync, GetModdedTemplateByIdAdapter>();
+            services.AddScoped<IIsLinkedFromButtonAsync, IsLinkedFromButtonAdapter>();
+            services.AddScoped<IListModdedTemplatesByProjectAsync, ListModdedTemplatesByProjectAdapter>();
+            services.AddScoped<ITemplateSupportsQuestionsAsync, TemplateSupportsQuestionsAdapter>();
+            services.AddScoped<IUpdateModdedTemplateAsync, UpdateModdedTemplateAdapter>();
+            services.AddScoped<ITemplateBelongsToProjectAsync, ModdedTemplateBelongsToProjectAdapter>();
+
+            // Question DI (answers are saved through their question)
+            services.AddScoped<IAddQuestionAsync, AddQuestionAdapter>();
+            services.AddScoped<IGetQuestionByIdAsync, GetQuestionByIdAdapter>();
+            services.AddScoped<IGetQuestionByAnswerIdAsync, GetQuestionByAnswerIdAdapter>();
+            services.AddScoped<IListQuestionsByTemplateAsync, ListQuestionsByTemplateAdapter>();
+            services.AddScoped<IUpdateQuestionAsync, UpdateQuestionAdapter>();
+
+            // QuizResult DI
+            services.AddScoped<ITryAddQuizResultAsync, TryAddQuizResultAdapter>();
+            services.AddScoped<IListQuizResultsBySessionAsync, ListQuizResultsBySessionAdapter>();
+
             // Staff DI
             services.AddScoped<IAddAsync, AddStaffAdapter>();
             services.AddScoped<IAnyAsync, AnyStaffAdapter>();
@@ -66,6 +121,18 @@ namespace Infrastructure
             services.AddScoped<IModdedTemplateBelongsToProjectAsync, ModdedTemplateBelongsToProjectAdapter>();
             services.AddScoped<IProjectExistsAsync, ProjectExistsAdapter>();
             services.AddScoped<IIsMainModdedTemplateAsync, IsMainModdedTemplateAdapter>();
+
+            // Session DI
+            services.AddScoped<IProjectExists, ProjectExistsAdapter>();
+            services.AddScoped<ICreateSessionAsync, CreateSessionAdapter>();
+            services.AddScoped<IGetSessionByIdAsync, GetSessionByIdAdapter>();
+            services.AddScoped<IGetSessionSummaryAsync, GetSessionSummaryAdapter>();
+
+            // User DI
+            services.AddScoped<IClearQuizLeaderboardAsync, ClearQuizLeaderboardAdapter>();
+            services.AddScoped<IDeleteUserAsync, DeleteUserAdapter>();
+            services.AddScoped<IGetUserByIdAsync, GetUserByIdAdapter>();
+            services.AddScoped<IListUsersAsync, ListUsersAdapter>();
 
             // Version DI
             services.AddScoped<IAddVersionAsync, AddVersionAdapter>();
