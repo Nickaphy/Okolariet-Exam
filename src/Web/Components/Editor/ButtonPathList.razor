@@ -6,7 +6,7 @@
    with the sub-menu's buttons. That is how any depth of sub-menus is drawn with one piece of code.
    (A Blazor component may contain itself, as long as it stops somewhere: here, at a menu with no sub-menus.)
 
-   The component only shows things and reports what the user did (OnLabelChanged, OnAddPage, OnRemovePage).
+   The component only shows things and reports what the user did (OnLabelChanged, OnAddPage, OnMovePage ...).
    The editor page decides what happens (opens a dialog, saves, reloads). *@
 
 <ol class="buttons">
@@ -45,15 +45,39 @@
                                         <strong>@node.Page.Title</strong>
                                         <small>@StepDetail(node, index, button.Pages.Count)</small>
                                     </div>
-                                    @* Editing the contents of a page is the next step of the project. *@
-                                    <button type="button" class="btn btn-secondary btn-sm" disabled title="Kommer i næste trin">
-                                        <Icon Name="edit_note" /> Indhold
-                                    </button>
-                                    <button type="button" class="btn btn-danger-ghost btn-sm"
-                                            aria-label="@($"Fjern {node.Page.Title}")"
-                                            @onclick="() => OnRemovePage.InvokeAsync((button, index))">
-                                        <Icon Name="delete" /> Fjern
-                                    </button>
+                                    <div class="step-actions">
+                                        @* Order: up / down. A sub-menu is always last, so it can't move, and nothing can move below it. *@
+                                        <button type="button" class="btn btn-ghost btn-sm btn-icon" title="Ryk op" aria-label="@($"Ryk {node.Page.Title} op")"
+                                                disabled="@(Busy || index == 0 || node.IsMenu)"
+                                                @onclick="() => OnMovePage.InvokeAsync((button, index, -1))">
+                                            <Icon Name="arrow_upward" />
+                                        </button>
+                                        <button type="button" class="btn btn-ghost btn-sm btn-icon" title="Ryk ned" aria-label="@($"Ryk {node.Page.Title} ned")"
+                                                disabled="@(Busy || index == button.Pages.Count - 1 || button.Pages[Math.Min(index + 1, button.Pages.Count - 1)].IsMenu)"
+                                                @onclick="() => OnMovePage.InvokeAsync((button, index, 1))">
+                                            <Icon Name="arrow_downward" />
+                                        </button>
+
+                                        @* Editing the contents of a page is the next step of the project. *@
+                                        <button type="button" class="btn btn-secondary btn-sm" disabled title="Kommer i næste trin">
+                                            <Icon Name="edit_note" /> Indhold
+                                        </button>
+                                        <button type="button" class="btn btn-secondary btn-sm" disabled="@Busy"
+                                                title="Vælg en anden skabelon. Indholdet flytter med."
+                                                @onclick="() => OnChangeTemplate.InvokeAsync((button, index))">
+                                            <Icon Name="swap_horiz" /> Skabelon
+                                        </button>
+                                        <button type="button" class="btn btn-ghost btn-sm" disabled="@Busy"
+                                                title="Tag siden ud af forløbet uden at slette den"
+                                                @onclick="() => OnDetachPage.InvokeAsync((button, index))">
+                                            <Icon Name="link_off" /> Tag ud
+                                        </button>
+                                        <button type="button" class="btn btn-danger-ghost btn-sm" disabled="@Busy"
+                                                aria-label="@($"Fjern {node.Page.Title}")"
+                                                @onclick="() => OnRemovePage.InvokeAsync((button, index))">
+                                            <Icon Name="delete" /> Fjern
+                                        </button>
+                                    </div>
                                 </div>
 
                                 @if (node.IsMenu)
@@ -61,7 +85,8 @@
                                     <div class="sub-menu">
                                         <p class="sub-menu-lead"><Icon Name="subdirectory_arrow_right" /> Knapper på «@node.Page.Title»</p>
                                         <ButtonPathList Buttons="node.Buttons" Model="Model" Busy="Busy"
-                                                        OnLabelChanged="OnLabelChanged" OnAddPage="OnAddPage" OnRemovePage="OnRemovePage" />
+                                                        OnLabelChanged="OnLabelChanged" OnAddPage="OnAddPage" OnRemovePage="OnRemovePage"
+                                                        OnMovePage="OnMovePage" OnDetachPage="OnDetachPage" OnChangeTemplate="OnChangeTemplate" />
                                     </div>
                                 }
                             </li>
@@ -100,8 +125,17 @@
     // The user wants to add a page at the end of this button's path.
     [Parameter] public EventCallback<ButtonPath> OnAddPage { get; set; }
 
-    // The user wants to remove page number Index (0-based) from this button's path.
+    // The user wants to remove (delete) page number Index (0-based) from this button's path.
     [Parameter] public EventCallback<(ButtonPath Button, int Index)> OnRemovePage { get; set; }
+
+    // The user wants to move page number Index one step up (Direction -1) or down (+1).
+    [Parameter] public EventCallback<(ButtonPath Button, int Index, int Direction)> OnMovePage { get; set; }
+
+    // The user wants to take page number Index out of the path, without deleting it.
+    [Parameter] public EventCallback<(ButtonPath Button, int Index)> OnDetachPage { get; set; }
+
+    // The user wants page number Index to use another template.
+    [Parameter] public EventCallback<(ButtonPath Button, int Index)> OnChangeTemplate { get; set; }
 
     // Unique per menu and button, so the <label> finds its <input> also when sub-menus have the same slot keys.
     private static string LabelId(ButtonPath button) => $"label-{button.OwnerId:N}-{button.Slot.Key}";

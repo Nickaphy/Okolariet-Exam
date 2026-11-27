@@ -54,17 +54,22 @@ public static class ApiCall
     //     var (projects, error) = await ApiCall.GetAll(page => Projects.ListProjects(page, 100));
     public static async Task<(List<T> Items, string? Error)> GetAll<T>(Func<int, Task<PagedResult<T>>> fetchPage)
     {
+        const int maxPages = 50;   // 5000 items: far more than a museum has; a guard so a wrong answer can never loop forever
+
         var all = new List<T>();
-        for (var page = 1; ; page++)
+        for (var page = 1; page <= maxPages; page++)
         {
             var (result, error) = await Get(() => fetchPage(page));
             if (error is not null) return (new List<T>(), error);
 
             all.AddRange(result!.Items);
 
-            // Stop when everything is here, or on an empty page (so we can never loop forever).
-            if (result.Items.Count == 0 || all.Count >= result.TotalCount) return (all, null);
+            // Stop when everything is here, or when this page wasn't full (so it was the last one).
+            // The second check matters with the Prism mock: it says "100 in total" but returns the same
+            // single example on every page, which would otherwise give 100 copies of the same item.
+            if (all.Count >= result.TotalCount || result.Items.Count < result.PageSize) break;
         }
+        return (all, null);
     }
 
     // Runs work that already returns "null = it worked, or a message", and only adds the missing piece:

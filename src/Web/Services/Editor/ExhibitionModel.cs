@@ -66,6 +66,39 @@ namespace Web.Services.Editor
         public IReadOnlyList<ModdedTemplate> Orphans { get; init; } = [];
 
         public string DisplayNameOf(string templateType) =>
-            Templates.FirstOrDefault(t => t.Type == templateType)?.DisplayName ?? templateType;
+            TemplateOf(templateType)?.DisplayName ?? templateType;
+
+        public Template? TemplateOf(string templateType) =>
+            Templates.FirstOrDefault(t => t.Type == templateType);
+
+        // Every button in the exhibition, the main menu's and all sub-menus', each with a short description of
+        // where it is ("Hovedmenu · Knap 2 «Quiz»"). Used to pick where a page should go.
+        public IEnumerable<(ButtonPath Button, string Where)> AllButtons() => ButtonsBelow(Buttons, "Hovedmenu");
+
+        private static IEnumerable<(ButtonPath, string)> ButtonsBelow(IReadOnlyList<ButtonPath> buttons, string menuName)
+        {
+            foreach (var button in buttons)
+            {
+                var label = button.Label.Length > 0 ? $" «{button.Label}»" : "";
+                yield return (button, $"{menuName} · {button.Slot.Label}{label}");
+
+                // The buttons of a sub-menu at the end of this path, described with the sub-menu's own name.
+                foreach (var page in button.Pages.Where(p => p.IsMenu))
+                    foreach (var below in ButtonsBelow(page.Buttons, $"Undermenu «{page.Page.Title}»"))
+                        yield return below;
+            }
+        }
+
+        // Where a page sits: which button's path, and its position (0-based) in that path.
+        // null for the main menu and for pages no button leads to.
+        public (ButtonPath Button, int Index)? FindSpot(Guid pageId)
+        {
+            foreach (var (button, _) in AllButtons())
+            {
+                for (var i = 0; i < button.Pages.Count; i++)
+                    if (button.Pages[i].Page.Id == pageId) return (button, i);
+            }
+            return null;
+        }
     }
 }

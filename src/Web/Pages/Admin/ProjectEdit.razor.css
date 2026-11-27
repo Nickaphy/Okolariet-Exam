@@ -234,3 +234,19 @@
             justify-self: start;
         }
 }
+
+/* The main menu's template name and its "Skift skabelon" button, to the right of the heading. */
+.menu-template {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+/* The buttons on a page under "Sider uden knap". */
+.step-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}

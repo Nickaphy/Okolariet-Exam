@@ -79,6 +79,12 @@ namespace Web.Pages.Kiosk
             current = MainMenu ?? current;
         }
 
+        // Once the kiosk is on screen: switch off right-click, dragging, selecting and the developer-tools keys (wwwroot/js).
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (firstRender) await JS.InvokeVoidAsync("oekolariet.lockKiosk");
+        }
+
         private async Task EnterFullscreenAsync()
         {
             // Must run from a tap: browsers only allow full screen after the user did something.

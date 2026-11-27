@@ -2,9 +2,11 @@ using System.Net;
 using Web.Api;
 using Web.Api.Contracts;
 using Web.Exceptions;
+using Web.Ports.Answers;
 using Web.Ports.Items;
 using Web.Ports.ModdedTemplates;
 using Web.Ports.Projects;
+using Web.Ports.Questions;
 using Web.Ports.Versions;
 
 namespace Web.Services.Editor
@@ -30,7 +32,9 @@ namespace Web.Services.Editor
         IProjectGateway projects,
         IModdedTemplateGateway pages,
         IItemGateway items,
-        IVersionGateway versions)
+        IVersionGateway versions,
+        IQuestionGateway questions,
+        IAnswerGateway answers)
     {
         // ---- the project itself ----
 
@@ -94,10 +98,8 @@ namespace Web.Services.Editor
                 SortOrder = m.Pages.Count
             });
 
-            // Link it in: an empty path → the button points at it. Otherwise → the last page's "next" points at it.
-            var linkError = await ApiCall.Run(() => button.Pages.Count == 0
-                ? WriteSlotAsync(button.OwnerId, button.Slot.Key, button.Label, page.Id)
-                : WriteNextAsync(button.Pages[^1].Page.Id, page.Id));
+            // Link it in at the end of the path.
+            var linkError = await ApiCall.Run(() => PointAtAsync(button, button.Pages.Count, page.Id));
 
             return linkError is null
                 ? null
@@ -112,8 +114,7 @@ namespace Web.Services.Editor
             Guid? after = index + 1 < button.Pages.Count ? button.Pages[index + 1].Page.Id : null;
 
             // 1. Whatever pointed at the removed page now points at the page after it (or at nothing).
-            if (index == 0) await WriteSlotAsync(button.OwnerId, button.Slot.Key, button.Label, after);
-            else await WriteNextAsync(button.Pages[index - 1].Page.Id, after);
+            await PointAtAsync(button, index, after);
 
             // 2. Delete. Parents before children: the server refuses to delete a page another page still links to.
             foreach (var page in removed.WithSubPages())
@@ -128,7 +129,163 @@ namespace Web.Services.Editor
         public Task<string?> DeletePageAsync(ModdedTemplate page) =>
             ApiCall.Run(() => pages.DeleteModdedTemplate(page.Id), ignoreNotFound: true);
 
+        // ---- re-routing: change the order, take a page out, put a page in ----
+
+        // Moves page number "index" one step up (direction -1) or down (+1) in its path.
+        public Task<string?> MovePageAsync(ButtonPath button, int index, int direction) => ApiCall.Try(async () =>
+        {
+            // The two pages that swap places: "upper" and the one right below it.
+            var upper = direction < 0 ? index - 1 : index;
+            if (upper < 0 || upper + 1 >= button.Pages.Count) return null;   // already first / last
+
+            var a = button.Pages[upper];
+            var b = button.Pages[upper + 1];
+            if (b.IsMenu) return "En undermenu er altid den sidste side i et forløb, så den kan ikke rykkes op.";
+            Guid? afterB = upper + 2 < button.Pages.Count ? button.Pages[upper + 2].Page.Id : null;
+
+            // Before:  … → A → B → (after B)        After:  … → B → A → (after B)
+            await PointAtAsync(button, upper, b.Page.Id);
+            await WriteNextAsync(b.Page.Id, a.Page.Id);
+            await WriteNextAsync(a.Page.Id, afterB);
+            return null;
+        });
+
+        // Takes a page out of its path without deleting it. The pages around it are joined up, and the page
+        // shows under "Sider uden knap", from where it can be put in somewhere else (AttachPageAsync).
+        // A sub-menu takes the pages below it along (they stay linked to it).
+        public Task<string?> DetachPageAsync(ButtonPath button, int index) => ApiCall.Try(async () =>
+        {
+            var page = button.Pages[index];
+            Guid? after = index + 1 < button.Pages.Count ? button.Pages[index + 1].Page.Id : null;
+
+            await PointAtAsync(button, index, after);
+            if (!page.IsMenu) await WriteNextAsync(page.Page.Id, null);
+            return null;
+        });
+
+        // Puts an existing page (one from "Sider uden knap") last in a button's path.
+        public Task<string?> AttachPageAsync(ButtonPath button, ModdedTemplate page) => ApiCall.Try(async () =>
+        {
+            if (button.EndsInMenu)
+                return "Forløbet slutter i en undermenu. Vælg en af undermenuens knapper i stedet.";
+            if (button.Pages.Any(p => p.Page.Id == page.Id)) return null;   // already there
+
+            await PointAtAsync(button, button.Pages.Count, page.Id);
+            return null;
+        });
+
+        // ---- change the template of a page (also the main menu) ----
+
+        // The API doesn't allow changing a page's template type (it decides which fields the page has).
+        // So the change is made as: a new page from the new template → copy everything that fits → point
+        // whatever led to the old page at the new one → delete the old page. Nothing a guest can reach is lost
+        // on the way: if a step fails before the switch, the new page is removed again and the old one is untouched.
+        //
+        // What is kept: the title and colours, every field whose key also exists in the new template (e.g.
+        // button1-4 when a 4-button menu becomes a 6-button menu, including where the buttons lead), and for a
+        // quiz the questions and answers (as many as the new template allows). Only templates of the same kind
+        // (menu, fact or quiz) can be swapped, so the fields have something in common.
+        public Task<string?> ChangeTemplateAsync(ExhibitionModel m, ModdedTemplate old, string newType) => ApiCall.Try(async () =>
+        {
+            if (newType == old.TemplateType) return null;
+            if (m.TemplateOf(newType) is not { } newTemplate) return "Skabelonen findes ikke på serveren.";
+            var oldTemplate = m.TemplateOf(old.TemplateType);
+            if (oldTemplate is not null && oldTemplate.Category != newTemplate.Category)
+                return "En side kan kun skifte til en skabelon af samme slags (menu, fakta eller quiz).";
+
+            // 1. The new page: same title, colours and order as the old one.
+            var created = await pages.CreateModdedTemplate(m.Project.Id, new ModdedTemplateCreate
+            {
+                TemplateType = newType,
+                Title = old.Title,
+                SortOrder = old.SortOrder,
+                Appearance = old.Appearance
+            });
+
+            // Removes the new page again when a step below fails, so no half-made copy is left behind.
+            async Task<string> Undo(string error)
+            {
+                await ApiCall.Run(() => pages.DeleteModdedTemplate(created.Id), ignoreNotFound: true);
+                return error;
+            }
+
+            // 2. Copy the content.
+            var copyError = await ApiCall.Run(() => CopyContentAsync(old, oldTemplate, created.Id, newTemplate));
+            if (copyError is not null) return await Undo(copyError);
+
+            // 3. Switch: whatever led to the old page now leads to the new one.
+            var switchError = m.Menu?.Id == old.Id
+                ? await SaveProjectAsync(m, m.Project.Name, created.Id, m.Project.Appearance)                       // the main menu
+                : m.FindSpot(old.Id) is { } spot
+                    ? await ApiCall.Run(() => PointAtAsync(spot.Button, spot.Index, created.Id))                    // a page in a path
+                    : null;                                                                                          // a page no button leads to
+            if (switchError is not null) return await Undo(switchError);
+
+            // 4. The old page is no longer used.
+            var deleteError = await ApiCall.Run(() => pages.DeleteModdedTemplate(old.Id), ignoreNotFound: true);
+            return deleteError is null
+                ? null
+                : $"Skabelonen er skiftet, men den gamle side kunne ikke slettes (den står under «Sider uden knap»). {deleteError}";
+        });
+
+        // Copies the fields (and a quiz's questions) that fit the new template. See ChangeTemplateAsync.
+        private async Task CopyContentAsync(ModdedTemplate old, Template? oldTemplate, Guid newPageId, Template newTemplate)
+        {
+            foreach (var item in old.Items ?? [])
+            {
+                // Only fields the new template has, with the same kind (a text field can't hold a picture).
+                var slot = newTemplate.Slots?.FirstOrDefault(s => s.Key == item.SlotKey);
+                var oldSlot = oldTemplate?.Slots?.FirstOrDefault(s => s.Key == item.SlotKey);
+                if (slot is null || (oldSlot is not null && oldSlot.Kind != slot.Kind)) continue;
+
+                await items.SetItem(newPageId, item.SlotKey, new ModdedTemplateItemInput
+                {
+                    Text = Shorten(item.Text, slot.MaxLength),   // e.g. an 8-button menu allows shorter button texts
+                    AssetId = item.AssetId,
+                    TargetModdedTemplateId = item.TargetModdedTemplateId
+                });
+            }
+
+            if (newTemplate.QuestionRules is not { } rules) return;
+
+            foreach (var question in (old.Questions ?? []).OrderBy(q => q.SortOrder).Take(rules.MaxQuestions))
+            {
+                var copy = await questions.CreateQuestion(newPageId,
+                    new QuestionInput { Text = question.Text, AssetId = question.AssetId, SortOrder = question.SortOrder });
+
+                foreach (var answer in AnswersToKeep(question, rules.AnswersPerQuestion))
+                {
+                    await answers.CreateAnswer(copy.Id, new AnswerInput
+                    {
+                        Text = answer.Text,
+                        AssetId = answer.AssetId,
+                        IsCorrect = answer.IsCorrect,
+                        SortOrder = answer.SortOrder
+                    });
+                }
+            }
+        }
+
+        // When the new quiz allows fewer answers per question (e.g. sandt/falsk has 2): keep the right answer(s)
+        // first, fill up with the others, and keep them in their original order.
+        public static IEnumerable<Answer> AnswersToKeep(Question question, int limit) =>
+            (question.Answers ?? [])
+                .OrderByDescending(a => a.IsCorrect).ThenBy(a => a.SortOrder)
+                .Take(limit)
+                .OrderBy(a => a.SortOrder);
+
+        private static string? Shorten(string? text, int? maxLength) =>
+            text is not null && maxLength is int max && text.Length > max ? text[..max] : text;
+
         // ---- helpers ----
+
+        // The link INTO position "position" of a path:
+        //   position 0  → the button itself (on its menu) points at the page;
+        //   otherwise   → the "next" slot of the page just before it points at the page.
+        // target null = point at nothing (the path ends before this position).
+        private Task PointAtAsync(ButtonPath button, int position, Guid? target) => position == 0
+            ? WriteSlotAsync(button.OwnerId, button.Slot.Key, button.Label, target)
+            : WriteNextAsync(button.Pages[position - 1].Page.Id, target);
 
         // New pages are named after their template ("Faktaside", then "Faktaside 2" ...). Max 120 characters (API rule).
         private static string TitleFor(ExhibitionModel m, string templateType)

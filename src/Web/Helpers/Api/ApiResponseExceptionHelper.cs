@@ -24,6 +24,6 @@ namespace Web.Helpers
 
         // The status code, and the Retry-After header if the server sent one (e.g. "wait 15 minutes" after 5 wrong passwords).
         private static GatewayException Failure(IApiResponse response) =>
-            new(response.StatusCode, response.Headers?.RetryAfter?.Delta);
+            new(response.StatusCode ?? System.Net.HttpStatusCode.InternalServerError, response.Headers?.RetryAfter?.Delta);
     }
 }

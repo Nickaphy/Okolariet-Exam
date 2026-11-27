@@ -10,7 +10,7 @@ namespace Web.Pages.Admin
     public partial class ProjectEdit
     {
         // Which dialog is open. Only one at a time; None = no dialog.
-        private enum DialogKind { None, Rename, AddPage, RemovePage, DeleteOrphan, Publish }
+        private enum DialogKind { None, Rename, AddPage, RemovePage, DeleteOrphan, ChangeTemplate, AttachPage, Publish }
 
         [Parameter] public Guid ProjectId { get; set; }
 
@@ -27,6 +27,8 @@ namespace Web.Pages.Admin
         private ButtonPath? activeButton;   // AddPage and RemovePage: which button's path
         private int removeIndex;            // RemovePage: which page in that path (0-based)
         private ModdedTemplate? orphan;     // DeleteOrphan: which page
+        private ModdedTemplate? changing;   // ChangeTemplate: which page gets a new template
+        private ModdedTemplate? attaching;  // AttachPage: which page is put in under a button
         private int? publishedVersion;      // Publish: the new version number, for the success message
 
         private string? selectedMenuType;
@@ -130,6 +132,8 @@ namespace Web.Pages.Admin
             dialog = DialogKind.None;
             activeButton = null;
             orphan = null;
+            changing = null;
+            attaching = null;
         }
 
         // From ButtonPathList: "Tilføj side" was pressed.
@@ -151,6 +155,73 @@ namespace Web.Pages.Admin
         {
             orphan = page;
             dialog = DialogKind.DeleteOrphan;
+        }
+
+        // "Skift skabelon" on the main menu, or "Skabelon" on a page in a path.
+        private void AskChangeTemplate(ModdedTemplate page)
+        {
+            changing = page;
+            dialog = DialogKind.ChangeTemplate;
+        }
+
+        // "Sæt ind" on a page under "Sider uden knap".
+        private void AskAttach(ModdedTemplate page)
+        {
+            attaching = page;
+            dialog = DialogKind.AttachPage;
+        }
+
+        // ---- re-routing straight from the list (no dialog: both are easy to undo) ----
+
+        // From ButtonPathList: the ↑ / ↓ arrows.
+        private Task MovePageAsync((ButtonPath Button, int Index, int Direction) move) =>
+            SaveAsync(() => Editing.MovePageAsync(move.Button, move.Index, move.Direction));
+
+        // From ButtonPathList: "Tag ud". The page is kept and shows under "Sider uden knap".
+        private Task DetachPageAsync((ButtonPath Button, int Index) spot) =>
+            SaveAsync(() => Editing.DetachPageAsync(spot.Button, spot.Index),
+                $"«{spot.Button.Pages[spot.Index].Page.Title}» er taget ud af forløbet. Den står nu under «Sider uden knap».");
+
+        // ---- changing a template ----
+
+        // Only templates of the same kind (menu, fact or quiz) as the page, so its content has somewhere to go.
+        private IReadOnlyList<Template> SameKindTemplates =>
+            changing is not null && model!.TemplateOf(changing.TemplateType) is { } current
+                ? model.Templates.Where(t => t.Category == current.Category).ToList()
+                : model!.Templates;
+
+        // Chips on the template cards in the "change template" dialog: what is the page now, and what would not
+        // fit in that template. Nothing is thrown away silently: staff see it before they choose.
+        private IEnumerable<string> ChangeNotesFor(Template candidate)
+        {
+            if (changing is null) yield break;
+            if (candidate.Type == changing.TemplateType)
+            {
+                yield return "Nuværende skabelon";
+                yield break;
+            }
+
+            var current = model!.TemplateOf(changing.TemplateType);
+            var lost = (changing.Items ?? [])
+                .Where(i => i.Text is not null || i.AssetId is not null || i.TargetModdedTemplateId is not null)
+                .Where(i => candidate.Slots?.Any(s => s.Key == i.SlotKey) != true)
+                .Select(i => current?.Slots?.FirstOrDefault(s => s.Key == i.SlotKey)?.Label ?? i.SlotKey)
+                .ToList();
+            if (lost.Count > 0) yield return "Forsvinder: " + string.Join(", ", lost);
+
+            // Buttons that disappear take their path along out of the menu: the pages are kept, under "Sider uden knap".
+            if ((changing.Items ?? []).Any(i => i.TargetModdedTemplateId is not null && candidate.Slots?.Any(s => s.Key == i.SlotKey) != true))
+                yield return "Sider bag fjernede knapper bevares under «Sider uden knap»";
+
+            if (candidate.QuestionRules is { } rules)
+            {
+                var count = changing.Questions?.Count ?? 0;
+                if (count > rules.MaxQuestions) yield return $"Kun de første {rules.MaxQuestions} spørgsmål kommer med";
+                if (changing.Questions?.Any(q => (q.Answers?.Count ?? 0) > rules.AnswersPerQuestion) == true)
+                    yield return $"Kun {rules.AnswersPerQuestion} svar pr. spørgsmål (det rigtige beholdes)";
+            }
+
+            if (lost.Count == 0) yield return "Alt indhold flytter med";
         }
 
         // Handed to ConfirmDialog as Run: publishing also gives back the version number.
@@ -193,6 +264,11 @@ namespace Web.Pages.Admin
         private Task OnOrphanDeleted() => Finish("Siden er slettet.");
 
         private Task OnAppearanceSaved() => Finish("Udseendet er gemt.");
+
+        private Task OnTemplateChanged(string templateType) =>
+            Finish($"Siden bruger nu «{model!.DisplayNameOf(templateType)}». Indholdet er flyttet med.");
+
+        private Task OnPageAttached() => Finish("Siden er sat ind. Gæsterne kan nu nå den.");
 
         private Task OnPublished() => Finish(publishedVersion is { } v
             ? $"Udstillingen er udgivet som version {v}."

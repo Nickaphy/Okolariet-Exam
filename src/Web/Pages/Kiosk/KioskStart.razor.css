@@ -9,6 +9,8 @@
     color: var(--tpl-text, #fff);
     font-family: var(--tpl-font, var(--font));
     user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;   /* no "save image" menu on a long press (iPad / Safari) */
     overflow: hidden;
 }
 

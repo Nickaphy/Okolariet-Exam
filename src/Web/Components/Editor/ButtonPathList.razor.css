@@ -70,7 +70,7 @@
 
 .step {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     gap: 0.85rem;
     padding: 0.55rem 0.75rem;
@@ -133,8 +133,16 @@
         grid-template-columns: auto minmax(0, 1fr);
     }
 
-        .step .btn {
+        .step-actions {
             grid-column: 2;
             justify-self: start;
         }
+}
+
+.step-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem;
 }

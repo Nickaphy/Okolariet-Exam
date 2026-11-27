@@ -10,7 +10,8 @@
 
 <PageTitle>Økolariet</PageTitle>
 
-<main class="kiosk" style="@KioskStyle">
+@* @oncontextmenu:preventDefault: no right-click menu, even before the JavaScript lock below has loaded. *@
+<main class="kiosk" style="@KioskStyle" @oncontextmenu:preventDefault="true">
     @if (current is not null)
     {
         <div class="screen">

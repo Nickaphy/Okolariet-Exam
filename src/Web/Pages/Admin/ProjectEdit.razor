@@ -80,7 +80,12 @@ else
                         Et forløb kan også ende i en undermenu med sine egne knapper.
                     </ChildContent>
                     <Aside>
-                        <span class="template-tag"><Icon Name="dashboard" /> @model.DisplayNameOf(model.Menu.TemplateType)</span>
+                        <div class="menu-template">
+                            <span class="template-tag"><Icon Name="dashboard" /> @model.DisplayNameOf(model.Menu.TemplateType)</span>
+                            <button type="button" class="btn btn-secondary btn-sm" disabled="@busy" @onclick="() => AskChangeTemplate(model.Menu)">
+                                <Icon Name="swap_horiz" /> Skift skabelon
+                            </button>
+                        </div>
                     </Aside>
                 </PanelHead>
 
@@ -107,7 +112,9 @@ else
                 }
 
                 <ButtonPathList Buttons="model.Buttons" Model="model" Busy="busy"
-                                OnLabelChanged="SaveLabelAsync" OnAddPage="AskAdd" OnRemovePage="AskRemove" />
+                                OnLabelChanged="SaveLabelAsync" OnAddPage="AskAdd" OnRemovePage="AskRemove"
+                                OnMovePage="MovePageAsync" OnDetachPage="DetachPageAsync"
+                                OnChangeTemplate="@(spot => AskChangeTemplate(spot.Button.Pages[spot.Index].Page))" />
             </section>
 
             <aside class="panel preview-panel" aria-labelledby="preview-heading">
@@ -137,7 +144,7 @@ else
     {
         <section class="panel section" aria-labelledby="orphans-heading">
             <PanelHead IconName="link_off" Title="Sider uden knap" Id="orphans-heading">
-                Disse sider er ikke koblet til nogen knap, så gæsterne kan ikke nå dem. Slet dem, hvis de ikke skal bruges.
+                Disse sider er ikke koblet til nogen knap, så gæsterne kan ikke nå dem. Sæt dem ind under en knap, eller slet dem.
             </PanelHead>
             <ul class="steps">
                 @foreach (var moddedTemplate in model.Orphans)
@@ -147,10 +154,16 @@ else
                             <strong>@moddedTemplate.Title</strong>
                             <small>@model.DisplayNameOf(moddedTemplate.TemplateType)</small>
                         </div>
-                        <button type="button" class="btn btn-danger-ghost btn-sm"
-                                aria-label="@($"Slet {moddedTemplate.Title}")" @onclick="() => AskDeleteOrphan(moddedTemplate)">
-                            <Icon Name="delete" /> Slet
-                        </button>
+                        <div class="step-actions">
+                            <button type="button" class="btn btn-secondary btn-sm" disabled="@(busy || model.Menu is null)"
+                                    aria-label="@($"Sæt {moddedTemplate.Title} ind under en knap")" @onclick="() => AskAttach(moddedTemplate)">
+                                <Icon Name="add_link" /> Sæt ind
+                            </button>
+                            <button type="button" class="btn btn-danger-ghost btn-sm"
+                                    aria-label="@($"Slet {moddedTemplate.Title}")" @onclick="() => AskDeleteOrphan(moddedTemplate)">
+                                <Icon Name="delete" /> Slet
+                            </button>
+                        </div>
                     </li>
                 }
             </ul>
@@ -207,6 +220,22 @@ else
                     Siden bliver slettet med alt, der står på den.
                 </p>
             </ConfirmDialog>
+            break;
+
+        case DialogKind.ChangeTemplate when changing is not null:
+            <TemplatePickerDialog Title="@($"Vælg en ny skabelon til «{changing.Title}»")"
+                                  Templates="SameKindTemplates" Notes="ChangeNotesFor"
+                                  SubmitText="Skift skabelon" BusyText="Skifter…"
+                                  Submit="type => Editing.ChangeTemplateAsync(model!, changing!, type)"
+                                  OnDone="OnTemplateChanged" OnCancel="CloseDialog" />
+            break;
+
+        case DialogKind.AttachPage when attaching is not null:
+            <ButtonPickerDialog Title="@($"Sæt «{attaching.Title}» ind under en knap")"
+                                Intro="Siden kommer sidst i knappens forløb. Rækkefølgen kan ændres bagefter med pilene."
+                                Buttons="model.AllButtons().ToList()"
+                                Submit="button => Editing.AttachPageAsync(button, attaching!)"
+                                OnDone="OnPageAttached" OnCancel="CloseDialog" />
             break;
 
         case DialogKind.Publish:

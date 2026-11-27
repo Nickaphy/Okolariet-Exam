@@ -2272,6 +2272,7 @@ public TokenRequestGrantType GrantType { get; set; }
         public string Email { get; set; }
 
         [JsonPropertyName("password")]
+        [System.ComponentModel.DataAnnotations.StringLength(128)]
         public string Password { get; set; }
 
         /// <summary>
@@ -2358,7 +2359,7 @@ public TokenRequestGrantType GrantType { get; set; }
 
         [JsonPropertyName("newPassword")]
         [System.ComponentModel.DataAnnotations.Required]
-        [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 12)]
+        [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 12)]
         public string NewPassword { get; set; }
 
         private IDictionary<string, object> _additionalProperties;
@@ -2545,7 +2546,7 @@ public TokenRequestGrantType GrantType { get; set; }
 
         [JsonPropertyName("password")]
         [System.ComponentModel.DataAnnotations.Required]
-        [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 12)]
+        [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 12)]
         public string Password { get; set; }
 
         [JsonPropertyName("role")]
@@ -2650,14 +2651,15 @@ public StaffRole Role { get; set; }
     {
 
         /// <summary>
-        /// Required when changing your own password
+        /// Required when changing your own password. Leave out (or null) when an admin resets someone else's password.
         /// </summary>
         [JsonPropertyName("currentPassword")]
+        [System.ComponentModel.DataAnnotations.StringLength(128)]
         public string CurrentPassword { get; set; }
 
         [JsonPropertyName("newPassword")]
         [System.ComponentModel.DataAnnotations.Required]
-        [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 12)]
+        [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 12)]
         public string NewPassword { get; set; }
 
         private IDictionary<string, object> _additionalProperties;
