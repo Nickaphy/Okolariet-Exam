@@ -19,10 +19,20 @@ public class UploadAssetUseCase(
             {
                 var kind = Asset.KindFromContentType(cmd.ContentType);
                 if (kind is null)
-                    return Result.Fail(new BusinessRuleError("File type not allowed."));        // should become 415
+                    return Result.Fail(new BusinessRuleError("File type not allowed."));
+                    // should become 415
 
                 if (cmd.SizeBytes > Asset.MaxBytesFor(kind.Value))
-                    return Result.Fail(new BusinessRuleError("File is too large."));            // should become 413
+                    return Result.Fail(new BusinessRuleError("File is too large."));
+                    // should become 413
+
+                // Check the same rules as Asset.Create BEFORE the file is written to disk.
+                // Otherwise a failed upload would leave an orphaned file behind.
+                if (string.IsNullOrWhiteSpace(cmd.OriginalName))
+                    return Result.Fail(new BusinessRuleError("Name required."));
+
+                if (cmd.SizeBytes <= 0)
+                    return Result.Fail(new BusinessRuleError("File is empty."));
 
                 var storedName = await saveFile.SaveFileAsync(cmd.Content, cmd.ContentType, ct);
                 var asset = Asset.Create(kind.Value, cmd.OriginalName, storedName, cmd.ContentType, cmd.SizeBytes, time.GetUtcNow());
