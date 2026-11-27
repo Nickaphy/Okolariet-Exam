@@ -1,13 +1,16 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 
 namespace Web.Templates.Menus
 {
+    // The shared frame of all main-menu templates (see MenuFrame.razor for the layout).
+    // A menu template is just this frame with its own settings, e.g.
+    //     <MenuFrame Buttons="6" Columns="3" Size="MenuButtonSize.Medium" Compact="true" />
     public partial class MenuFrame
     {
         [CascadingParameter] public TemplateScope Scope { get; set; } = default!;
 
-        // The button slots of this template, in order.
-        [Parameter, EditorRequired] public IReadOnlyList<string> Keys { get; set; } = [];
+        // How many buttons the template has. Their slot keys are button1, button2 ... (must match TemplateCatalog).
+        [Parameter, EditorRequired] public int Buttons { get; set; }
 
         // Buttons per row.
         [Parameter] public int Columns { get; set; } = 2;
@@ -20,23 +23,26 @@ namespace Web.Templates.Menus
         // Smaller heading, for menus with many buttons.
         [Parameter] public bool Compact { get; set; }
 
-        private bool HasBackground => Scope.Slot("background")?.AssetId is not null;
+        private IEnumerable<string> Keys => ButtonKeys(Buttons);
 
-        // With few buttons filled in, they share the width between them (never more columns than the template has).
+        // Buttons per row actually used. With only 2 of 4 buttons filled in, those 2 share the whole width.
+        // In placeholder mode every button is shown, so all columns are used.
         private int Cols => Scope.Placeholders
             ? Columns
             : Math.Clamp(Keys.Count(Scope.HasText), 1, Columns);
 
+        // MenuButtonSize.Large → "mf-large" (the CSS class with that size).
         private string SizeClass => "mf-" + Size.ToString().ToLowerInvariant();
 
-        // button1, button2 ... buttonN. Must match TemplateCatalog on the server.
-        public static string[] ButtonKeys(int count) =>
-            Enumerable.Range(1, count).Select(i => $"button{i}").ToArray();
+        private static IEnumerable<string> ButtonKeys(int count) =>
+            Enumerable.Range(1, count).Select(i => $"button{i}");
+
+        // ---- example content for the template gallery and the template picker ----
 
         private static readonly string[] SampleLabels =
             ["Quiz", "Fakta om affald", "Sorteringsspil", "Hav og strand", "Skoven", "Genbrug", "Dyrene", "Energi"];
 
-        // Example content for the template gallery.
+        // Buttons get a made-up target, so they look "alive" (a button without a target is drawn faded).
         public static PageContent Sample(string templateType, int buttons)
         {
             var slots = new Dictionary<string, SlotContent>
@@ -45,10 +51,10 @@ namespace Web.Templates.Menus
                 ["intro"] = new("Tryk på en knap for at gå på opdagelse"),
             };
 
-            for (var i = 0; i < buttons; i++)
-                slots[$"button{i + 1}"] = new(SampleLabels[i], TargetId: Guid.NewGuid());
+            foreach (var (key, label) in ButtonKeys(buttons).Zip(SampleLabels))
+                slots[key] = new SlotContent(label, TargetId: Guid.NewGuid());
 
-            return new(Guid.Empty, templateType, "Hovedmenu", null, slots);
+            return new PageContent(Guid.Empty, templateType, null, null, slots);
         }
     }
 }

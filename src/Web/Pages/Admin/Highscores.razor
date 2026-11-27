@@ -1,11 +1,14 @@
-﻿@page "/admin/highscores"
+@page "/admin/highscores"
 @layout AdminLayout
 @attribute [Authorize]
-@inject IProjectsApi ProjectsApi
-@inject ITemplatesApi TemplatesApi
-@inject IModdedTemplatesApi ModdedTemplatesApi
-@inject IUsersApi UsersApi
-@inject IStatisticsApi StatisticsApi
+@inject IProjectGateway ProjectGateway
+@inject ITemplateGateway TemplateGateway
+@inject IModdedTemplateGateway ModdedTemplateGateway
+@inject IUserGateway UserGateway
+@inject IStatisticsGateway StatisticsGateway
+
+@* Results per exhibition: totals at the top, then per quiz the top 10 and the questions (QuestionResults),
+   and "Start forfra" at the bottom. The exhibition is picked in a drop-down. *@
 
 <PageTitle>Highscores · Økolariet</PageTitle>
 
@@ -16,10 +19,7 @@
     </div>
 </header>
 
-@if (notice is not null)
-{
-    <NoticeBar Kind="@notice.Kind" Text="@notice.Text" OnClose="() => notice = null" />
-}
+<NoticeBar Notice="notice" OnClose="() => notice = null" />
 
 @if (projectsState == LoadState.Loading)
 {
@@ -27,11 +27,7 @@
 }
 else if (projectsState == LoadState.Failed)
 {
-    <div class="empty-state" role="alert">
-        <h2>Udstillingerne kunne ikke hentes</h2>
-        <p>@projectsError</p>
-        <button type="button" class="btn btn-secondary" @onclick="LoadProjectsAsync">Prøv igen</button>
-    </div>
+    <LoadError Title="Udstillingerne kunne ikke hentes" Message="@projectsError" OnRetry="LoadProjectsAsync" />
 }
 else if (projects.Count == 0)
 {
@@ -58,11 +54,7 @@ else
     }
     else if (dataState == LoadState.Failed)
     {
-        <div class="empty-state" role="alert">
-            <h2>Resultaterne kunne ikke hentes</h2>
-            <p>@dataError</p>
-            <button type="button" class="btn btn-secondary" @onclick="LoadDataAsync">Prøv igen</button>
-        </div>
+        <LoadError Title="Resultaterne kunne ikke hentes" Message="@dataError" OnRetry="LoadDataAsync" />
     }
     else if (stats is not null)
     {
@@ -130,60 +122,7 @@ else
                             <ul class="questions">
                                 @foreach (var question in questions)
                                 {
-                                    var isOpen = expanded.Contains(question.Id);
-                                    <li class="question" @key="question.Id">
-                                        <div class="question-head">
-                                            <span class="question-text">@question.Text</span>
-                                            <button type="button" class="btn btn-secondary btn-sm"
-                                                    aria-expanded="@(isOpen ? "true" : "false")"
-                                                    @onclick="() => ToggleQuestionAsync(question)">
-                                                <Icon Name="@(isOpen ? "expand_less" : "bar_chart")" /> @(isOpen ? "Skjul svar" : "Vis svar")
-                                            </button>
-                                        </div>
-
-                                        @if (isOpen)
-                                        {
-                                            if (loadingQuestions.Contains(question.Id))
-                                            {
-                                                <p class="muted">Henter…</p>
-                                            }
-                                            else if (questionStats.TryGetValue(question.Id, out var s))
-                                            {
-                                                <p class="q-summary">@s.TotalAnswers svar · @Display.Percent(s.CorrectPercentage) rigtige</p>
-                                                <ul class="bars">
-                                                    @foreach (var answer in s.Answers)
-                                                    {
-                                                        var def = question.Answers?.FirstOrDefault(a => a.Id == answer.AnswerId);
-                                                        var isCorrect = def?.IsCorrect == true;
-                                                        <li class="bar-row">
-                                                            <span class="bar-label">
-                                                                @(def?.Text ?? "Slettet svar")
-                                                                @if (isCorrect)
-                                                                {
-                                                                    <span class="tick">✓ rigtigt</span>
-                                                                }
-                                                            </span>
-                                                            <span class="bar" role="img" aria-label="@Display.Percent(answer.Percentage)">
-                                                                <span class="bar-fill @(isCorrect ? "bar-fill-correct" : "")"
-                                                                      style="width:@Display.CssWidth(answer.Percentage)"></span>
-                                                            </span>
-                                                            <span class="bar-value">@answer.Count · @Display.Percent(answer.Percentage)</span>
-                                                        </li>
-                                                    }
-                                                </ul>
-                                                <button type="button" class="btn btn-danger-ghost btn-sm"
-                                                        @onclick="() => AskReset(question)">
-                                                    <Icon Name="restart_alt" /> Nulstil svar
-                                                </button>
-                                            }
-                                            else
-                                            {
-                                                <p class="form-error" role="alert">
-                                                    @(questionErrors.GetValueOrDefault(question.Id) ?? "Svarene kunne ikke hentes.")
-                                                </p>
-                                            }
-                                        }
-                                    </li>
+                                    <QuestionResults @key="question.Id" Question="question" OnReset="AskReset" />
                                 }
                             </ul>
                         }

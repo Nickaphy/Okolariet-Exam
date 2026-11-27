@@ -1,21 +1,24 @@
+@* The coloured message strip at the top of a page. Draws nothing while Notice is null, so a page can
+   simply write  <NoticeBar Notice="notice" OnClose="() => notice = null" />  without an @if around it.
+   Without OnClose there is no close button (used for "Uploader 2 af 5 …"). *@
 
-@* Coloured message strip at the top of a page, that relays status information -> ("Slettet", "Udgivet", errors). Kind: "info" | "success" | "error". *@
-
-<div class="notice notice-@Kind" role="@(Kind == "error" ? "alert" : "status")">
-    <Icon Name="@IconName" Class="notice-icon" />
-    <span class="notice-text">@Text</span>
-    @if (OnClose.HasDelegate)
-    {
-        <button type="button" class="notice-close" aria-label="Luk beskeden" @onclick="OnClose"><Icon Name="close" /></button>
-    }
-</div>
+@if (Notice is not null)
+{
+    <div class="notice notice-@Notice.Kind" role="@(Notice.Kind == "error" ? "alert" : "status")">
+        <Icon Name="@IconName" Class="notice-icon" />
+        <span class="notice-text">@Notice.Text</span>
+        @if (OnClose.HasDelegate)
+        {
+            <button type="button" class="notice-close" aria-label="Luk beskeden" @onclick="OnClose"><Icon Name="close" /></button>
+        }
+    </div>
+}
 
 @code {
-    [Parameter] public string Kind { get; set; } = "info";
-    [Parameter, EditorRequired] public string Text { get; set; } = string.Empty;
+    [Parameter] public Notice? Notice { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
 
-    private string IconName => Kind switch
+    private string IconName => Notice?.Kind switch
     {
         "success" => "check_circle",
         "error" => "error",

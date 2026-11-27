@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 using Web.Api;
 using Web.Api.Contracts;
 
@@ -39,14 +39,7 @@ namespace Web.Dialogs.EditorDialogs
             var type = selected!;
             busy = true;
             error = null;
-            try
-            {
-                error = await Submit(type);
-            }
-            catch (HttpRequestException)
-            {
-                error = ApiErrors.Offline;
-            }
+            error = await ApiCall.Try(() => Submit(type));   // null = it worked
             busy = false;
 
             if (error is null) await OnDone.InvokeAsync(type);

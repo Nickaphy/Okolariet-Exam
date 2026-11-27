@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 using Web.Api;
 
 namespace Web.Dialogs.ReusableDialogs
@@ -26,9 +26,9 @@ namespace Web.Dialogs.ReusableDialogs
 
         [Parameter] public RenderFragment? Extra { get; set; }
 
+        // Does the work with the typed text. Returns null on success, or a message to show in the dialog.
         [Parameter, EditorRequired] public Func<string, Task<string?>> Submit { get; set; } = default!;
 
-        
         // Called after a successful submit, with the name that was saved.
         [Parameter] public EventCallback<string> OnDone { get; set; }
         [Parameter] public EventCallback OnCancel { get; set; }
@@ -42,7 +42,8 @@ namespace Web.Dialogs.ReusableDialogs
 
         private bool CanSubmit => !busy && Valid && text.Trim().Length > 0;
 
-        protected override void OnInitialized() => text = Value ?? string.Empty; // Helps prevent NULL text error by forcing string.Empty
+        // Start with the current name when renaming (never null, so .Trim() is always safe).
+        protected override void OnInitialized() => text = Value ?? string.Empty;
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
@@ -58,14 +59,7 @@ namespace Web.Dialogs.ReusableDialogs
             var name = text.Trim();
             busy = true;
             error = null;
-            try
-            {
-                error = await Submit(name);
-            }
-            catch (HttpRequestException)
-            {
-                error = ApiErrors.Offline;
-            }
+            error = await ApiCall.Try(() => Submit(name));   // null = it worked
             busy = false;
 
             if (error is null) await OnDone.InvokeAsync(name);

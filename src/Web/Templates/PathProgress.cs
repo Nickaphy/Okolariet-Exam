@@ -1,35 +1,50 @@
-﻿using Web.Services.Editor;
+using Web.Services.Editor;
 
 namespace Web.Templates
 {
-    // Index is 1-based.
+    // "Page 2 of 5". Index starts at 1.
     public sealed record PathPosition(int Index, int Total);
 
-    // "Side 2 / 5": where a page sits in its chain of "next" links, on the published pages.
-    // It follows whatever order staff chose. A page on its own (no next, nothing pointing at it) has no position.
+    // Works out where the kiosk's current page sits in its path, for "Side 2 / 5" and the dots.
+    //
+    // The published pages don't store an order; each page only knows the page AFTER it (the "next" slot,
+    // see PathConvention). So we count:
+    //   - backwards: which page points at this one, which page points at that one, ... → pages before;
+    //   - forwards:  this page's next, that page's next, ...                            → pages after.
+    // It follows whatever order staff chose in the editor. A page alone (nothing before or after) has no position.
     public static class PathProgress
     {
         public static PathPosition? Of(PageContent current, IReadOnlyDictionary<Guid, PageContent> pages)
         {
-            // Who points at whom, so we can walk backwards to the start of the path.
-            var previous = new Dictionary<Guid, Guid>();
+            // Turn the "next" links around: for every page, which page comes BEFORE it.
+            var previousOf = new Dictionary<Guid, Guid>();
             foreach (var page in pages.Values)
+            {
                 if (NextOf(page) is Guid next && pages.ContainsKey(next))
-                    previous.TryAdd(next, page.Id);
+                    previousOf.TryAdd(next, page.Id);
+            }
 
-            var seen = new HashSet<Guid> { current.Id };   // also stops a loop
+            // Pages already counted. Stops us from counting forever if the links ever form a loop (A → B → A).
+            var seen = new HashSet<Guid> { current.Id };
 
             var before = 0;
-            for (var id = current.Id; previous.TryGetValue(id, out var earlier) && seen.Add(earlier); id = earlier)
+            var id = current.Id;
+            while (previousOf.TryGetValue(id, out var earlier) && seen.Add(earlier))
+            {
                 before++;
+                id = earlier;
+            }
 
             var after = 0;
-            for (var page = current;
-                 NextOf(page) is Guid next && pages.TryGetValue(next, out var following) && seen.Add(next);
-                 page = following)
+            var at = current;
+            while (NextOf(at) is Guid next && pages.TryGetValue(next, out var following) && seen.Add(next))
+            {
                 after++;
+                at = following;
+            }
 
-            return before + after == 0 ? null : new PathPosition(before + 1, before + after + 1);
+            if (before + after == 0) return null;
+            return new PathPosition(before + 1, before + after + 1);
         }
 
         private static Guid? NextOf(PageContent page) =>

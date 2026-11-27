@@ -1,4 +1,4 @@
-﻿using Web.Api;
+using Web.Api;
 using Web.Api.Contracts;
 using Web.Helpers;
 using Web.Ports.Helpers;
@@ -29,6 +29,13 @@ namespace Web.Adapters.Projects
 
         public async Task<Project> GetProject(Guid projectId, CancellationToken ct = default)
             => (await api.GetProject(projectId, ct)).Unwrap();
+
+        // ETag'en står i svarets headers, ikke i selve projektet, så den hentes ud her.
+        public async Task<Versioned<Project>> GetProjectWithETag(Guid projectId, CancellationToken ct = default)
+        {
+            var response = await api.GetProject(projectId, ct);
+            return new Versioned<Project>(response.Unwrap(), response.Headers?.ETag?.Tag);
+        }
 
         public async Task<Project> UpdateProject(Guid projectId, ProjectInput body, string ifMatch, CancellationToken ct = default)
             => (await api.UpdateProject(projectId, body, ifMatch, ct)).Unwrap();

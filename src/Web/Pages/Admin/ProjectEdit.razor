@@ -4,6 +4,14 @@
 @inject ExhibitionLoader Loader
 @inject ExhibitionEditor Editing
 
+@* The editor of one exhibition. From the top:
+   1. no main menu yet → pick a menu template and create it;
+   2. the main menu: its texts, its buttons with their paths of pages (ButtonPathList), and a live preview;
+   3. Udseende (colours and font, AppearanceEditor);
+   4. pages no button leads to ("Sider uden knap"), so they can be deleted;
+   5. the dialogs. Only one is open at a time, chosen by "dialog" (see DialogKind in ProjectEdit.razor.cs).
+   All changes go through ExhibitionEditor, and the page reloads the whole model after each change. *@
+
 <PageTitle>@(model?.Project.Name ?? "Rediger") · Økolariet</PageTitle>
 
 <a class="back" href="admin/projects"><Icon Name="arrow_back" /> Alle udstillinger</a>
@@ -16,11 +24,7 @@
     }
     else
     {
-        <div class="empty-state" role="alert">
-            <h1 tabindex="-1">Udstillingen kunne ikke hentes</h1>
-            <p>@loadError</p>
-            <button type="button" class="btn btn-secondary" @onclick="ReloadAsync"><Icon Name="refresh" /> Prøv igen</button>
-        </div>
+        <LoadError Title="Udstillingen kunne ikke hentes" Message="@loadError" OnRetry="ReloadAsync" />
     }
 }
 else
@@ -29,14 +33,7 @@ else
         <div class="title-block">
             <h1 tabindex="-1">@model.Project.Name</h1>
             <div class="title-meta">
-                @if (model.Project.LatestVersionNumber is { } version)
-                {
-                    <span class="status status-live"><span class="dot"></span>Udgivet · version @version</span>
-                }
-                else
-                {
-                    <span class="status status-draft"><span class="dot"></span>Ikke udgivet endnu</span>
-                }
+                <PublishStatus Version="model.Project.LatestVersionNumber" />
                 <button type="button" class="link-button" @onclick="() => Open(DialogKind.Rename)">
                     <Icon Name="edit" /> Skift navn
                 </button>
@@ -49,20 +46,14 @@ else
         </button>
     </header>
 
-    @if (notice is not null)
-    {
-        <NoticeBar Kind="@notice.Kind" Text="@notice.Text" OnClose="() => notice = null" />
-    }
+    <NoticeBar Notice="notice" OnClose="() => notice = null" />
 
     @if (model.Menu is null)
     {
         <section class="panel section" aria-labelledby="menu-heading">
-            <div class="panel-head">
-                <div>
-                    <h2 id="menu-heading"><span class="head-icon"><Icon Name="home" /></span> Vælg hovedmenu</h2>
-                    <p>Alle udstillinger starter med en hovedmenu. Vælg, hvordan den skal se ud.</p>
-                </div>
-            </div>
+            <PanelHead IconName="home" Title="Vælg hovedmenu" Id="menu-heading">
+                Alle udstillinger starter med en hovedmenu. Vælg, hvordan den skal se ud.
+            </PanelHead>
 
             @if (MenuTemplates.Count == 0)
             {
@@ -83,16 +74,15 @@ else
     {
         <div class="editor-grid">
             <section class="panel" aria-labelledby="menu-heading">
-                <div class="panel-head">
-                    <div>
-                        <h2 id="menu-heading"><span class="head-icon"><Icon Name="home" /></span> Hovedmenu</h2>
-                        <p>
-                            Det første, gæsterne ser. Hver knap fører ind i et forløb af sider, der vises efter hinanden.
-                            Et forløb kan også ende i en undermenu med sine egne knapper.
-                        </p>
-                    </div>
-                    <span class="template-tag"><Icon Name="dashboard" /> @model.DisplayNameOf(model.Menu.TemplateType)</span>
-                </div>
+                <PanelHead IconName="home" Title="Hovedmenu" Id="menu-heading">
+                    <ChildContent>
+                        Det første, gæsterne ser. Hver knap fører ind i et forløb af sider, der vises efter hinanden.
+                        Et forløb kan også ende i en undermenu med sine egne knapper.
+                    </ChildContent>
+                    <Aside>
+                        <span class="template-tag"><Icon Name="dashboard" /> @model.DisplayNameOf(model.Menu.TemplateType)</span>
+                    </Aside>
+                </PanelHead>
 
                 @if (MenuTextSlots.Count > 0)
                 {
@@ -116,18 +106,16 @@ else
                     <p class="section-lead">Den valgte menu har ingen knapper.</p>
                 }
 
-                @RenderButtons(model.Buttons)
+                <ButtonPathList Buttons="model.Buttons" Model="model" Busy="busy"
+                                OnLabelChanged="SaveLabelAsync" OnAddPage="AskAdd" OnRemovePage="AskRemove" />
             </section>
 
             <aside class="panel preview-panel" aria-labelledby="preview-heading">
-                <div class="panel-head">
-                    <div>
-                        <h2 id="preview-heading"><span class="head-icon"><Icon Name="visibility" /></span> Forhåndsvisning</h2>
-                        <p>Sådan ser hovedmenuen ud på skærmen. Tomme felter vises med stiplet kant.</p>
-                    </div>
-                </div>
+                <PanelHead IconName="visibility" Title="Forhåndsvisning" Id="preview-heading">
+                    Sådan ser hovedmenuen ud på skærmen. Tomme felter vises med stiplet kant.
+                </PanelHead>
                 <div class="preview-stage">
-                    <TemplateHost Page="PageContent.From(model.Menu)" Inherited="model.Project.Appearance"
+                    <TemplateHost Page="MenuPage!" Inherited="model.Project.Appearance"
                                   Definition="model.MenuTemplate" Preview="true" Placeholders="true" />
                 </div>
             </aside>
@@ -135,14 +123,11 @@ else
     }
 
     <section class="panel section" aria-labelledby="look-heading">
-        <div class="panel-head">
-            <div>
-                <h2 id="look-heading"><span class="head-icon"><Icon Name="palette" /></span> Udseende</h2>
-                <p>Farver og skrifttype for hele udstillingen. Vælg et færdigt tema, eller sæt farverne sammen selv.</p>
-            </div>
-        </div>
+        <PanelHead IconName="palette" Title="Udseende" Id="look-heading">
+            Farver og skrifttype for hele udstillingen. Vælg et færdigt tema, eller sæt farverne sammen selv.
+        </PanelHead>
         <AppearanceEditor Value="model.Project.Appearance"
-                          PreviewPage="@(model.Menu is null ? null : PageContent.From(model.Menu))"
+                          PreviewPage="MenuPage"
                           PreviewDefinition="model.MenuTemplate"
                           Save="appearance => Editing.SaveAppearanceAsync(model!, appearance)"
                           OnSaved="OnAppearanceSaved" />
@@ -151,12 +136,9 @@ else
     @if (model.Orphans.Count > 0)
     {
         <section class="panel section" aria-labelledby="orphans-heading">
-            <div class="panel-head">
-                <div>
-                    <h2 id="orphans-heading"><span class="head-icon"><Icon Name="link_off" /></span> Sider uden knap</h2>
-                    <p>Disse sider er ikke koblet til nogen knap, så gæsterne kan ikke nå dem. Slet dem, hvis de ikke skal bruges.</p>
-                </div>
-            </div>
+            <PanelHead IconName="link_off" Title="Sider uden knap" Id="orphans-heading">
+                Disse sider er ikke koblet til nogen knap, så gæsterne kan ikke nå dem. Slet dem, hvis de ikke skal bruges.
+            </PanelHead>
             <ul class="steps">
                 @foreach (var moddedTemplate in model.Orphans)
                 {
@@ -243,83 +225,4 @@ else
             </ConfirmDialog>
             break;
     }
-}
-
-@code {
-    // The buttons of a menu, each with its path of pages. A page that is itself a menu shows that menu's own buttons
-    // below it, which is why this calls itself.
-    private RenderFragment RenderButtons(IReadOnlyList<ButtonPath> buttons) => @<ol class="buttons">
-        @foreach (var button in buttons)
-        {
-            <li class="button-card" @key="button.Slot.Key">
-                <div class="button-top">
-                    <span class="button-badge"><Icon Name="smart_button" /> @button.Slot.Label</span>
-                    <div class="button-label">
-                        <label for="@LabelId(button)" class="visually-hidden">Tekst på @button.Slot.Label</label>
-                        <input id="@LabelId(button)" class="input" value="@button.Label"
-                               placeholder="Tekst på knappen, fx Quiz"
-                               maxlength="@(button.Slot.MaxLength ?? 500)"
-                               autocomplete="off" disabled="@busy"
-                               @onchange="e => SaveLabelAsync(button, e.Value?.ToString() ?? string.Empty)" />
-                    </div>
-                </div>
-
-                <div class="path">
-                    @if (button.Pages.Count == 0)
-                    {
-                        <p class="path-empty"><Icon Name="info" /> Knappen fører ikke nogen steder hen endnu.</p>
-                    }
-                    else
-                    {
-                        <ol class="steps" aria-label="@($"Forløb for {button.Slot.Label}")">
-                            @for (var i = 0; i < button.Pages.Count; i++)
-                            {
-                                var index = i;
-                                var node = button.Pages[i];
-                                <li class="step-item" @key="node.Page.Id">
-                                    <div class="step">
-                                        <span class="step-no" aria-hidden="true">@(index + 1)</span>
-                                        <div class="step-info">
-                                            <strong>@node.Page.Title</strong>
-                                            <small>@StepDetail(node, index, button.Pages.Count)</small>
-                                        </div>
-                                        @* Editing the contents of a page is the next step. *@
-                                        <button type="button" class="btn btn-secondary btn-sm" disabled
-                                                title="Kommer i næste trin">
-                                            <Icon Name="edit_note" /> Indhold
-                                        </button>
-                                        <button type="button" class="btn btn-danger-ghost btn-sm"
-                                                aria-label="@($"Fjern {node.Page.Title}")"
-                                                @onclick="() => AskRemove(button, index)">
-                                            <Icon Name="delete" /> Fjern
-                                        </button>
-                                    </div>
-
-                                    @if (node.IsMenu)
-                                    {
-                                        <div class="sub-menu">
-                                            <p class="sub-menu-lead"><Icon Name="subdirectory_arrow_right" /> Knapper på «@node.Page.Title»</p>
-                                            @RenderButtons(node.Buttons)
-                                        </div>
-                                    }
-                                </li>
-                            }
-                        </ol>
-                    }
-
-                    @if (button.EndsInMenu)
-                    {
-                        <p class="path-empty"><Icon Name="info" /> Forløbet slutter i en undermenu. Tilføj flere sider på undermenuens knapper.</p>
-                    }
-                    else
-                    {
-                        <button type="button" class="btn btn-secondary btn-sm add-page" disabled="@busy"
-                                @onclick="() => AskAdd(button)">
-                            <Icon Name="add" /> Tilføj side
-                        </button>
-                    }
-                </div>
-            </li>
-        }
-    </ol>;
 }

@@ -1,9 +1,11 @@
-﻿@namespace Web.Templates.Slots
+@namespace Web.Templates.Slots
+@inherits SlotBase
 
 @* An audio slot: a round "read aloud" button that plays or pauses the sound file.
-   Nothing when empty (a dashed box in placeholder mode). *@
+   The play/pause is a line of plain JavaScript in onclick (no Blazor round trip needed):
+   "this.nextElementSibling" is the <audio> element right after the button. *@
 
-@if (Scope.Slot(Key)?.AssetId is Guid id)
+@if (Content?.AssetId is Guid id)
 {
     <span class="slot-audio @Class" data-slot="@Key">
         <button type="button" class="slot-audio-button" aria-label="Afspil oplæsning"
@@ -17,10 +19,4 @@
 else if (Scope.Placeholders)
 {
     <div class="slot-placeholder @Class" data-slot="@Key">@Scope.LabelOf(Key)</div>
-}
-
-@code {
-    [CascadingParameter] public TemplateScope Scope { get; set; } = default!;
-    [Parameter, EditorRequired] public string Key { get; set; } = string.Empty;
-    [Parameter] public string? Class { get; set; }
 }

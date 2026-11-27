@@ -12,18 +12,18 @@
     overflow: hidden;
 }
 
+/* The 16:9 screen leaves the bottom 11vh free for the navigation bar, so the bar never covers
+   anything on the page (answer tiles, buttons at the bottom of a template). */
 .screen {
-    width: min(100vw, calc(100vh * 16 / 9));
+    width: min(100vw, calc(89vh * 16 / 9));
 }
 
 .kiosk-nav {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 2.5vh;
     display: flex;
+    align-items: center;
     justify-content: center;
     gap: 1.5vw;
+    height: 11vh;
     pointer-events: none;
 }
 

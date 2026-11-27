@@ -1,8 +1,9 @@
 @namespace Web.Templates.Slots
+@inherits SlotBase
 
-@* A text slot. Heading=true draws it as the page's <h1>. Renders nothing when empty (or a placeholder in previews). *@
+@* A text slot. Heading=true draws it as the page's <h1>. Draws nothing when empty (a dashed box in placeholder mode). *@
 
-@if (Scope.Slot(Key)?.Text is { Length: > 0 } text)
+@if (Content?.Text is { Length: > 0 } text)
 {
     if (Heading)
     {
@@ -19,8 +20,5 @@ else if (Scope.Placeholders)
 }
 
 @code {
-    [CascadingParameter] public TemplateScope Scope { get; set; } = default!;
-    [Parameter, EditorRequired] public string Key { get; set; } = string.Empty;
-    [Parameter] public string? Class { get; set; }
     [Parameter] public bool Heading { get; set; }
 }

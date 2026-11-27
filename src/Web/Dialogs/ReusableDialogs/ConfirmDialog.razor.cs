@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Web.Api;
 using Web.Components;
 
 namespace Web.Dialogs.ReusableDialogs
@@ -57,14 +58,7 @@ namespace Web.Dialogs.ReusableDialogs
 
             busy = true;
             error = null;
-            try
-            {
-                error = await Run();
-            }
-            catch (HttpRequestException)
-            {
-                error = Web.Api.ApiErrors.Offline;
-            }
+            error = await ApiCall.Try(Run);   // null = it worked
             busy = false;
 
             if (error is null) await OnDone.InvokeAsync();

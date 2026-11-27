@@ -1,4 +1,4 @@
-﻿@namespace Web.Templates.Facts
+@namespace Web.Templates.Facts
 @using Web.Templates.Slots
 
 @* Template "fact-video": a big video with a caption below. Slot keys: video, title. *@
@@ -9,9 +9,6 @@
 </div>
 
 @code {
-    public static PageContent Sample() => new(Guid.Empty, "fact-video", "Fakta", null,
-        new Dictionary<string, SlotContent>
-        {
-            ["title"] = new("Mød skildpadden, der spiste en pose"),
-        });
+    public static PageContent Sample() => PageContent.Sample("fact-video",
+        ("title", "Mød skildpadden, der spiste en pose"));
 }

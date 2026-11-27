@@ -1,4 +1,4 @@
-﻿using Web.Api.Contracts;
+using Web.Api.Contracts;
 
 namespace Web.Services.Editor
 {
@@ -17,10 +17,13 @@ namespace Web.Services.Editor
     {
         public bool IsMenu => Template?.Category == TemplateCategory.Menu;
 
-        // Every page below this one (sub-menu buttons and their paths), parents before children.
+        // Every page below this one (the paths behind a sub-menu's buttons), parents before children.
+        // Calls WithSubPages on each of those pages, so it goes all the way down through sub-sub-menus.
+        // For a normal page (not a menu) Buttons is empty, so this is empty too.
         public IEnumerable<ModdedTemplate> SubPages() =>
-            Buttons.SelectMany(b => b.Pages.SelectMany(p => p.WithSubPages()));
+            Buttons.SelectMany(button => button.Pages.SelectMany(page => page.WithSubPages()));
 
+        // This page first, then everything below it. The order deletes can safely happen in.
         public IEnumerable<ModdedTemplate> WithSubPages() => SubPages().Prepend(Page);
     }
 
@@ -28,6 +31,10 @@ namespace Web.Services.Editor
     // OwnerId is the menu the button sits on.
     public sealed record ButtonPath(Guid OwnerId, SlotDefinition Slot, string Label, IReadOnlyList<PathPage> Pages)
     {
+        // The page the button itself points at (null when the path is empty).
+        public Guid? FirstPageId => Pages.Count > 0 ? Pages[0].Page.Id : null;
+
+        // A path that ends in a sub-menu can't get more pages: the sub-menu's own buttons lead on.
         public bool EndsInMenu => Pages.Count > 0 && Pages[^1].IsMenu;
 
         public bool LastIs(string templateType) => Pages.Count > 0 && Pages[^1].Page.TemplateType == templateType;

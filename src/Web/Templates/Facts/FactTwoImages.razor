@@ -1,4 +1,4 @@
-﻿@namespace Web.Templates.Facts
+@namespace Web.Templates.Facts
 @using Web.Templates.Slots
 
 @* Template "fact-two-images": heading, then two images side by side, each with a caption (before/after, A/B).
@@ -20,16 +20,11 @@
 @code {
     [CascadingParameter] public TemplateScope Scope { get; set; } = default!;
 
-    private static readonly int[] Numbers = [1, 2];
+    // The columns to draw. With only one filled in, it gets the whole width.
+    private IEnumerable<int> Used => new[] { 1, 2 }.Where(n => Scope.Show($"image{n}", $"caption{n}"));
 
-    private IEnumerable<int> Used => Numbers.Where(n => Scope.Placeholders
-        || Scope.HasText($"caption{n}") || Scope.Slot($"image{n}")?.AssetId is not null);
-
-    public static PageContent Sample() => new(Guid.Empty, "fact-two-images", "Fakta", null,
-        new Dictionary<string, SlotContent>
-        {
-            ["title"] = new("Før og efter oprydningen"),
-            ["caption1"] = new("Stranden før"),
-            ["caption2"] = new("Stranden efter"),
-        });
+    public static PageContent Sample() => PageContent.Sample("fact-two-images",
+        ("title", "Før og efter oprydningen"),
+        ("caption1", "Stranden før"),
+        ("caption2", "Stranden efter"));
 }

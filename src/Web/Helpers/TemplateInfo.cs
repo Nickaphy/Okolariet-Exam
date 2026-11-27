@@ -1,24 +1,24 @@
-﻿using Web.Api.Contracts;
+using Web.Api.Contracts;
 using Web.Services.Editor;
 
 namespace Web.Helpers
 {
-    // This helper exists to translate some of the UI "Items" or "Assets" so we don't have to repeat ourselves.
-    // Danish texts about the fixed templates. Presentation only.
+    // Danish texts about the templates, for the template picker. Presentation only.
     public static class TemplateInfo
     {
-        public static string CategoryName(TemplateCategory category) => category switch //TO DO: Make sure to add Game when that type is ready
+        // The group headings in the picker. TODO: add Game when that category exists.
+        public static string CategoryName(TemplateCategory category) => category switch
         {
             TemplateCategory.Quiz => "Quiz",
             TemplateCategory.Fact => "Fakta",
             _ => "Menu"
         };
 
-        // Hand-written text for a template that deserves a nicer description. Key = template type.
-        // A template that is not listed here still gets a description, made from its slots.
+        // A hand-written description for a template. Key = template type.
+        // A template that is not listed here still gets one, counted from its slots ("4 knapper, 2 tekstfelter.").
         private static readonly Dictionary<string, string> Overrides = new()
         {
-            ["fact-image-text"] = "Overskrift og tekst ved siden af et billede. Kan læses højt.", //These are not CSS items, they are the templates' names located in Web/Templates/Facts
+            ["fact-image-text"] = "Overskrift og tekst ved siden af et billede. Kan læses højt.",
             ["fact-hero"] = "Ét stort billede med en tekstboks nederst.",
             ["fact-stats"] = "Op til tre kort med et stort tal og en kort forklaring.",
             ["fact-steps"] = "Op til fire trin efter hinanden, hver med billede og tekst.",
@@ -26,6 +26,12 @@ namespace Web.Helpers
             ["fact-list"] = "Op til tre korte punkter ved siden af et billede.",
             ["fact-video"] = "En stor video med en tekst under.",
             ["fact-video-only"] = "Kun en video, så stor som skærmen tillader.",
+
+            ["quiz-classic"] = "Spørgsmål med et billede og fire svar. Op til 10 spørgsmål.",
+            ["quiz-factbox"] = "Spørgsmål og svar til venstre, en faktaboks med tekst eller video til højre.",
+            ["quiz-image-answers"] = "Svarene er billeder. Godt til de mindste.",
+            ["quiz-video"] = "En kort video til hvert spørgsmål, derefter fire svar.",
+            ["quiz-true-false"] = "Et udsagn og to store knapper, fx sandt eller falsk.",
         };
 
         public static string Describe(Template template)
@@ -37,7 +43,7 @@ namespace Web.Helpers
 
             var slots = template.Slots.Where(s => s.Key != PathConvention.NextSlotKey).ToList();
             var parts = new List<string>(); 
-            Add(parts, slots, SlotDefinitionKind.Button, "knap", "knapper"); //Ideally should have used a type of localizer, has added technical debt. But it prevents us having to state Button is knap over and over.
+            Add(parts, slots, SlotDefinitionKind.Button, "knap", "knapper");
             Add(parts, slots, SlotDefinitionKind.Text, "tekstfelt", "tekstfelter");
             Add(parts, slots, SlotDefinitionKind.Image, "billede", "billeder");
             Add(parts, slots, SlotDefinitionKind.Video, "video", "videoer");
@@ -46,7 +52,8 @@ namespace Web.Helpers
             return parts.Count == 0 ? string.Empty : string.Join(", ", parts) + ".";
         }
 
-        private static void Add(List<string> parts, List<SlotDefinition> slots, SlotDefinitionKind kind, string one, string many) //Translates words in as flexible a way as possible. Can both handle one or multiple
+        // Adds e.g. "1 knap" or "3 knapper" when the template has slots of that kind.
+        private static void Add(List<string> parts, List<SlotDefinition> slots, SlotDefinitionKind kind, string one, string many)
         {
             var count = slots.Count(s => s.Kind == kind);
             if (count > 0) parts.Add($"{count} {(count == 1 ? one : many)}");

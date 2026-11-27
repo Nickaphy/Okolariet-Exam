@@ -1,11 +1,12 @@
 @page "/kiosk/{ProjectId:guid}"
 @layout BlankLayout
-@inject IVersionsApi VersionsApi
+@inject IVersionGateway VersionGateway
 @inject IJSRuntime JS
 
-@* Opened in its own window from Admin → Udstillinger → Start. Anonymous: uses only public endpoints.
-   Shows the published snapshot page by page. Menu buttons lead into their pages; the bar at the bottom
-   goes back, home, or on to the next page in the path ("next" slot, see PathConvention). *@
+@* The kiosk: what guests see on the touch screen. Opened in its own window from Admin → Udstillinger → Start.
+   Anonymous: it only uses public endpoints (BearerTokenHandler leaves kiosk calls alone).
+   Shows the latest published version page by page. Menu buttons lead into their pages; the bar at the bottom
+   goes back, home, or on to the next page in the path ("next" slot, see PathConvention). The code is in KioskStart.razor.cs. *@
 
 <PageTitle>Økolariet</PageTitle>
 
@@ -13,38 +14,36 @@
     @if (current is not null)
     {
         <div class="screen">
-            <TemplateHost Page="current" Inherited="version?.Appearance" OnNavigate="GoTo" />
+            <TemplateHost Page="current" Inherited="version?.Appearance" ProjectId="ProjectId" OnNavigate="GoTo" />
         </div>
 
-        @if (history.Count > 0 || NextId is not null)
-        {
-            <nav class="kiosk-nav" aria-label="Navigation">
-                @if (history.Count > 0)
-                {
-                    <button type="button" class="kiosk-btn" @onclick="Back"><Icon Name="arrow_back" /> Tilbage</button>
-                    <button type="button" class="kiosk-btn" @onclick="Home"><Icon Name="home" /> Forside</button>
-                }
-                @if (Progress is { } progress)
-                {
-                    <span class="kiosk-progress" role="status" aria-label="Side @progress.Index af @progress.Total">
-                        @if (progress.Total <= 8)
+        @* Always there (also when empty), so the screen above never jumps when the buttons appear. *@
+        <nav class="kiosk-nav" aria-label="Navigation">
+            @if (history.Count > 0)
+            {
+                <button type="button" class="kiosk-btn" @onclick="Back"><Icon Name="arrow_back" /> Tilbage</button>
+                <button type="button" class="kiosk-btn" @onclick="Home"><Icon Name="home" /> Forside</button>
+            }
+            @if (Progress is { } progress)
+            {
+                <span class="kiosk-progress" role="status" aria-label="Side @progress.Index af @progress.Total">
+                    @if (progress.Total <= 8)
+                    {
+                        @for (var i = 1; i <= progress.Total; i++)
                         {
-                            @for (var i = 1; i <= progress.Total; i++)
-                            {
-                                <span class="kiosk-dot @(i == progress.Index ? "kiosk-dot-on" : null)"></span>
-                            }
+                            <span class="kiosk-dot @(i == progress.Index ? "kiosk-dot-on" : null)"></span>
                         }
-                        <span class="kiosk-progress-text">Side @progress.Index / @progress.Total</span>
-                    </span>
-                }
-                @if (NextId is Guid next)
-                {
-                    <button type="button" class="kiosk-btn kiosk-btn-next" @onclick="() => GoTo(next)">
-                        Videre <Icon Name="arrow_forward" />
-                    </button>
-                }
-            </nav>
-        }
+                    }
+                    <span class="kiosk-progress-text">Side @progress.Index / @progress.Total</span>
+                </span>
+            }
+            @if (NextId is Guid next)
+            {
+                <button type="button" class="kiosk-btn kiosk-btn-next" @onclick="() => GoTo(next)">
+                    Videre <Icon Name="arrow_forward" />
+                </button>
+            }
+        </nav>
     }
     else if (errorMessage is not null)
     {
@@ -67,80 +66,3 @@
         </button>
     }
 </main>
-
-@code {
-    [Parameter] public Guid ProjectId { get; set; }
-
-    private PublishedVersion? version;
-    private Dictionary<Guid, PageContent> pages = new();
-    private PageContent? current;
-    private readonly Stack<Guid> history = new();
-    private string? errorMessage;
-    private bool isFullscreen;
-
-    // The page after this one in its path, if any.
-    private Guid? NextId =>
-        current?.Slots.GetValueOrDefault(Web.Services.Editor.PathConvention.NextSlotKey)?.TargetId is Guid id
-        && pages.ContainsKey(id) ? id : null;
-
-    private PathPosition? Progress => current is null ? null : PathProgress.Of(current, pages);
-
-    // The same colours as the page, so the bars around the 16:9 screen and the nav buttons match it.
-    private string KioskStyle => current is null ? string.Empty : Theme.Style(current.Appearance, version?.Appearance);
-
-    protected override async Task OnParametersSetAsync()
-    {
-        try
-        {
-            // If-None-Match is optional; Refit leaves the header out when the value is null.
-            var response = await VersionsApi.GetLatestVersion(ProjectId, null!);
-            if (response.IsSuccessStatusCode && response.Content is not null)
-            {
-                version = response.Content;
-                pages = new Dictionary<Guid, PageContent>();
-                foreach (var page in version.ModdedTemplates ?? [])
-                    pages[page.Id] = PageContent.From(page);
-
-                current = pages.GetValueOrDefault(version.MainModdedTemplateId) ?? pages.Values.FirstOrDefault();
-                history.Clear();
-                if (current is null) errorMessage = "Udstillingen har ingen sider.";
-            }
-            else if (response.StatusCode == HttpStatusCode.NotFound)
-                errorMessage = "Udstillingen er ikke udgivet endnu.";
-            else
-                errorMessage = "Udstillingen kunne ikke hentes. Prøv at genindlæse siden.";
-        }
-        catch (HttpRequestException)
-        {
-            errorMessage = "Ingen forbindelse til serveren.";
-        }
-    }
-
-    private void GoTo(Guid id)
-    {
-        if (current is null || !pages.TryGetValue(id, out var target)) return;
-        history.Push(current.Id);
-        current = target;
-    }
-
-    private void Back()
-    {
-        if (history.Count > 0 && pages.TryGetValue(history.Pop(), out var previous))
-            current = previous;
-    }
-
-    private void Home()
-    {
-        history.Clear();
-        if (version is not null)
-            current = pages.GetValueOrDefault(version.MainModdedTemplateId) ?? current;
-    }
-
-    private async Task EnterFullscreenAsync()
-    {
-        // Must run from a tap/click: browsers only allow full screen after a user gesture.
-        // If the browser refuses, the overlay is still hidden so the kiosk stays usable.
-        await JS.InvokeAsync<bool>("oekolariet.enterFullscreen");
-        isFullscreen = true;
-    }
-}

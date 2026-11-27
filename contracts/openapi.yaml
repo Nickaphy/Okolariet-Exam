@@ -1684,7 +1684,7 @@ components:
       in: path
       required: true
       schema: { type: string }
-      example: quiz
+      example: quiz-classic
 
     AssetKindFilter:
       name: kind

@@ -1,17 +1,14 @@
-﻿using System.Net;
+using System.Net;
 using Microsoft.AspNetCore.Components.Forms;
-using Refit;
 using Web.Api;
 using Web.Api.Contracts;
+using Web.Helpers;
+using Web.Components;
 
 namespace Web.Pages.Admin
 {
     public partial class Media
     {
-        private enum LoadState { Loading, Loaded, Failed }
-
-        private sealed record Notice(string Kind, string Text);
-
         private const int PageSize = 24;
         private const int MaxFilesAtOnce = 20;
 
@@ -48,11 +45,6 @@ namespace Web.Pages.Admin
         private Notice? notice;
         private Asset? assetToDelete;
 
-        // Files are served by the API itself, so a plain <img src> works (the kiosk loads them the same way).
-        private string ApiBase => (Config["Api:BaseUrl"] ?? string.Empty).TrimEnd('/');
-
-        private string UrlOf(Asset asset) => $"{ApiBase}/assets/{asset.Id}";
-
         private static string KindName(AssetKind assetKind) => assetKind switch
         {
             AssetKind.Image => "Billede",
@@ -64,56 +56,43 @@ namespace Web.Pages.Admin
 
         // ---- loading
 
+        // The first page of files (of the chosen kind). The library can be large, so it is NOT fetched all at once:
+        // "Vis flere" (LoadMoreAsync) fetches the next page.
         private async Task LoadAsync()
         {
             state = LoadState.Loading;
             page = 1;
-            try
-            {
-                var response = await AssetsApi.ListAssets(kind, 1, PageSize);
-                if (!response.IsSuccessStatusCode || response.Content is null)
-                {
-                    loadError = ApiErrors.Describe(response);
-                    state = LoadState.Failed;
-                    return;
-                }
 
-                assets = response.Content.Items.ToList();
-                total = response.Content.TotalCount;
-                state = LoadState.Loaded;
-            }
-            catch (HttpRequestException)
+            var (result, error) = await ApiCall.Get(() => AssetGateway.ListAssets(kind, 1, PageSize));
+            if (error is not null)
             {
-                loadError = ApiErrors.Offline;
+                loadError = error;
                 state = LoadState.Failed;
+                return;
             }
+
+            assets = result!.Items.ToList();
+            total = result.TotalCount;
+            state = LoadState.Loaded;
         }
 
         private async Task LoadMoreAsync()
         {
             loadingMore = true;
-            try
+
+            var (result, error) = await ApiCall.Get(() => AssetGateway.ListAssets(kind, page + 1, PageSize));
+            if (error is not null)
             {
-                var response = await AssetsApi.ListAssets(kind, page + 1, PageSize);
-                if (response.IsSuccessStatusCode && response.Content is not null)
-                {
-                    page++;
-                    assets.AddRange(response.Content.Items);
-                    total = response.Content.TotalCount;
-                }
-                else
-                {
-                    notice = new Notice("error", ApiErrors.Describe(response));
-                }
+                notice = Notice.Error(error);
             }
-            catch (HttpRequestException)
+            else
             {
-                notice = new Notice("error", ApiErrors.Offline);
+                page++;
+                assets.AddRange(result!.Items);
+                total = result.TotalCount;
             }
-            finally
-            {
-                loadingMore = false;
-            }
+
+            loadingMore = false;
         }
 
         private async Task SetKindAsync(AssetKind? value)
@@ -133,7 +112,7 @@ namespace Web.Pages.Admin
 
             if (e.FileCount > MaxFilesAtOnce)
             {
-                notice = new Notice("error", $"Vælg højst {MaxFilesAtOnce} filer ad gangen.");
+                notice = Notice.Error($"Vælg højst {MaxFilesAtOnce} filer ad gangen.");
                 inputKey++;
                 return;
             }
@@ -159,30 +138,26 @@ namespace Web.Pages.Admin
 
                     if (file.Size > limit)
                     {
-                        uploadErrors.Add($"{file.Name}: Filen er for stor (højst {Web.Helpers.Display.FileSize(limit.Value)}).");
+                        uploadErrors.Add($"{file.Name}: Filen er for stor (højst {Display.FileSize(limit.Value)}).");
                         continue;
                     }
 
-                    try
-                    {
-                        // Without the limit argument Blazor only allows 500 KB.
-                        await using var stream = file.OpenReadStream(limit.Value);
-                        var contentType = string.IsNullOrEmpty(file.ContentType) ? "application/octet-stream" : file.ContentType;
-                        var response = await AssetsApi.UploadAsset(new StreamPart(stream, file.Name, contentType));
+                    // Without the limit argument Blazor only allows 500 KB.
+                    await using var stream = file.OpenReadStream(limit.Value);
+                    var contentType = string.IsNullOrEmpty(file.ContentType) ? "application/octet-stream" : file.ContentType;
 
-                        var error = ApiErrors.ErrorOrNull(response, false,
-                            (HttpStatusCode.BadRequest, "Filtypen understøttes ikke, eller filen er ødelagt."),
-                            (HttpStatusCode.UnsupportedMediaType, "Filtypen understøttes ikke."));
+                    var error = await ApiCall.Run(() => AssetGateway.UploadAsset(stream, file.Name, contentType), false,
+                        (HttpStatusCode.BadRequest, "Filtypen understøttes ikke, eller filen er ødelagt."),
+                        (HttpStatusCode.UnsupportedMediaType, "Filtypen understøttes ikke."));
 
-                        if (error is null) uploaded++;
-                        else uploadErrors.Add($"{file.Name}: {error}");
-                    }
-                    catch (HttpRequestException)
+                    if (error is null)
                     {
-                        // No connection: the rest would fail the same way, so stop here.
-                        uploadErrors.Add($"{file.Name}: {ApiErrors.Offline}");
-                        break;
+                        uploaded++;
+                        continue;
                     }
+
+                    uploadErrors.Add($"{file.Name}: {error}");
+                    if (error == ApiErrors.Offline) break;   // no connection: the rest would fail the same way
                 }
             }
             finally
@@ -194,7 +169,7 @@ namespace Web.Pages.Admin
 
             if (uploaded > 0)
             {
-                notice = new Notice("success", uploaded == 1 ? "1 fil er uploadet." : $"{uploaded} filer er uploadet.");
+                notice = Notice.Success(uploaded == 1 ? "1 fil er uploadet." : $"{uploaded} filer er uploadet.");
                 await LoadAsync();
             }
         }
@@ -213,8 +188,9 @@ namespace Web.Pages.Admin
 
         // ---- delete
 
-        private async Task<string?> DeleteAsync() =>
-            ApiErrors.ErrorOrNull(await AssetsApi.DeleteAsset(assetToDelete!.Id), true,
+        // Handed to ConfirmDialog as Run. ignoreNotFound: already gone is fine. 409: the file is still used on a page.
+        private Task<string?> DeleteAsync() =>
+            ApiCall.Run(() => AssetGateway.DeleteAsset(assetToDelete!.Id), ignoreNotFound: true,
                 (HttpStatusCode.Conflict, "Filen bruges stadig på en side. Fjern den derfra først."));
 
         private async Task OnDeletedAsync()
@@ -225,7 +201,7 @@ namespace Web.Pages.Admin
 
             assets.Remove(deleted);
             total = Math.Max(0, total - 1);
-            notice = new Notice("success", $"«{deleted.OriginalName}» er slettet.");
+            notice = Notice.Success($"«{deleted.OriginalName}» er slettet.");
 
             // Deleting the last file on a page can leave the list empty while more files exist.
             if (assets.Count == 0 && total > 0) await LoadAsync();

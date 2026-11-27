@@ -1,9 +1,11 @@
 @page "/admin/projects"
 @layout AdminLayout
 @attribute [Authorize]
-@inject IProjectsApi ProjectsApi
+@inject IProjectGateway ProjectGateway
 @inject IJSRuntime JS
 @inject NavigationManager Nav
+
+@* The start page of the admin: every exhibition with Start (opens the kiosk window), Rediger and Slet. *@
 
 <PageTitle>Udstillinger · Økolariet</PageTitle>
 
@@ -17,10 +19,7 @@
     </button>
 </header>
 
-@if (notice is not null)
-{
-    <NoticeBar Kind="@notice.Kind" Text="@notice.Text" OnClose="() => notice = null" />
-}
+<NoticeBar Notice="notice" OnClose="() => notice = null" />
 
 @switch (state)
 {
@@ -34,11 +33,7 @@
         break;
 
     case LoadState.Failed:
-        <div class="empty-state" role="alert">
-            <h2>Udstillingerne kunne ikke hentes</h2>
-            <p>@loadError</p>
-            <button type="button" class="btn btn-secondary" @onclick="LoadAsync"><Icon Name="refresh" /> Prøv igen</button>
-        </div>
+        <LoadError Title="Udstillingerne kunne ikke hentes" Message="@loadError" OnRetry="LoadAsync" />
         break;
 
     default:
@@ -63,13 +58,9 @@
 
                         <div class="project-info">
                             <h2 class="project-name">@project.Name</h2>
-                            @if (isPublished)
+                            <PublishStatus Version="project.LatestVersionNumber" />
+                            @if (!isPublished)
                             {
-                                <span class="status status-live"><span class="dot"></span>Udgivet · version @project.LatestVersionNumber</span>
-                            }
-                            else
-                            {
-                                <span class="status status-draft"><span class="dot"></span>Ikke udgivet endnu</span>
                                 <span class="hint">Udgiv den under Rediger, før den kan startes.</span>
                             }
                         </div>

@@ -1,0 +1,15 @@
+@namespace Web.Templates.Quiz
+
+@* Template "quiz-image-answers": the answers are pictures (each answer's own picture), four in a row.
+   Good for the youngest guests, who don't read much yet. Slot keys: title, intro, background. *@
+
+<QuizRunner>
+    <div class="qi">
+        <QuizQuestionText />
+        <AnswerTiles Columns="4" Images="true" />
+    </div>
+</QuizRunner>
+
+@code {
+    public static PageContent Sample() => QuizSamples.Page("quiz-image-answers", QuizSamples.FourAnswers);
+}

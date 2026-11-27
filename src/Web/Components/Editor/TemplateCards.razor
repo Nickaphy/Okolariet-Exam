@@ -1,5 +1,6 @@
-﻿@* A group of template cards where one can be chosen (a radio group, so the keyboard works).
-   Use with @bind-Selected. Notes adds small chips to a card, like "Brugt på side 1". They only inform; they never block a choice. *@
+@* A group of template cards where one can be chosen (a radio group, so the keyboard works).
+   Use with @bind-Selected. Notes adds small chips to a card, like "Brugt på side 1". They only inform; they never block a choice.
+   Each card shows the real template (TemplateHost) with its example content from TemplateRegistry. *@
 
 <fieldset class="cards-set">
     <legend class="sr-only">@Legend</legend>
@@ -18,11 +19,14 @@
                 <label class="card @(chosen ? "card-selected" : "")" @key="template.Type">
                     <input type="radio" class="card-input" name="@groupName" checked="@chosen"
                            @onchange="() => SelectAsync(template.Type)" />
-                    <TemplateSketch Template="template" />
+                    @* The real template with example content, exactly as the kiosk draws it, only smaller. *@
+                    <div class="card-preview">
+                        <TemplateHost Page="PreviewOf(template)" Definition="template" Preview="true" Placeholders="true" />
+                    </div>
                     <span class="card-name">@(template.DisplayName + (chosen ? " ✔" : ""))</span>
                     <span class="card-text">@TemplateInfo.Describe(template)</span>
                     @{
-                        var notes = (Notes?.Invoke(template) ?? Enumerable.Empty<string>()).ToList();
+                        var notes = NotesOf(template);
                     }
                     @if (notes.Count > 0)
                     {

@@ -1,4 +1,4 @@
-﻿@namespace Web.Templates.Facts
+@namespace Web.Templates.Facts
 @using Web.Templates.Slots
 
 @* Template "fact-image-text": image on the left, heading (with read-aloud) and text on the right.
@@ -13,10 +13,7 @@
 </div>
 
 @code {
-    public static PageContent Sample() => new(Guid.Empty, "fact-image-text", "Fakta", null,
-        new Dictionary<string, SlotContent>
-        {
-            ["title"] = new("Hvor kommer plastikken fra?"),
-            ["body"] = new("Det meste plastik i havet kommer fra land. Det blæser væk fra lossepladser, skylles ud med regnvand og tabes fra både og skibe."),
-        });
+    public static PageContent Sample() => PageContent.Sample("fact-image-text",
+        ("title", "Hvor kommer plastikken fra?"),
+        ("body", "Det meste plastik i havet kommer fra land. Det blæser væk fra lossepladser, skylles ud med regnvand og tabes fra både og skibe."));
 }

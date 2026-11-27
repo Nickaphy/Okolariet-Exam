@@ -1,0 +1,29 @@
+@namespace Web.Templates.Quiz
+@inject AssetUrls Assets
+
+@* The question's own picture or video (the question's AssetId). The template decides which of the two it is.
+   Draws nothing when the question has none (a dashed box in placeholder mode). *@
+
+@if (Turn.Question.AssetId is Guid id)
+{
+    @if (Video)
+    {
+        <video class="qm @Class" src="@(Assets.For(id) + "#t=0.1")" controls="@(!Scope.Preview)" playsinline preload="metadata"></video>
+    }
+    else
+    {
+        <img class="qm @Class" src="@Assets.For(id)" alt="" />
+    }
+}
+else if (Scope.Placeholders)
+{
+    <div class="slot-placeholder @Class">@(Video ? "Spørgsmålets video" : "Spørgsmålets billede")</div>
+}
+
+@code {
+    [CascadingParameter] public QuizTurn Turn { get; set; } = default!;
+    [CascadingParameter] public TemplateScope Scope { get; set; } = default!;
+
+    [Parameter] public bool Video { get; set; }
+    [Parameter] public string? Class { get; set; }
+}

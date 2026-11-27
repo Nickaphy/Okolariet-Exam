@@ -1,8 +1,10 @@
-﻿@page "/admin/media"
+@page "/admin/media"
 @layout AdminLayout
 @attribute [Authorize]
-@inject IAssetsApi AssetsApi
-@inject Microsoft.Extensions.Configuration.IConfiguration Config
+@inject IAssetGateway AssetGateway
+@inject AssetUrls Assets
+
+@* The media library: upload images, video and sound, see them, and delete them. The files are used on the pages. *@
 
 <PageTitle>Mediebibliotek · Økolariet</PageTitle>
 
@@ -20,15 +22,9 @@
     </label>
 </header>
 
-@if (uploadStatus is not null)
-{
-    <NoticeBar Kind="info" Text="@uploadStatus" />
-}
-
-@if (notice is not null)
-{
-    <NoticeBar Kind="@notice.Kind" Text="@notice.Text" OnClose="() => notice = null" />
-}
+@* While uploading: "Uploader 2 af 5 …" (no close button). *@
+<NoticeBar Notice="@(uploadStatus is null ? null : Notice.Info(uploadStatus))" />
+<NoticeBar Notice="notice" OnClose="() => notice = null" />
 
 @if (uploadErrors.Count > 0)
 {
@@ -65,11 +61,7 @@
 }
 else if (state == LoadState.Failed)
 {
-    <div class="empty-state" role="alert">
-        <h2>Filerne kunne ikke hentes</h2>
-        <p>@loadError</p>
-        <button type="button" class="btn btn-secondary" @onclick="LoadAsync"><Icon Name="refresh" /> Prøv igen</button>
-    </div>
+    <LoadError Title="Filerne kunne ikke hentes" Message="@loadError" OnRetry="LoadAsync" />
 }
 else if (assets.Count == 0)
 {
@@ -88,14 +80,14 @@ else
                     @switch (asset.Kind)
                     {
                         case AssetKind.Image:
-                            <img src="@UrlOf(asset)" alt="@asset.OriginalName" loading="lazy" />
+                            <img src="@Assets.For(asset.Id)" alt="@asset.OriginalName" loading="lazy" />
                             break;
                         case AssetKind.Video:
-                            <video src="@UrlOf(asset)" controls preload="metadata"></video>
+                            <video src="@Assets.For(asset.Id)" controls preload="metadata"></video>
                             break;
                         default:
                             <Icon Name="music_note" Class="audio-icon" />
-                            <audio src="@UrlOf(asset)" controls preload="none"></audio>
+                            <audio src="@Assets.For(asset.Id)" controls preload="none"></audio>
                             break;
                     }
                 </div>

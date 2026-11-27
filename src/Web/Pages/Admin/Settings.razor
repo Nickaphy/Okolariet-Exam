@@ -1,10 +1,13 @@
-﻿@page "/admin/settings"
+@page "/admin/settings"
 @layout AdminLayout
 @attribute [Authorize]
-@inject IStaffApi StaffApi
-@inject INicknamesApi NicknamesApi
+@inject IStaffGateway StaffGateway
+@inject INicknameGateway NicknameGateway
 @inject AuthService Auth
 @inject NavigationManager Nav
+
+@* Settings: my own account, the staff who can log in, and the words guests' nicknames are made from.
+   Every change happens in a dialog (NameDialog or ConfirmDialog); "dialog" says which one is open. *@
 
 <PageTitle>Indstillinger · Økolariet</PageTitle>
 
@@ -15,10 +18,7 @@
     </div>
 </header>
 
-@if (notice is not null)
-{
-    <NoticeBar Kind="@notice.Kind" Text="@notice.Text" OnClose="() => notice = null" />
-}
+<NoticeBar Notice="notice" OnClose="() => notice = null" />
 
 @if (state == LoadState.Loading)
 {
@@ -26,11 +26,7 @@
 }
 else if (state == LoadState.Failed)
 {
-    <div class="empty-state" role="alert">
-        <h2>Indstillingerne kunne ikke hentes</h2>
-        <p>@loadError</p>
-        <button type="button" class="btn btn-secondary" @onclick="() => LoadAsync()">Prøv igen</button>
-    </div>
+    <LoadError Title="Indstillingerne kunne ikke hentes" Message="@loadError" OnRetry="() => LoadAsync()" />
 }
 else
 {

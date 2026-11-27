@@ -1,18 +1,16 @@
-﻿using System.Net;
+using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Components;
 using Web.Api;
 using Web.Api.Contracts;
+using Web.Components;
 
 namespace Web.Pages.Admin
 {
     public partial class Settings
     {
-        private enum LoadState { Loading, Loaded, Failed }
-
+        // Which dialog is open. Only one at a time; None = no dialog.
         private enum DialogKind { None, OwnPassword, NewStaff, StaffPassword, DeleteStaff, NewWord, DeleteWord }
-
-        private sealed record Notice(string Kind, string Text);
 
         // Same rules as the API: at least 12 characters, words of 2-20 letters.
         private const int MinPasswordLength = 12;
@@ -44,74 +42,36 @@ namespace Web.Pages.Admin
 
         // ---- loading
 
-        // quiet = reload after a change without flashing the "Henter…" text.
+        // Fetches me, all staff and all words, at the same time.
+        // quiet = a reload after a change: keep the page on screen and show a failure as a notice instead.
         private async Task LoadAsync(bool quiet = false)
         {
             if (!quiet) state = LoadState.Loading;
 
-            try
+            var meTask = ApiCall.Get(() => StaffGateway.GetCurrentStaff());
+            var staffTask = ApiCall.GetAll(page => StaffGateway.ListStaff(page, 100));
+            var wordsTask = ApiCall.GetAll(page => NicknameGateway.ListWordsAsync(page, 100));
+
+            var (meResult, meError) = await meTask;
+            var (staffItems, staffError) = await staffTask;
+            var (wordItems, wordError) = await wordsTask;
+
+            var error = meError ?? staffError ?? wordError;   // the first error, if any
+            if (error is null)
             {
-                var meTask = StaffApi.GetCurrentStaff();
-                var staffTask = LoadStaffAsync();
-                var wordsTask = LoadWordsAsync();
-
-                var meResponse = await meTask;
-                var (staffItems, staffError) = await staffTask;
-                var (wordItems, wordError) = await wordsTask;
-
-                var error = ApiErrors.ErrorOrNull(meResponse) ?? staffError ?? wordError;
-                if (error is not null)
-                {
-                    SetLoadFailed(error, quiet);
-                    return;
-                }
-
-                me = meResponse.Content;
+                me = meResult;
                 staff = staffItems;
                 words = wordItems;
                 state = LoadState.Loaded;
             }
-            catch (HttpRequestException)
+            else if (quiet)
             {
-                SetLoadFailed(ApiErrors.Offline, quiet);
+                notice = Notice.Error(error);
             }
-        }
-
-        private void SetLoadFailed(string error, bool quiet)
-        {
-            if (quiet)
+            else
             {
-                notice = new Notice("error", error);
-                return;
-            }
-
-            loadError = error;
-            state = LoadState.Failed;
-        }
-
-        private async Task<(List<Staff> Items, string? Error)> LoadStaffAsync()
-        {
-            var all = new List<Staff>();
-            for (var page = 1; ; page++)
-            {
-                var response = await StaffApi.ListStaff(page, 100);
-                if (!response.IsSuccessStatusCode || response.Content is null) return (all, ApiErrors.Describe(response));
-
-                all.AddRange(response.Content.Items);
-                if (response.Content.Items.Count == 0 || all.Count >= response.Content.TotalCount) return (all, null);
-            }
-        }
-
-        private async Task<(List<NicknameWord> Items, string? Error)> LoadWordsAsync()
-        {
-            var all = new List<NicknameWord>();
-            for (var page = 1; ; page++)
-            {
-                var response = await NicknamesApi.ListNicknameWords(page, 100);
-                if (!response.IsSuccessStatusCode || response.Content is null) return (all, ApiErrors.Describe(response));
-
-                all.AddRange(response.Content.Items);
-                if (response.Content.Items.Count == 0 || all.Count >= response.Content.TotalCount) return (all, null);
+                loadError = error;
+                state = LoadState.Failed;
             }
         }
 
@@ -167,7 +127,7 @@ namespace Web.Pages.Admin
         private async Task Finish(string text)
         {
             CloseDialog();
-            notice = new Notice("success", text);
+            notice = Notice.Success(text);
             await LoadAsync(quiet: true);
         }
 
@@ -177,29 +137,18 @@ namespace Web.Pages.Admin
         {
             if (me is null) return "Din konto kunne ikke hentes. Genindlæs siden.";
 
-            var response = await StaffApi.SetStaffPassword(me.Id, new PasswordChange
-            {
-                CurrentPassword = currentPassword,
-                NewPassword = newPassword
-            });
-
-            return ApiErrors.ErrorOrNull(response, false,
+            var myId = me.Id;
+            var change = new PasswordChange { CurrentPassword = currentPassword, NewPassword = newPassword };
+            return await ApiCall.Run(() => StaffGateway.SetStaffPassword(myId, change), false,
                 (HttpStatusCode.BadRequest, "Den nuværende adgangskode er forkert, eller den nye er for kort."));
         }
 
         // Changing your own password revokes every login of yours, this one included.
         // So log out cleanly and let the user sign in with the new password.
+        // (LogoutAsync never throws: without a connection it just forgets the login locally.)
         private async Task OnOwnPasswordChangedAsync(string _)
         {
-            try
-            {
-                await Auth.LogoutAsync();
-            }
-            catch (HttpRequestException)
-            {
-                // The server already ended the login. Nothing more to clean up here.
-            }
-
+            await Auth.LogoutAsync();
             Nav.NavigateTo("admin/login", replace: true);
         }
 
@@ -209,14 +158,8 @@ namespace Web.Pages.Admin
         {
             if (!email.Contains('@')) return "Skriv en gyldig e-mail.";
 
-            var response = await StaffApi.CreateStaff(new StaffCreate
-            {
-                Email = email,
-                Password = newPassword,
-                Role = StaffRole.Admin
-            });
-
-            return ApiErrors.ErrorOrNull(response, false,
+            var newStaff = new StaffCreate { Email = email, Password = newPassword, Role = StaffRole.Admin };
+            return await ApiCall.Run(() => StaffGateway.CreateStaff(newStaff), false,
                 (HttpStatusCode.Conflict, "Der findes allerede en medarbejder med den e-mail."),
                 (HttpStatusCode.BadRequest, $"E-mailen eller adgangskoden er ikke gyldig (adgangskoden skal være mindst {MinPasswordLength} tegn)."));
         }
@@ -228,14 +171,14 @@ namespace Web.Pages.Admin
             if (password.Length < MinPasswordLength) return $"Adgangskoden skal være mindst {MinPasswordLength} tegn.";
 
             // An admin resetting someone else's password leaves currentPassword out.
-            var response = await StaffApi.SetStaffPassword(activeStaff!.Id, new PasswordChange { NewPassword = password });
-            return ApiErrors.ErrorOrNull(response);
+            var change = new PasswordChange { NewPassword = password };
+            return await ApiCall.Run(() => StaffGateway.SetStaffPassword(activeStaff!.Id, change));
         }
 
         private Task OnStaffPasswordSet(string _) => Finish($"Adgangskoden til {activeStaff?.Email} er skiftet.");
 
-        private async Task<string?> DeleteStaffAsync() =>
-            ApiErrors.ErrorOrNull(await StaffApi.DeleteStaff(activeStaff!.Id), true,
+        private Task<string?> DeleteStaffAsync() =>
+            ApiCall.Run(() => StaffGateway.DeleteStaff(activeStaff!.Id), ignoreNotFound: true,
                 (HttpStatusCode.UnprocessableEntity, "Du kan ikke slette dig selv eller den sidste administrator."));
 
         private Task OnStaffDeleted() => Finish($"{activeStaff?.Email} er slettet.");
@@ -246,15 +189,14 @@ namespace Web.Pages.Admin
         {
             if (!WordPattern.IsMatch(text)) return "Ordet skal være 2 til 20 bogstaver, uden mellemrum eller tal.";
 
-            var response = await NicknamesApi.CreateNicknameWord(new NicknameWordInput { Text = text });
-            return ApiErrors.ErrorOrNull(response, false,
+            return await ApiCall.Run(() => NicknameGateway.CreateNicknameWord(new NicknameWordInput { Text = text }), false,
                 (HttpStatusCode.Conflict, "Ordet findes allerede."));
         }
 
         private Task OnWordCreated(string text) => Finish($"«{text}» er tilføjet.");
 
-        private async Task<string?> DeleteWordAsync() =>
-            ApiErrors.ErrorOrNull(await NicknamesApi.DeleteNicknameWord(activeWord!.Id), true,
+        private Task<string?> DeleteWordAsync() =>
+            ApiCall.Run(() => NicknameGateway.DeleteNicknameWord(activeWord!.Id), ignoreNotFound: true,
                 (HttpStatusCode.UnprocessableEntity, "Der skal være mindst 10 ord, så kiosken kan komme med forslag."));
 
         private Task OnWordDeleted() => Finish($"«{activeWord?.Text}» er fjernet.");

@@ -94,3 +94,10 @@
     color: var(--ink-soft);
     font-size: 0.85rem;
 }
+
+/* The small live preview of the template on each card (replaces the old wireframe sketch). */
+.card-preview {
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+}

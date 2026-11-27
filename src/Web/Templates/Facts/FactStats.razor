@@ -1,4 +1,4 @@
-﻿@namespace Web.Templates.Facts
+@namespace Web.Templates.Facts
 @using Web.Templates.Slots
 
 @* Template "fact-stats": heading and up to three cards, each with a small picture, a big number and a short explanation.
@@ -21,24 +21,13 @@
 @code {
     [CascadingParameter] public TemplateScope Scope { get; set; } = default!;
 
-    private static readonly int[] Numbers = [1, 2, 3];
+    // The cards to draw: those with something filled in (all three in placeholder mode).
+    // The cards that are left share the width, so two cards are wider than three.
+    private IEnumerable<int> Used => new[] { 1, 2, 3 }.Where(n => Scope.Show($"stat{n}", $"stat{n}Text", $"stat{n}Image"));
 
-    // A card is drawn when something in it is filled in (all of them in placeholder mode).
-    // The cards left share the width, so two cards are wider than three.
-    private IEnumerable<int> Used => Numbers.Where(n => Scope.Placeholders || Filled(n));
-
-    private bool Filled(int n) =>
-        Scope.HasText($"stat{n}") || Scope.HasText($"stat{n}Text") || Scope.Slot($"stat{n}Image")?.AssetId is not null;
-
-    public static PageContent Sample() => new(Guid.Empty, "fact-stats", "Fakta", null,
-        new Dictionary<string, SlotContent>
-        {
-            ["title"] = new("Plastik i tal"),
-            ["stat1"] = new("450 år"),
-            ["stat1Text"] = new("Så længe tager det en plastflaske at nedbrydes"),
-            ["stat2"] = new("1 ud af 3"),
-            ["stat2Text"] = new("Sådan en andel af havets fisk har plastik i maven"),
-            ["stat3"] = new("8 mio. ton"),
-            ["stat3Text"] = new("Så meget plastik ender i havet hvert år"),
-        });
+    public static PageContent Sample() => PageContent.Sample("fact-stats",
+        ("title", "Plastik i tal"),
+        ("stat1", "450 år"), ("stat1Text", "Så længe tager det en plastflaske at nedbrydes"),
+        ("stat2", "1 ud af 3"), ("stat2Text", "Sådan en andel af havets fisk har plastik i maven"),
+        ("stat3", "8 mio. ton"), ("stat3Text", "Så meget plastik ender i havet hvert år"));
 }

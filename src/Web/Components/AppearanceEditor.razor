@@ -10,7 +10,7 @@
                 @foreach (var preset in AppearancePresets.All)
                 {
                     var look = Theme.Resolve(preset.Appearance);
-                    var chosen = IsPreset(preset);
+                    var chosen = IsChosen(preset);
                     <button type="button" class="preset @(chosen ? "preset-on" : "")"
                             aria-pressed="@(chosen ? "true" : "false")" disabled="@busy"
                             @onclick="() => Apply(preset)">
@@ -33,16 +33,18 @@
         <fieldset class="ap-group">
             <legend class="ap-legend">Egne farver</legend>
             <div class="fields">
-                <ColourField Label="Baggrund" Value="@bg" ValueChanged="v => bg = v"
-                             Fallback="@resolved.BackgroundColor" Disabled="@busy" />
-                <ColourField Label="Knapper" Value="@button" ValueChanged="v => button = v"
-                             Fallback="@resolved.ButtonColor" Disabled="@busy" />
-                <ColourField Label="Tekst" Value="@text" ValueChanged="v => text = v"
-                             Fallback="@resolved.TextColor" Disabled="@busy" />
-                <FontField Label="Skrifttype" Value="@font" ValueChanged="v => font = v" Disabled="@busy" />
+                @* "draft with { ... }" makes a copy of the draft with one value changed. *@
+                <ColourField Label="Baggrund" Value="@draft.Background" ValueChanged="v => draft = draft with { Background = v }"
+                             Fallback="@Resolved.BackgroundColor" Disabled="@busy" />
+                <ColourField Label="Knapper" Value="@draft.Button" ValueChanged="v => draft = draft with { Button = v }"
+                             Fallback="@Resolved.ButtonColor" Disabled="@busy" />
+                <ColourField Label="Tekst" Value="@draft.Text" ValueChanged="v => draft = draft with { Text = v }"
+                             Fallback="@Resolved.TextColor" Disabled="@busy" />
+                <FontField Label="Skrifttype" Value="@draft.Font" ValueChanged="v => draft = draft with { Font = v }" Disabled="@busy" />
             </div>
 
-            @if (Theme.Contrast(resolved.TextColor!, resolved.BackgroundColor!) < 4.5)
+            @* 4.5 is the WCAG minimum contrast for normal text. *@
+            @if (Theme.Contrast(Resolved.TextColor!, Resolved.BackgroundColor!) < 4.5)
             {
                 <p class="ap-warn"><Icon Name="warning" /> Teksten og baggrunden ligner hinanden meget, så teksten kan være svær at læse.</p>
             }

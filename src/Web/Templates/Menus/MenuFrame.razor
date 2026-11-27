@@ -1,13 +1,15 @@
-﻿@namespace Web.Templates.Menus
+@namespace Web.Templates.Menus
 @using Web.Templates.Slots
 
 @* The shared frame of the main menus: optional background image, heading, intro text and a grid of buttons.
-   A menu template only chooses the button keys and the layout. Slot keys: title, intro, background, button.
-   Colours and font come from the Appearance selected in ModdedTemplateItem (see Theme). *@
+   A menu template only chooses how many buttons and which layout (see MenuFrame.razor.cs).
+   Slot keys: title, intro, background, button1 ... buttonN.
+   Colours and font come from the page's or project's Appearance (see Theme), never from here. *@
 
 <div class="mf @(Split ? "mf-split" : null) @(Compact ? "mf-compact" : null)">
     <SlotImage Key="background" Class="mf-bg" ShowPlaceholder="false" />
-    @if (HasBackground)
+    @* A see-through layer in the background colour over a photo, so the text stays readable on any picture. *@
+    @if (Scope.HasAny("background"))
     {
         <div class="mf-shade" aria-hidden="true"></div>
     }

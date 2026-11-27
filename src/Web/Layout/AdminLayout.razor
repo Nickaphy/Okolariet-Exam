@@ -2,6 +2,8 @@
 @inject AuthService Auth
 @inject NavigationManager Nav
 
+@* The frame around every admin page: the green menu on the left (logo, pages, who is logged in, log out) and the page itself. *@
+
 <div class="admin-shell">
     <aside class="sidebar">
         <a class="brand" href="admin/projects">
@@ -14,21 +16,12 @@
 
         <nav class="nav" aria-label="Hovedmenu">
             <p class="nav-caption">Menu</p>
-            <NavLink class="nav-item" href="admin/projects" Match="NavLinkMatch.Prefix">
-                <Icon Name="slideshow" /> <span>Udstillinger</span>
-            </NavLink>
-            <NavLink class="nav-item" href="admin/highscores" Match="NavLinkMatch.Prefix">
-                <Icon Name="leaderboard" /> <span>Highscores</span>
-            </NavLink>
-            <NavLink class="nav-item" href="admin/media" Match="NavLinkMatch.Prefix">
-                <Icon Name="perm_media" /> <span>Mediebibliotek</span>
-            </NavLink>
-            <NavLink class="nav-item" href="admin/templates" Match="NavLinkMatch.Prefix">
-                <Icon Name="dashboard" /> <span>Skabeloner</span>
-            </NavLink>
-            <NavLink class="nav-item" href="admin/settings" Match="NavLinkMatch.Prefix">
-                <Icon Name="settings" /> <span>Indstillinger</span>
-            </NavLink>
+            @foreach (var item in NavItems)
+            {
+                <NavLink class="nav-item" href="@item.Href" Match="NavLinkMatch.Prefix">
+                    <Icon Name="@item.Icon" /> <span>@item.Text</span>
+                </NavLink>
+            }
         </nav>
 
         <div class="sidebar-foot">
@@ -57,6 +50,16 @@
 </div>
 
 @code {
+    // The menu on the left. NavLink marks the item whose address the current page starts with.
+    private static readonly (string Href, string Icon, string Text)[] NavItems =
+    [
+        ("admin/projects", "slideshow", "Udstillinger"),
+        ("admin/highscores", "leaderboard", "Highscores"),
+        ("admin/media", "perm_media", "Mediebibliotek"),
+        ("admin/templates", "dashboard", "Skabeloner"),
+        ("admin/settings", "settings", "Indstillinger"),
+    ];
+
     private bool loggingOut;
 
     private async Task LogoutAsync()

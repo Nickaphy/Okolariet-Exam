@@ -1,0 +1,58 @@
+@namespace Web.Templates.Quiz
+@inject AssetUrls Assets
+
+@* The answer options as big tiles, Kahoot style: a shape (▲ ● ■ ◆) and the answer's text.
+   After the guest has answered: the right answer is marked ✓, a wrong choice ✗, and the rest fade out.
+   Images=true: every tile shows the answer's picture above the text (the picture quiz). *@
+
+<div class="at @(Images ? "at-images" : null)" style="--cols:@Columns" role="group" aria-label="Svarmuligheder">
+    @for (var i = 0; i < Turn.Question.Answers.Count; i++)
+    {
+        var answer = Turn.Question.Answers[i];
+        <button type="button" class="at-tile @StateOf(answer)" @key="answer.Id"
+                disabled="@Turn.Locked" @onclick="() => Turn.Choose.InvokeAsync(answer.Id)">
+            @if (Images)
+            {
+                @if (answer.AssetId is Guid assetId)
+                {
+                    <img class="at-image" src="@Assets.For(assetId)" alt="" />
+                }
+                else if (Scope.Placeholders)
+                {
+                    <span class="slot-placeholder at-image">Billede</span>
+                }
+            }
+            <span class="at-row">
+                <span class="at-shape" aria-hidden="true">@AnswerShapes.Of(i)</span>
+                <span class="at-text">@answer.Text</span>
+                @if (Turn.Answered && answer.Id == Turn.CorrectId)
+                {
+                    <span class="at-mark" aria-label="rigtigt svar">✓</span>
+                }
+                else if (Turn.Answered && answer.Id == Turn.ChosenId)
+                {
+                    <span class="at-mark" aria-label="dit svar, forkert">✗</span>
+                }
+            </span>
+        </button>
+    }
+</div>
+
+@code {
+    [CascadingParameter] public QuizTurn Turn { get; set; } = default!;
+    [CascadingParameter] public TemplateScope Scope { get; set; } = default!;
+
+    // Tiles per row (2 gives the classic 2x2 grid, 1 a column, 4 a row).
+    [Parameter] public int Columns { get; set; } = 2;
+
+    [Parameter] public bool Images { get; set; }
+
+    // The CSS class that gives a tile its look after the guest has answered.
+    private string? StateOf(QuizAnswer answer)
+    {
+        if (!Turn.Answered) return Turn.ChosenId == answer.Id ? "at-chosen" : null;   // chosen, waiting for the server
+        if (answer.Id == Turn.CorrectId) return "at-correct";
+        if (answer.Id == Turn.ChosenId) return "at-wrong";
+        return "at-faded";
+    }
+}

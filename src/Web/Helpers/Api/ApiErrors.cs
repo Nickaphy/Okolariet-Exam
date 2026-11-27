@@ -1,43 +1,44 @@
 using System.Net;
-using Refit;
+using Web.Exceptions;
 
 namespace Web.Api;
 
-// Turns API failures into short Danish sentences staff can act on.
-// The API's ProblemDetails are in English and meant for developers, so the UI
-// maps on status code instead of showing <c>detail</c> directly.
+// Turns a failed API call into a short Danish sentence staff (or guests) can act on.
+// The API's own error texts are English and meant for developers, so the text is picked from the status code.
 public static class ApiErrors
 {
     public const string Offline =
         "Der er ingen forbindelse til serveren. Tjek internettet, og prøv igen.";
 
-    // What dialogs and pages want after a call: null when it worked, otherwise a message. overrides replace the generic message for one status, e.g. (Conflict, "E-mailen bruges allerede.").
-    public static string? ErrorOrNull(IApiResponse response, bool ignoreNotFound = false,
-        params (HttpStatusCode Status, string Message)[] overrides)
+    // The message for an exception from a gateway call.
+    //   GatewayException     → the API answered with an error status → text for that status (or an override);
+    //   HttpRequestException → no answer at all → the "offline" text.
+    // overrides: a better text for one status code, e.g. (HttpStatusCode.Conflict, "Ordet findes allerede.").
+    public static string For(Exception exception, params (HttpStatusCode Status, string Message)[] overrides)
     {
-        if (response.IsSuccessStatusCode || (ignoreNotFound && response.StatusCode == HttpStatusCode.NotFound))     // ignoreNotFound treats 404 as success (someone else already deleted it).
-            return null;
+        if (exception is not GatewayException gateway) return Offline;
 
         foreach (var (status, message) in overrides)
         {
-            if (response.StatusCode == status) return message;
+            if (gateway.StatusCode == status) return message;
         }
 
-        return Describe(response);
+        return Describe(gateway.StatusCode);
     }
 
-    public static string Describe(IApiResponse response) => response.StatusCode switch // Mapped and translated API errors
+    // The general text for each status code.
+    public static string Describe(HttpStatusCode status) => status switch
     {
-        HttpStatusCode.Unauthorized => "Du er blevet logget ud. Log ind igen.", //401
-        HttpStatusCode.Forbidden => "Du har ikke adgang til at gøre dette.", //403
-        HttpStatusCode.NotFound => "Det findes ikke længere. Måske har en anden slettet det.", //404
-        HttpStatusCode.Conflict => "Det kan ikke lade sig gøre, fordi det stadig bliver brugt.", //409
-        HttpStatusCode.PreconditionFailed => "En anden har foretaget ændringer. Hent siden igen, og prøv igen.", //412
-        HttpStatusCode.UnprocessableEntity => "Det er ikke tilladt her.", //422
-        HttpStatusCode.TooManyRequests => "For mange forsøg. Vent lidt, og prøv igen.", //429
-        HttpStatusCode.BadRequest => "Noget af det udfyldte er ikke gyldigt.", //400
-        HttpStatusCode.RequestEntityTooLarge => "Filen er for stor.", //413
-        >= HttpStatusCode.InternalServerError => "Der skete en fejl på serveren. Prøv igen om lidt.", //500
+        HttpStatusCode.BadRequest => "Noget af det udfyldte er ikke gyldigt.",                                   // 400
+        HttpStatusCode.Unauthorized => "Du er blevet logget ud. Log ind igen.",                                   // 401
+        HttpStatusCode.Forbidden => "Du har ikke adgang til at gøre dette.",                                      // 403
+        HttpStatusCode.NotFound => "Det findes ikke længere. Måske har en anden slettet det.",                    // 404
+        HttpStatusCode.Conflict => "Det kan ikke lade sig gøre, fordi det stadig bliver brugt.",                  // 409
+        HttpStatusCode.PreconditionFailed => "En anden har foretaget ændringer. Hent siden igen, og prøv igen.",  // 412 (ETag no longer matches)
+        HttpStatusCode.RequestEntityTooLarge => "Filen er for stor.",                                             // 413
+        HttpStatusCode.UnprocessableEntity => "Det er ikke tilladt her.",                                         // 422 (breaks a business rule)
+        HttpStatusCode.TooManyRequests => "For mange forsøg. Vent lidt, og prøv igen.",                           // 429
+        >= HttpStatusCode.InternalServerError => "Der skete en fejl på serveren. Prøv igen om lidt.",             // 5xx
         _ => "Noget gik galt. Prøv igen."
     };
 }

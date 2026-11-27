@@ -1,0 +1,117 @@
+@namespace Web.Components.Editor
+
+@* The buttons of one menu in the editor. For each button: its text, and the path of pages it leads through.
+
+   Sub-menus: when a page in a path is itself a menu, this component shows ITSELF again below that page,
+   with the sub-menu's buttons. That is how any depth of sub-menus is drawn with one piece of code.
+   (A Blazor component may contain itself, as long as it stops somewhere: here, at a menu with no sub-menus.)
+
+   The component only shows things and reports what the user did (OnLabelChanged, OnAddPage, OnRemovePage).
+   The editor page decides what happens (opens a dialog, saves, reloads). *@
+
+<ol class="buttons">
+    @foreach (var button in Buttons)
+    {
+        <li class="button-card" @key="button.Slot.Key">
+            <div class="button-top">
+                <span class="button-badge"><Icon Name="smart_button" /> @button.Slot.Label</span>
+                <div class="button-label">
+                    <label for="@LabelId(button)" class="visually-hidden">Tekst på @button.Slot.Label</label>
+                    @* @onchange fires when the field loses focus (or Enter), so we save once, not on every key. *@
+                    <input id="@LabelId(button)" class="input" value="@button.Label"
+                           placeholder="Tekst på knappen, fx Quiz"
+                           maxlength="@(button.Slot.MaxLength ?? 500)"
+                           autocomplete="off" disabled="@Busy"
+                           @onchange="e => OnLabelChanged.InvokeAsync((button, e.Value?.ToString() ?? string.Empty))" />
+                </div>
+            </div>
+
+            <div class="path">
+                @if (button.Pages.Count == 0)
+                {
+                    <p class="path-empty"><Icon Name="info" /> Knappen fører ikke nogen steder hen endnu.</p>
+                }
+                else
+                {
+                    <ol class="steps" aria-label="@($"Forløb for {button.Slot.Label}")">
+                        @for (var i = 0; i < button.Pages.Count; i++)
+                        {
+                            var index = i;   // a copy: the lambdas below must remember this number, not the loop variable
+                            var node = button.Pages[i];
+                            <li class="step-item" @key="node.Page.Id">
+                                <div class="step">
+                                    <span class="step-no" aria-hidden="true">@(index + 1)</span>
+                                    <div class="step-info">
+                                        <strong>@node.Page.Title</strong>
+                                        <small>@StepDetail(node, index, button.Pages.Count)</small>
+                                    </div>
+                                    @* Editing the contents of a page is the next step of the project. *@
+                                    <button type="button" class="btn btn-secondary btn-sm" disabled title="Kommer i næste trin">
+                                        <Icon Name="edit_note" /> Indhold
+                                    </button>
+                                    <button type="button" class="btn btn-danger-ghost btn-sm"
+                                            aria-label="@($"Fjern {node.Page.Title}")"
+                                            @onclick="() => OnRemovePage.InvokeAsync((button, index))">
+                                        <Icon Name="delete" /> Fjern
+                                    </button>
+                                </div>
+
+                                @if (node.IsMenu)
+                                {
+                                    <div class="sub-menu">
+                                        <p class="sub-menu-lead"><Icon Name="subdirectory_arrow_right" /> Knapper på «@node.Page.Title»</p>
+                                        <ButtonPathList Buttons="node.Buttons" Model="Model" Busy="Busy"
+                                                        OnLabelChanged="OnLabelChanged" OnAddPage="OnAddPage" OnRemovePage="OnRemovePage" />
+                                    </div>
+                                }
+                            </li>
+                        }
+                    </ol>
+                }
+
+                @if (button.EndsInMenu)
+                {
+                    <p class="path-empty"><Icon Name="info" /> Forløbet slutter i en undermenu. Tilføj flere sider på undermenuens knapper.</p>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-secondary btn-sm add-page" disabled="@Busy"
+                            @onclick="() => OnAddPage.InvokeAsync(button)">
+                        <Icon Name="add" /> Tilføj side
+                    </button>
+                }
+            </div>
+        </li>
+    }
+</ol>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<ButtonPath> Buttons { get; set; } = [];
+
+    // Only used for template names ("Faktaside").
+    [Parameter, EditorRequired] public ExhibitionModel Model { get; set; } = default!;
+
+    // True while something is being saved: fields and buttons are locked.
+    [Parameter] public bool Busy { get; set; }
+
+    // The user changed the text on a button.
+    [Parameter] public EventCallback<(ButtonPath Button, string Label)> OnLabelChanged { get; set; }
+
+    // The user wants to add a page at the end of this button's path.
+    [Parameter] public EventCallback<ButtonPath> OnAddPage { get; set; }
+
+    // The user wants to remove page number Index (0-based) from this button's path.
+    [Parameter] public EventCallback<(ButtonPath Button, int Index)> OnRemovePage { get; set; }
+
+    // Unique per menu and button, so the <label> finds its <input> also when sub-menus have the same slot keys.
+    private static string LabelId(ButtonPath button) => $"label-{button.OwnerId:N}-{button.Slot.Key}";
+
+    // "Faktaside · side 2 af 4": which template the page uses, and where it sits in its path.
+    private string StepDetail(PathPage node, int index, int count)
+    {
+        var text = Model.DisplayNameOf(node.Page.TemplateType);
+        if (node.IsMenu) text += " · undermenu";
+        if (count > 1) text += $" · side {index + 1} af {count}";
+        return text;
+    }
+}

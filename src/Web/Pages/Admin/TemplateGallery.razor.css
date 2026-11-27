@@ -43,3 +43,15 @@
     overflow: hidden;
     border: 1px solid var(--line);
 }
+
+.gallery-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.chip-warn {
+    border-color: var(--warn, #b26a00);
+    color: var(--warn, #b26a00);
+}

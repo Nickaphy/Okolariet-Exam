@@ -1,23 +1,18 @@
-﻿using System.Text.RegularExpressions;
 using Microsoft.JSInterop;
 using Web.Api;
 using Web.Api.Contracts;
+using Web.Components;
+using Web.Theming;
 
 namespace Web.Pages.Admin
 {
     public partial class Projects
     {
-        private enum LoadState { Loading, Loaded, Failed }
-
-        private sealed record Notice(string Kind, string Text);
-
-        private static readonly Regex HexColour = new("^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$");
-
         private LoadState state = LoadState.Loading;
         private List<Project> projects = [];
         private string? loadError;
         private Notice? notice;
-        private Project? projectToDelete;
+        private Project? projectToDelete;   // set = the delete dialog is open
         private bool showNewDialog;
 
         protected override Task OnInitializedAsync() => LoadAsync();
@@ -25,44 +20,29 @@ namespace Web.Pages.Admin
         private async Task LoadAsync()
         {
             state = LoadState.Loading;
-            try
-            {
-                // The list is paged (max 100 per page); a museum has few projects, so fetch them all.
-                var all = new List<Project>();
-                for (var page = 1; ; page++)
-                {
-                    var response = await ProjectsApi.ListProjects(page, 100);
-                    if (!response.IsSuccessStatusCode || response.Content is null)
-                    {
-                        loadError = ApiErrors.Describe(response);
-                        state = LoadState.Failed;
-                        return;
-                    }
 
-                    all.AddRange(response.Content.Items);
-                    if (response.Content.Items.Count == 0 || all.Count >= response.Content.TotalCount) break;
-                }
-
-                projects = all.OrderBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
-                state = LoadState.Loaded;
-            }
-            catch (HttpRequestException)
+            var (all, error) = await ApiCall.GetAll(page => ProjectGateway.ListProjects(page, 100));
+            if (error is not null)
             {
-                loadError = ApiErrors.Offline;
+                loadError = error;
                 state = LoadState.Failed;
+                return;
             }
+
+            projects = all.OrderBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+            state = LoadState.Loaded;
         }
 
         private async Task StartAsync(Project project)
         {
             var url = Nav.ToAbsoluteUri($"kiosk/{project.Id}").ToString();
 
-            // One named window per project: pressing Start again brings the same window forward.
+            // One named window per project (wwwroot/js): pressing Start again brings the same window forward.
             var opened = await JS.InvokeAsync<bool>("oekolariet.openKioskWindow", url, $"kiosk-{project.Id:N}");
 
             notice = opened
-                ? new Notice("info", $"«{project.Name}» er åbnet i et nyt vindue. Flyt det over på touchskærmen, og tryk på skærmen for at starte i fuld skærm.")
-                : new Notice("error", "Browseren blokerede det nye vindue. Tillad pop op-vinduer for denne side, og prøv igen.");
+                ? Notice.Info($"«{project.Name}» er åbnet i et nyt vindue. Flyt det over på touchskærmen, og tryk på skærmen for at starte i fuld skærm.")
+                : Notice.Error("Browseren blokerede det nye vindue. Tillad pop op-vinduer for denne side, og prøv igen.");
         }
 
         private void Edit(Project project) => Nav.NavigateTo($"admin/projects/{project.Id}");
@@ -78,12 +58,12 @@ namespace Web.Pages.Admin
         {
             projects.Remove(project);
             projectToDelete = null;
-            notice = new Notice("success", $"«{project.Name}» er slettet.");
+            notice = Notice.Success($"«{project.Name}» er slettet.");
         }
 
+        // The little coloured square in front of each exhibition: its background colour, if it has one.
+        // Theme.IsColour checks the value first, because it ends up in a style attribute.
         private static string SwatchStyle(Project project) =>
-            project.Appearance?.BackgroundColor is { } colour && HexColour.IsMatch(colour)
-                ? $"background:{colour}"
-                : string.Empty;
+            Theme.IsColour(project.Appearance?.BackgroundColor) ? $"background:{project.Appearance!.BackgroundColor}" : string.Empty;
     }
 }

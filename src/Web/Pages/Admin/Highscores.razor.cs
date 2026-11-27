@@ -1,41 +1,35 @@
-﻿using Microsoft.AspNetCore.Components;
-using Refit;
+using Microsoft.AspNetCore.Components;
 using Web.Api;
 using Web.Api.Contracts;
+using Web.Components;
+using Web.Helpers;
 
 namespace Web.Pages.Admin
 {
     public partial class Highscores
     {
-        private enum LoadState { Loading, Loaded, Failed }
-
+        // Which dialog is open. Only one at a time; None = no dialog.
         private enum DialogKind { None, ClearBoard, ResetQuestion, DeleteResults }
 
-        private sealed record Notice(string Kind, string Text);
-
-        // One quiz with its top scores. Players is how many scores are saved in total (not only the top 10).
+        // One quiz with its top 10. Players = how many scores are saved in total (not only the top 10).
         private sealed record QuizBoard(ModdedTemplate Quiz, IReadOnlyList<User> Top, int Players);
 
+        // The list of exhibitions (for the drop-down).
         private LoadState projectsState = LoadState.Loading;
         private List<Project> projects = [];
         private string? projectsError;
         private Guid? selectedId;
 
+        // The results of the chosen exhibition.
         private LoadState dataState = LoadState.Loading;
         private string? dataError;
         private ProjectStatistics? stats;
         private List<QuizBoard> boards = [];
 
-        // Answer statistics are fetched per question the first time it is opened.
-        private readonly HashSet<Guid> expanded = [];
-        private readonly HashSet<Guid> loadingQuestions = [];
-        private readonly Dictionary<Guid, QuestionStatistics> questionStats = [];
-        private readonly Dictionary<Guid, string> questionErrors = [];
-
         private Notice? notice;
         private DialogKind dialog;
-        private ModdedTemplate? activeQuiz;
-        private Question? activeQuestion;
+        private ModdedTemplate? activeQuiz;     // ClearBoard: which quiz
+        private Question? activeQuestion;       // ResetQuestion: which question
 
         private Project? SelectedProject => projects.FirstOrDefault(p => p.Id == selectedId);
 
@@ -46,33 +40,17 @@ namespace Web.Pages.Admin
         private async Task LoadProjectsAsync()
         {
             projectsState = LoadState.Loading;
-            try
-            {
-                // Paged (max 100 per page); a museum has few projects, so fetch them all.
-                var all = new List<Project>();
-                for (var page = 1; ; page++)
-                {
-                    var response = await ProjectsApi.ListProjects(page, 100);
-                    if (!response.IsSuccessStatusCode || response.Content is null)
-                    {
-                        projectsError = ApiErrors.Describe(response);
-                        projectsState = LoadState.Failed;
-                        return;
-                    }
 
-                    all.AddRange(response.Content.Items);
-                    if (response.Content.Items.Count == 0 || all.Count >= response.Content.TotalCount) break;
-                }
-
-                projects = all.OrderBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
-                projectsState = LoadState.Loaded;
-            }
-            catch (HttpRequestException)
+            var (all, error) = await ApiCall.GetAll(page => ProjectGateway.ListProjects(page, 100));
+            if (error is not null)
             {
-                projectsError = ApiErrors.Offline;
+                projectsError = error;
                 projectsState = LoadState.Failed;
                 return;
             }
+
+            projects = all.OrderBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+            projectsState = LoadState.Loaded;
 
             // Show the first exhibition straight away, so the page is never empty.
             if (selectedId is null && projects.Count > 0)
@@ -82,85 +60,67 @@ namespace Web.Pages.Admin
             }
         }
 
+        // Everything shown for one exhibition, in three rounds (each round needs the one before):
+        //   1. the totals, the template definitions and the list of pages;
+        //   2. every quiz page in full (the list has no questions);
+        //   3. the top 10 of every quiz.
         private async Task LoadDataAsync()
         {
             if (selectedId is not { } projectId) return;
 
             dataState = LoadState.Loading;
             dataError = null;
-            expanded.Clear();
-            loadingQuestions.Clear();
-            questionStats.Clear();
-            questionErrors.Clear();
 
-            try
+            // 1.
+            var statsTask = ApiCall.Get(() => StatisticsGateway.GetProjectStatistics(projectId));
+            var templatesTask = ApiCall.Get(() => TemplateGateway.ListTemplates());
+            var pagesTask = ApiCall.Get(() => ModdedTemplateGateway.ListModdedTemplates(projectId));
+
+            var (projectStats, statsError) = await statsTask;
+            var (templates, templatesError) = await templatesTask;
+            var (pages, pagesError) = await pagesTask;
+            if ((statsError ?? templatesError ?? pagesError) is { } error1)
             {
-                var statsTask = StatisticsApi.GetProjectStatistics(projectId);
-                var templatesTask = TemplatesApi.ListTemplates();
-                var pagesTask = ModdedTemplatesApi.ListModdedTemplates(projectId);
-                await Task.WhenAll(statsTask, templatesTask, pagesTask);
-
-                var statsResponse = await statsTask;
-                var templatesResponse = await templatesTask;
-                var pagesResponse = await pagesTask;
-                if (FirstFailure(statsResponse, templatesResponse, pagesResponse) is { } failure)
-                {
-                    SetDataFailed(projectId, failure);
-                    return;
-                }
-
-                // Only quiz pages have highscores. The template list says which types are quizzes.
-                var quizTypes = templatesResponse.Content!
-                    .Where(t => t.Category == TemplateCategory.Quiz)
-                    .Select(t => t.Type)
-                    .ToHashSet();
-                var quizSummaries = pagesResponse.Content!
-                    .Where(p => quizTypes.Contains(p.TemplateType))
-                    .OrderBy(p => p.SortOrder)
-                    .ToList();
-
-                // The summaries have no questions, so each quiz is fetched in full.
-                var quizResponses = await Task.WhenAll(
-                    quizSummaries.Select(s => ModdedTemplatesApi.GetModdedTemplate(s.Id)));
-                if (FirstFailure(quizResponses) is { } quizFailure)
-                {
-                    SetDataFailed(projectId, quizFailure);
-                    return;
-                }
-
-                var quizzes = quizResponses.Select(r => r.Content!).ToList();
-                var userResponses = await Task.WhenAll(
-                    quizzes.Select(q => UsersApi.ListUsers(q.Id, Sort.BestScore, 1, 10)));
-                if (FirstFailure(userResponses) is { } userFailure)
-                {
-                    SetDataFailed(projectId, userFailure);
-                    return;
-                }
-
-                if (selectedId != projectId) return; // the user picked another exhibition meanwhile
-
-                stats = statsResponse.Content;
-                boards = quizzes
-                    .Zip(userResponses, (quiz, users) =>
-                        new QuizBoard(quiz, users.Content!.Items.ToList(), users.Content.TotalCount))
-                    .ToList();
-                dataState = LoadState.Loaded;
+                ShowDataError(projectId, error1);
+                return;
             }
-            catch (HttpRequestException)
+
+            // Only quiz pages have highscores. The template definitions say which template types are quizzes.
+            var quizTypes = templates!.Where(t => t.Category == TemplateCategory.Quiz).Select(t => t.Type).ToHashSet();
+            var quizIds = pages!.Where(p => quizTypes.Contains(p.TemplateType)).OrderBy(p => p.SortOrder).Select(p => p.Id);
+
+            // 2.
+            var quizResults = await Task.WhenAll(quizIds.Select(id => ApiCall.Get(() => ModdedTemplateGateway.GetModdedTemplate(id))));
+            if (FirstError(quizResults.Select(r => r.Error)) is { } error2)
             {
-                if (selectedId != projectId) return;
-                dataError = ApiErrors.Offline;
-                dataState = LoadState.Failed;
+                ShowDataError(projectId, error2);
+                return;
             }
+            var quizzes = quizResults.Select(r => r.Value!).ToList();
+
+            // 3.
+            var userResults = await Task.WhenAll(quizzes.Select(q => ApiCall.Get(() => UserGateway.ListUsers(q.Id, Sort.BestScore, 1, 10))));
+            if (FirstError(userResults.Select(r => r.Error)) is { } error3)
+            {
+                ShowDataError(projectId, error3);
+                return;
+            }
+
+            if (selectedId != projectId) return;   // the user picked another exhibition while this was loading
+
+            stats = projectStats;
+            boards = quizzes
+                .Zip(userResults, (quiz, users) => new QuizBoard(quiz, users.Value!.Items.ToList(), users.Value.TotalCount))
+                .ToList();
+            dataState = LoadState.Loaded;
         }
 
-        private static IApiResponse? FirstFailure(params IApiResponse[] responses) =>
-            responses.FirstOrDefault(r => !r.IsSuccessStatusCode);
+        private static string? FirstError(IEnumerable<string?> errors) => errors.FirstOrDefault(e => e is not null);
 
-        private void SetDataFailed(Guid projectId, IApiResponse response)
+        private void ShowDataError(Guid projectId, string error)
         {
-            if (selectedId != projectId) return;
-            dataError = ApiErrors.Describe(response);
+            if (selectedId != projectId) return;   // an old answer for an exhibition that is no longer chosen
+            dataError = error;
             dataState = LoadState.Failed;
         }
 
@@ -173,45 +133,16 @@ namespace Web.Pages.Admin
             await LoadDataAsync();
         }
 
-        // ---- questions
+        // ---- shown on the page
 
         private static IEnumerable<Question> QuestionsOf(ModdedTemplate quiz) =>
             quiz.Questions?.OrderBy(q => q.SortOrder) ?? Enumerable.Empty<Question>();
 
+        // "7 af 10 · 70 %"
         private static string ScoreText(User user) =>
             user.Score is null
                 ? "–"
-                : $"{user.Score.Correct} af {user.Score.TotalQuestions} · {Web.Helpers.Display.Percent(user.Score.Percentage)}";
-
-        private async Task ToggleQuestionAsync(Question question)
-        {
-            if (!expanded.Add(question.Id))
-            {
-                expanded.Remove(question.Id);
-                return;
-            }
-
-            if (questionStats.ContainsKey(question.Id)) return;
-
-            loadingQuestions.Add(question.Id);
-            questionErrors.Remove(question.Id);
-            try
-            {
-                var response = await StatisticsApi.GetQuestionStatistics(question.Id);
-                if (response.IsSuccessStatusCode && response.Content is not null)
-                    questionStats[question.Id] = response.Content;
-                else
-                    questionErrors[question.Id] = ApiErrors.Describe(response);
-            }
-            catch (HttpRequestException)
-            {
-                questionErrors[question.Id] = ApiErrors.Offline;
-            }
-            finally
-            {
-                loadingQuestions.Remove(question.Id);
-            }
-        }
+                : $"{user.Score.Correct} af {user.Score.TotalQuestions} · {Display.Percent(user.Score.Percentage)}";
 
         // ---- dialogs
 
@@ -221,6 +152,7 @@ namespace Web.Pages.Admin
             dialog = DialogKind.ClearBoard;
         }
 
+        // From QuestionResults: "Nulstil svar" was pressed.
         private void AskReset(Question question)
         {
             activeQuestion = question;
@@ -236,14 +168,15 @@ namespace Web.Pages.Admin
             activeQuestion = null;
         }
 
-        private async Task<string?> ClearBoardAsync() =>
-            ApiErrors.ErrorOrNull(await UsersApi.DeleteModdedTemplateUsers(activeQuiz!.Id), ignoreNotFound: true);
+        // Handed to ConfirmDialog as Run. ignoreNotFound: already gone is fine.
+        private Task<string?> ClearBoardAsync() =>
+            ApiCall.Run(() => UserGateway.DeleteQuizUsers(activeQuiz!.Id), ignoreNotFound: true);
 
-        private async Task<string?> ResetQuestionAsync() =>
-            ApiErrors.ErrorOrNull(await StatisticsApi.DeleteQuestionResults(activeQuestion!.Id), ignoreNotFound: true);
+        private Task<string?> ResetQuestionAsync() =>
+            ApiCall.Run(() => StatisticsGateway.DeleteQuestionResults(activeQuestion!.Id), ignoreNotFound: true);
 
-        private async Task<string?> DeleteResultsAsync() =>
-            ApiErrors.ErrorOrNull(await StatisticsApi.DeleteProjectResults(selectedId!.Value), ignoreNotFound: true);
+        private Task<string?> DeleteResultsAsync() =>
+            ApiCall.Run(() => StatisticsGateway.DeleteProjectResults(selectedId!.Value), ignoreNotFound: true);
 
         private Task OnBoardCleared() => Finish("Highscores er ryddet.");
 
@@ -251,11 +184,11 @@ namespace Web.Pages.Admin
 
         private Task OnResultsDeleted() => Finish("Alle resultater for udstillingen er slettet.");
 
-        // Closes the dialog, tells the user what happened and reloads the numbers.
+        // Closes the dialog, says what happened and reloads the numbers.
         private async Task Finish(string text)
         {
             CloseDialog();
-            notice = new Notice("success", text);
+            notice = Notice.Success(text);
             await LoadDataAsync();
         }
     }
