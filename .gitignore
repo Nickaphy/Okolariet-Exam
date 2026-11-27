@@ -72,3 +72,6 @@ backups/
 **/dist/
 **/build/
 **/wwwroot/lib/
+
+AGENTS.md
+STATUS.md

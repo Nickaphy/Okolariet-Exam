@@ -6,8 +6,10 @@ using Application.OutBoundPort.AuthRepository.Tokens;
 using Application.OutBoundPort.IPasswordHash;
 using Application.OutBoundPort.ISessionRepository;
 using Application.OutBoundPort.IStaffRepository;
+using Application.OutBoundPort.IQuizResultRepository;
 using Application.OutBoundPort.IUserRepository;
 using Infrastructure.Adapters.Auth;
+using Infrastructure.Adapters.QuizResults;
 using Infrastructure.Adapters.Sessions;
 using Infrastructure.Adapters.Staff;
 using Infrastructure.Adapters.Users;
@@ -82,6 +84,10 @@ namespace Infrastructure
             services.AddScoped<IDeleteUserAsync, DeleteUserAdapter>();
             services.AddScoped<IGetUserByIdAsync, GetUserByIdAdapter>();
             services.AddScoped<IListUsersAsync, ListUsersAdapter>();
+
+            // QuizResult DI
+            services.AddScoped<ITryAddQuizResultAsync, TryQuizResultAdapter>();
+            services.AddScoped<IListQuizResultsBySessionAsync, ListQuizResultsBySessionAdapter>();
 
             // Version DI
             services.AddScoped<IAddVersionAsync, AddVersionAdapter>();
