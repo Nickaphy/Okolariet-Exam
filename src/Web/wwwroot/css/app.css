@@ -1,16 +1,20 @@
-/* Shared look for admin and kiosk. Grey wireframe style for now; colours live in the
-   variables below so the final palette can be swapped in one place. */
 :root {
-    --ink: #2a2a2a;
-    --ink-soft: #555;
-    --muted: #7d7d7d;
-    --line: #d9d9d9;
-    --line-strong: #a8a8a8;
-    --bg: #f4f4f4;
-    --surface: #fff;
-    --surface-sunk: #ececec;
-    --focus: #2563eb;
+    /* ── THE TWO THEME COLOURS: change these and the whole app follows ── */
+    --colour-accent: #9BB979; /* Pistachio Green */
+    --colour-grey: #d3d3d3; /* Light Grey */
 
+    /* derived from the two above (don't need touching) */
+    --colour-accent-soft: color-mix(in srgb, var(--colour-accent) 35%, #fff); /* hover / selected rows */
+
+    --ink: #2a2a2a;
+    --ink-soft: #3f3f3f;
+    --muted: #595959;
+    --line: #b5b5b5;
+    --line-strong: #757575;
+    --bg: var(--colour-grey);
+    --surface: #fff; /* cards, inputs, dialogs */
+    --surface-sunk: color-mix(in srgb, var(--colour-grey) 45%, #fff);
+    --focus: #2563eb;
     --ok: #1d7a3e;
     --ok-bg: #eef8f1;
     --danger: #b42318;
@@ -18,10 +22,8 @@
     --warn: #c98a00;
     --warn-bg: #fff8e6;
     --warn-ink: #7a5200;
-
     --radius: 14px;
     --radius-lg: 22px;
-
     --font: "Noto Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
 
@@ -206,3 +208,94 @@ a { color: var(--ink); }
     padding: 0 1rem;
     font-size: 0.95rem;
 }
+
+/* ---- admin page chrome (shared by the pages inside AdminLayout) */
+.admin-main h1 {
+    margin: 0;
+    font-size: 2.5rem;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+.page-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    max-width: 1100px;
+    margin-bottom: 2rem;
+}
+
+.lead {
+    margin: 0.4rem 0 0;
+    font-size: 1.15rem;
+    color: var(--ink-soft);
+}
+
+.page-section {
+    max-width: 1100px;
+    margin-bottom: 2.5rem;
+}
+
+    .page-section > h2 {
+        margin: 0 0 0.25rem;
+        padding-left: 0.75rem;
+        border-left: 8px solid var(--colour-accent);
+        font-size: 1.6rem;
+        font-weight: 800;
+    }
+
+.section-lead {
+    margin: 0 0 1.25rem;
+    color: var(--ink-soft);
+}
+
+.empty-state {
+    max-width: 640px;
+    padding: 2.5rem;
+    border: 2px dashed var(--line-strong);
+    border-radius: var(--radius);
+    text-align: center;
+}
+
+    .empty-state h2 {
+        margin: 0 0 0.5rem;
+        font-size: 1.4rem;
+    }
+
+    .empty-state p {
+        margin: 0 0 1.25rem;
+        color: var(--ink-soft);
+    }
+
+/* Row of filter buttons ("Alle / Billeder / Video") */
+.chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.chip {
+    min-height: 44px;
+    padding: 0 1.1rem;
+    border: 2px solid var(--line-strong);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+    .chip:hover {
+        border-color: var(--ink);
+    }
+
+    .chip[aria-pressed="true"] {
+        border-color: var(--ink);
+        background: var(--colour-accent);
+        color: var(--ink);
+        font-weight: 700;
+    }

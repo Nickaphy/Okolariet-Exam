@@ -24,28 +24,29 @@ namespace Web.Pages.Admin
         private ButtonPath? activeButton;
         private int removeIndex;
         private ModdedTemplate? orphan;
-        private string? selectedPageType;
         private string? selectedMenuType;
         private int? publishedVersion;
         private Guid? loadedProjectId;
 
+        // Only a Menu template can be the main menu. Pages can use any template, menus included (they become sub-menus).
         private IReadOnlyList<Template> MenuTemplates =>
             model!.Templates.Where(t => t.Category == TemplateCategory.Menu).ToList();
-
-        private IReadOnlyList<Template> PageTemplates =>
-            model!.Templates.Where(t => t.Category != TemplateCategory.Menu).ToList(); // Note: != so it's all NOT main menu templates
 
         // The first menu is pre-selected, so the common case is a single click.
         private string? SelectedMenuType => selectedMenuType ?? MenuTemplates.FirstOrDefault()?.Type;
 
-        private static string LabelId(ButtonPath button) => $"label-{button.Slot.Key}";
+        private void SelectMenuType(string? type) => selectedMenuType = type;
 
-        private static string CategoryName(TemplateCategory category) => category switch //TO DO: Make sure to add Game when that type is ready
+        // "Faktaside · side 2 af 4": which template it is, and where it sits in its path.
+        private string StepDetail(PathPage node, int index, int count)
         {
-            TemplateCategory.Quiz => "Quiz",
-            TemplateCategory.Fact => "Fakta",
-            _ => "Menu"
-        };
+            var text = model!.DisplayNameOf(node.Page.TemplateType);
+            if (node.IsMenu) text += " · undermenu";
+            if (count > 1) text += $" · side {index + 1} af {count}";
+            return text;
+        }
+
+        private static string LabelId(ButtonPath button) => $"label-{button.OwnerId:N}-{button.Slot.Key}";
 
         protected override async Task OnParametersSetAsync()
         {
@@ -93,7 +94,6 @@ namespace Web.Pages.Admin
         private void AskAdd(ButtonPath button)
         {
             activeButton = button;
-            selectedPageType = null;
             dialog = DialogKind.AddPage;
         }
 
@@ -110,16 +110,39 @@ namespace Web.Pages.Admin
             dialog = DialogKind.DeleteOrphan;
         }
 
+        // Small chips on the template cards. They only inform, they never block anything.
+        private IEnumerable<string> NotesFor(Template template)
+        {
+            if (activeButton is null) yield break;
+
+            var lastIsThis = activeButton.LastIs(template.Type);
+            var earlier = activeButton.PositionsOf(template.Type)
+                .Where(number => !(lastIsThis && number == activeButton.Pages.Count))
+                .ToList();
+
+            if (earlier.Count > 0) yield return "Brugt på side " + JoinNumbers(earlier);
+            if (lastIsThis) yield return "Brugt på forrige side";
+            if (template.Category == TemplateCategory.Menu) yield return "Undermenu";
+        }
+
+        // 1 → "1", 1,3 → "1 og 3", 1,3,4 → "1, 3 og 4"
+        private static string JoinNumbers(IReadOnlyList<int> numbers) => numbers.Count == 1
+            ? numbers[0].ToString()
+            : string.Join(", ", numbers.Take(numbers.Count - 1)) + " og " + numbers[^1];
+
         // ---- results. ----
         // Each one closes the dialog, tells the user what happened and reloads.
 
         private Task OnRenamed(string name) => Finish("success", $"Udstillingen hedder nu «{name}».");
 
-        private Task OnPageAdded(string title) => Finish("success", $"«{title}» er tilføjet.");
+        private Task OnPageAdded(string templateType) =>
+            Finish("success", $"«{model!.DisplayNameOf(templateType)}» er tilføjet.");
 
-        private Task OnPageRemoved() => Finish("success", "Skabelonen er fjernet."); 
+        private Task OnPageRemoved() => Finish("success", "Siden er fjernet.");
 
-        private Task OnOrphanDeleted() => Finish("success", "Skabelonerne er slettet."); // All templates, that would be left behind if project get's deleted -> Orphans
+        private Task OnOrphanDeleted() => Finish("success", "Siderne er slettet."); // All pages that would be left behind if a project gets deleted -> Orphans
+
+        private Task OnAppearanceSaved() => Finish("success", "Udseendet er gemt.");
 
         private Task OnPublished() => Finish("success", publishedVersion is { } v
             ? $"Udstillingen er udgivet som version {v}."
@@ -160,7 +183,7 @@ namespace Web.Pages.Admin
 
             busy = true;
             notice = null;
-            var error = await Editing.SaveButtonLabelAsync(model!, button, label);
+            var error = await Editing.SaveButtonLabelAsync(button, label);
             if (error is not null) notice = new Notice("error", error);
 
             // Reload either way: on success it shows the saved text, on failure it puts the old text back.

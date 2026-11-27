@@ -51,32 +51,20 @@ namespace Web.Services.Editor
         private static ExhibitionModel Build(Project project, string? etag, List<Template> templates, List<ModdedTemplate> all)
         {
             var byId = all.ToDictionary(p => p.Id);
-
-            var menu = project.MainModdedTemplateId is { } menuId && byId.TryGetValue(menuId, out var m) ? m : null;
-            var menuTemplate = menu is null ? null : templates.FirstOrDefault(t => t.Type == menu.TemplateType);
-
-            var buttons = new List<ButtonPath>();
+            var byType = templates.ToDictionary(t => t.Type);
             var used = new HashSet<Guid>();
 
-            if (menu is not null && menuTemplate is not null)
+            var menu = project.MainModdedTemplateId is { } menuId && byId.TryGetValue(menuId, out var m) ? m : null;
+            Template? menuTemplate = null;
+            if (menu is not null)
             {
-                foreach (var slot in menuTemplate.Slots.Where(s => s.Kind == SlotDefinitionKind.Button))
-                {
-                    var item = ItemOf(menu, slot.Key);
-                    var path = new List<ModdedTemplate>();
-
-                    // Follow button → first page → next → next ... "used" also stops loops
-                    // and a page that two buttons point at.
-                    var next = item?.TargetModdedTemplateId;
-                    while (next is { } id && byId.TryGetValue(id, out var page) && used.Add(id))
-                    {
-                        path.Add(page);
-                        next = ItemOf(page, PathConvention.NextSlotKey)?.TargetModdedTemplateId;
-                    }
-
-                    buttons.Add(new ButtonPath(slot, item?.Text ?? string.Empty, path));
-                }
+                used.Add(menu.Id);
+                byType.TryGetValue(menu.TemplateType, out menuTemplate);
             }
+
+            IReadOnlyList<ButtonPath> buttons = menu is not null && menuTemplate is not null
+                ? ButtonsOf(menu, menuTemplate, byId, byType, used)
+                : [];
 
             return new ExhibitionModel
             {
@@ -87,8 +75,44 @@ namespace Web.Services.Editor
                 Menu = menu,
                 MenuTemplate = menuTemplate,
                 Buttons = buttons,
-                Orphans = all.Where(p => p.Id != menu?.Id && !used.Contains(p.Id)).ToList()
+                Orphans = all.Where(p => !used.Contains(p.Id)).ToList()
             };
+        }
+
+        // The buttons of one menu, each with the pages it leads through. A page that is itself a menu
+        // gets its own buttons the same way (that is what makes sub-menus work).
+        private static List<ButtonPath> ButtonsOf(
+            ModdedTemplate menu, Template menuTemplate,
+            Dictionary<Guid, ModdedTemplate> byId, Dictionary<string, Template> byType, HashSet<Guid> used)
+        {
+            var result = new List<ButtonPath>();
+
+            foreach (var slot in menuTemplate.Slots.Where(s => s.Kind == SlotDefinitionKind.Button))
+            {
+                var item = ItemOf(menu, slot.Key);
+                var path = new List<PathPage>();
+
+                // Follow button → first page → next → next ... "used" also stops loops
+                // and a page that two buttons point at.
+                var next = item?.TargetModdedTemplateId;
+                while (next is { } id && byId.TryGetValue(id, out var page) && used.Add(id))
+                {
+                    byType.TryGetValue(page.TemplateType, out var pageTemplate);
+                    var isMenu = pageTemplate?.Category == TemplateCategory.Menu;
+
+                    // A sub-menu ends its path: its own buttons lead on, there is no "next" page after it.
+                    IReadOnlyList<ButtonPath> subButtons = isMenu
+                        ? ButtonsOf(page, pageTemplate!, byId, byType, used)
+                        : [];
+
+                    path.Add(new PathPage(page, pageTemplate, subButtons));
+                    next = isMenu ? null : ItemOf(page, PathConvention.NextSlotKey)?.TargetModdedTemplateId;
+                }
+
+                result.Add(new ButtonPath(menu.Id, slot, item?.Text ?? string.Empty, path));
+            }
+
+            return result;
         }
 
         private static ModdedTemplateItem? ItemOf(ModdedTemplate page, string slotKey) =>

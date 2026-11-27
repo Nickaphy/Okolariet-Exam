@@ -9,6 +9,8 @@ namespace Web.Dialogs.ReusableDialogs
         [Parameter] public string Label { get; set; } = "Navn";
         [Parameter] public string? Placeholder { get; set; }
         [Parameter] public string? Hint { get; set; }
+        // "text" for names. Use "password" or "email" when the field holds one of those.
+        [Parameter] public string InputType { get; set; } = "text";
 
 
         // Text the field starts with (e.g. the current name when renaming).

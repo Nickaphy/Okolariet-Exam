@@ -1,0 +1,73 @@
+﻿@* Colours and font for the whole exhibition (later also for a single page): ready-made themes, own colours, and a live preview.
+   Save gets null when nothing is chosen (= the neutral default) and returns null on success or an error message,
+   like the dialogs. What is saved is plain colours, so a theme is only a shortcut for filling them in. *@
+
+<div class="ap">
+    <div>
+        <fieldset class="presets">
+            <legend class="field-label">Færdige temaer</legend>
+            <div class="preset-row">
+                @foreach (var preset in AppearancePresets.All)
+                {
+                    <button type="button" class="preset" aria-pressed="@(IsPreset(preset) ? "true" : "false")" disabled="@busy"
+                            @onclick="() => Apply(preset)">
+                        <span class="dots" aria-hidden="true">
+                            <i style="background:@(Theme.Resolve(preset.Appearance).BackgroundColor)"></i>
+                            <i style="background:@(Theme.Resolve(preset.Appearance).ButtonColor)"></i>
+                            <i style="background:@(Theme.Resolve(preset.Appearance).TextColor)"></i>
+                        </span>
+                        @preset.Name
+                    </button>
+                }
+            </div>
+        </fieldset>
+
+        <p class="field-label">Eller vælg selv</p>
+        <div class="fields">
+            <div>
+                <label for="@idBg" class="field-label">Baggrund</label>
+                <input id="@idBg" type="color" class="colour-input" disabled="@busy"
+                       value="@resolved.BackgroundColor" @oninput="e => bg = Colour(e)" />
+            </div>
+            <div>
+                <label for="@idButton" class="field-label">Knapper</label>
+                <input id="@idButton" type="color" class="colour-input" disabled="@busy"
+                       value="@resolved.ButtonColor" @oninput="e => button = Colour(e)" />
+            </div>
+            <div>
+                <label for="@idText" class="field-label">Tekst</label>
+                <input id="@idText" type="color" class="colour-input" disabled="@busy"
+                       value="@resolved.TextColor" @oninput="e => text = Colour(e)" />
+            </div>
+            <div>
+                <label for="@idFont" class="field-label">Skrifttype</label>
+                <select id="@idFont" class="input" disabled="@busy" @onchange="e => font = Empty(e.Value?.ToString())">
+                    @foreach (var (value, label) in Theme.Fonts)
+                    {
+                        <option value="@value" selected="@((font ?? string.Empty) == value)">@label</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        @if (Theme.Contrast(resolved.TextColor!, resolved.BackgroundColor!) < 4.5)
+        {
+            <p class="field-hint hint-warn">Teksten og baggrunden ligner hinanden meget, så teksten kan være svær at læse.</p>
+        }
+
+        @if (error is not null)
+        {
+            <p class="form-error" role="alert">@error</p>
+        }
+
+        <button type="button" class="btn btn-primary save" disabled="@(busy || !Dirty)" @onclick="SaveAsync">
+            @(busy ? "Gemmer…" : "Gem udseende")
+        </button>
+    </div>
+
+    <div class="ap-preview" style="@Theme.Style(Current(), Inherited)" aria-hidden="true">
+        <strong>Overskrift</strong>
+        <span>Sådan ser teksten ud.</span>
+        <span class="ap-button">Knap</span>
+    </div>
+</div>

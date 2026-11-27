@@ -1,0 +1,209 @@
+﻿@page "/admin/settings"
+@layout AdminLayout
+@attribute [Authorize]
+@inject IStaffApi StaffApi
+@inject INicknamesApi NicknamesApi
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+<PageTitle>Indstillinger · Økolariet</PageTitle>
+
+<header class="page-head">
+    <div>
+        <h1 tabindex="-1">Indstillinger</h1>
+        <p class="lead">Medarbejdere, din adgangskode og de ord, gæsternes kaldenavne laves af.</p>
+    </div>
+</header>
+
+@if (notice is not null)
+{
+    <NoticeBar Kind="@notice.Kind" Text="@notice.Text" OnClose="() => notice = null" />
+}
+
+@if (state == LoadState.Loading)
+{
+    <p class="page-loading" aria-busy="true">Henter indstillinger…</p>
+}
+else if (state == LoadState.Failed)
+{
+    <div class="empty-state" role="alert">
+        <h2>Indstillingerne kunne ikke hentes</h2>
+        <p>@loadError</p>
+        <button type="button" class="btn btn-secondary" @onclick="() => LoadAsync()">Prøv igen</button>
+    </div>
+}
+else
+{
+    <section class="page-section" aria-labelledby="account-heading">
+        <h2 id="account-heading">Min konto</h2>
+        <div class="row">
+            <div class="row-info">
+                <strong>@(me?.Email ?? "Ukendt")</strong>
+                <small>Du er logget ind som administrator</small>
+            </div>
+            <div class="row-actions">
+                <button type="button" class="btn btn-secondary btn-sm" disabled="@(me is null)" @onclick="AskOwnPassword">
+                    Skift adgangskode
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <section class="page-section" aria-labelledby="staff-heading">
+        <div class="section-head">
+            <div>
+                <h2 id="staff-heading">Medarbejdere</h2>
+                <p class="section-lead">Dem, der kan logge ind og lave udstillinger.</p>
+            </div>
+            <button type="button" class="btn btn-primary" @onclick="AskNewStaff">+ Ny medarbejder</button>
+        </div>
+
+        <ul class="rows">
+            @foreach (var member in staff)
+            {
+                var isMe = member.Id == me?.Id;
+                <li class="row" @key="member.Id">
+                    <div class="row-info">
+                        <strong>@member.Email</strong>
+                        <small>
+                            @RoleName(member.Role)
+                            @if (isMe)
+                            {
+                                <span class="you">· Dig</span>
+                            }
+                        </small>
+                    </div>
+                    @if (!isMe)
+                    {
+                        <div class="row-actions">
+                            <button type="button" class="btn btn-secondary btn-sm"
+                                    aria-label="@($"Ny adgangskode til {member.Email}")"
+                                    @onclick="() => AskStaffPassword(member)">
+                                Ny adgangskode
+                            </button>
+                            <button type="button" class="btn btn-danger-ghost btn-sm"
+                                    aria-label="@($"Slet {member.Email}")"
+                                    @onclick="() => AskDeleteStaff(member)">
+                                Slet
+                            </button>
+                        </div>
+                    }
+                </li>
+            }
+        </ul>
+    </section>
+
+    <section class="page-section" aria-labelledby="words-heading">
+        <div class="section-head">
+            <div>
+                <h2 id="words-heading">Kaldenavne</h2>
+                <p class="section-lead">
+                    Gæsterne laver et kaldenavn af to af disse ord. Der skal være mindst 10 ord (nu @words.Count).
+                </p>
+            </div>
+            <button type="button" class="btn btn-primary" @onclick="AskNewWord">+ Nyt ord</button>
+        </div>
+
+        @if (words.Count == 0)
+        {
+            <p class="muted">Der er ingen ord endnu.</p>
+        }
+        else
+        {
+            <ul class="words" aria-label="Godkendte ord">
+                @foreach (var word in words.OrderBy(w => w.Text, StringComparer.CurrentCultureIgnoreCase))
+                {
+                    <li class="word" @key="word.Id">
+                        <span>@word.Text</span>
+                        <button type="button" class="word-remove"
+                                aria-label="@($"Fjern ordet {word.Text}")" @onclick="() => AskDeleteWord(word)">
+                            ×
+                        </button>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+}
+
+@switch (dialog)
+{
+    case DialogKind.OwnPassword:
+        <NameDialog Title="Skift din adgangskode"
+                    Label="Din nuværende adgangskode" InputType="password" MaxLength="128"
+                    SubmitText="Skift adgangskode" BusyText="Skifter…"
+                    Valid="@(newPassword.Length >= MinPasswordLength && newPassword == repeatPassword)"
+                    Submit="ChangeOwnPasswordAsync" OnDone="OnOwnPasswordChangedAsync" OnCancel="CloseDialog">
+            <Extra>
+                <div class="extra-field">
+                    <label for="new-password" class="field-label">Ny adgangskode</label>
+                    <input id="new-password" class="input" type="password" autocomplete="new-password" maxlength="128"
+                           @bind="newPassword" @bind:event="oninput" />
+                    <p class="field-hint">Mindst @MinPasswordLength tegn. Du bliver logget ud bagefter og skal logge ind igen.</p>
+                </div>
+                <div class="extra-field">
+                    <label for="repeat-password" class="field-label">Gentag den nye adgangskode</label>
+                    <input id="repeat-password" class="input" type="password" autocomplete="new-password" maxlength="128"
+                           @bind="repeatPassword" @bind:event="oninput" />
+                    @if (repeatPassword.Length > 0 && newPassword != repeatPassword)
+                    {
+                        <p class="form-error">De to adgangskoder er ikke ens.</p>
+                    }
+                </div>
+            </Extra>
+        </NameDialog>
+        break;
+
+    case DialogKind.NewStaff:
+        <NameDialog Title="Ny medarbejder"
+                    Label="E-mail" InputType="email" Placeholder="navn@oekolariet.dk"
+                    SubmitText="Opret medarbejder" BusyText="Opretter…"
+                    Valid="@(newPassword.Length >= MinPasswordLength)"
+                    Submit="CreateStaffAsync" OnDone="OnStaffCreated" OnCancel="CloseDialog">
+            <Extra>
+                <div class="extra-field">
+                    <label for="staff-password" class="field-label">Adgangskode</label>
+                    <input id="staff-password" class="input" type="password" autocomplete="new-password" maxlength="128"
+                           @bind="newPassword" @bind:event="oninput" />
+                    <p class="field-hint">Mindst @MinPasswordLength tegn. Medarbejderen kan skifte den bagefter.</p>
+                </div>
+            </Extra>
+        </NameDialog>
+        break;
+
+    case DialogKind.StaffPassword when activeStaff is not null:
+        <NameDialog Title="@($"Ny adgangskode til {activeStaff.Email}")"
+                    Label="Ny adgangskode" InputType="password" MaxLength="128"
+                    Hint="@($"Mindst {MinPasswordLength} tegn. Medarbejderen bliver logget ud overalt og skal logge ind igen.")"
+                    SubmitText="Gem adgangskode" BusyText="Gemmer…"
+                    Submit="SetStaffPasswordAsync" OnDone="OnStaffPasswordSet" OnCancel="CloseDialog" />
+        break;
+
+    case DialogKind.DeleteStaff when activeStaff is not null:
+        <ConfirmDialog Title="@($"Slet {activeStaff.Email}?")"
+                       Tone="DialogTone.Danger" ConfirmText="Slet medarbejder" BusyText="Sletter…"
+                       Run="DeleteStaffAsync" OnDone="OnStaffDeleted" OnCancel="CloseDialog">
+            <p class="callout callout-danger">
+                <strong>Det kan ikke fortrydes.</strong>
+                Medarbejderen kan ikke logge ind mere.
+            </p>
+        </ConfirmDialog>
+        break;
+
+    case DialogKind.NewWord:
+        <NameDialog Title="Nyt ord til kaldenavne"
+                    Label="Ord" MaxLength="20" Placeholder="Fx Modig"
+                    Hint="2 til 20 bogstaver, uden mellemrum. Vælg pæne ord, som børn gerne må hedde."
+                    SubmitText="Tilføj ord" BusyText="Tilføjer…"
+                    Submit="CreateWordAsync" OnDone="OnWordCreated" OnCancel="CloseDialog" />
+        break;
+
+    case DialogKind.DeleteWord when activeWord is not null:
+        <ConfirmDialog Title="@($"Fjern ordet «{activeWord.Text}»?")"
+                       Tone="DialogTone.Danger" ConfirmText="Fjern ordet" BusyText="Fjerner…"
+                       Run="DeleteWordAsync" OnDone="OnWordDeleted" OnCancel="CloseDialog">
+            <p>Gæster, der allerede har brugt ordet, beholder deres kaldenavn.</p>
+            <p>Der skal altid være mindst 10 ord, så kiosken kan komme med forslag.</p>
+        </ConfirmDialog>
+        break;
+}

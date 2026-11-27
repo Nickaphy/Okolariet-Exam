@@ -1,0 +1,19 @@
+﻿
+@* "Choose a template" dialog. Shows every fixed template as a card; the chosen one is handed to Submit (which returns null on success or an error message, like the other dialogs). *@
+
+<DialogShell Title="@Title" Wide="true" Busy="busy" OnClose="CancelAsync">
+    <ChildContent>
+        <TemplateCards Templates="Templates" Selected="selected" SelectedChanged="Select" Notes="Notes" />
+
+        @if (error is not null)
+        {
+            <p class="form-error" role="alert">@error</p>
+        }
+    </ChildContent>
+    <Actions>
+        <button type="button" class="btn btn-secondary" disabled="@busy" @onclick="CancelAsync">Annuller</button>
+        <button type="button" class="btn btn-primary" disabled="@(!CanSubmit)" @onclick="SubmitAsync">
+            @(busy ? BusyText : SubmitText)
+        </button>
+    </Actions>
+</DialogShell>

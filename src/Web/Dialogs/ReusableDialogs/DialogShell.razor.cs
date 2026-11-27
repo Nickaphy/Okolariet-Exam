@@ -12,6 +12,8 @@ namespace Web.Dialogs.ReusableDialogs
         // While true (a save is running) Escape does nothing, so the dialog cannot vanish mid-save.
         [Parameter] public bool Busy { get; set; }
 
+        // A wider dialog, for content like the template picker.
+        [Parameter] public bool Wide { get; set; }
         [Parameter] public RenderFragment? ChildContent { get; set; }
         [Parameter] public RenderFragment? Actions { get; set; }
         [Parameter] public EventCallback OnClose { get; set; }

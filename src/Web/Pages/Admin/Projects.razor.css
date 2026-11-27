@@ -59,7 +59,7 @@ h1 {
     height: 56px;
     border-radius: 12px;
     border: 2px solid var(--ink);
-    background: var(--surface-sunk);
+    background: var(--colour-accent-soft);
 }
 
 .project-info {

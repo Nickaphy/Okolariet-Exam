@@ -1,0 +1,244 @@
+﻿@page "/admin/highscores"
+@layout AdminLayout
+@attribute [Authorize]
+@inject IProjectsApi ProjectsApi
+@inject ITemplatesApi TemplatesApi
+@inject IModdedTemplatesApi ModdedTemplatesApi
+@inject IUsersApi UsersApi
+@inject IStatisticsApi StatisticsApi
+
+<PageTitle>Highscores · Økolariet</PageTitle>
+
+<header class="page-head">
+    <div>
+        <h1 tabindex="-1">Highscores og statistik</h1>
+        <p class="lead">Se, hvordan gæsterne klarer sig, og ryd op, når en udstilling skal starte forfra.</p>
+    </div>
+</header>
+
+@if (notice is not null)
+{
+    <NoticeBar Kind="@notice.Kind" Text="@notice.Text" OnClose="() => notice = null" />
+}
+
+@if (projectsState == LoadState.Loading)
+{
+    <p class="page-loading" aria-busy="true">Henter udstillinger…</p>
+}
+else if (projectsState == LoadState.Failed)
+{
+    <div class="empty-state" role="alert">
+        <h2>Udstillingerne kunne ikke hentes</h2>
+        <p>@projectsError</p>
+        <button type="button" class="btn btn-secondary" @onclick="LoadProjectsAsync">Prøv igen</button>
+    </div>
+}
+else if (projects.Count == 0)
+{
+    <div class="empty-state">
+        <h2>Der er ingen udstillinger endnu</h2>
+        <p>Når en udstilling er oprettet og spillet, kan du se resultaterne her.</p>
+    </div>
+}
+else
+{
+    <div class="picker">
+        <label for="project-select" class="field-label">Udstilling</label>
+        <select id="project-select" class="input" @onchange="OnProjectChanged">
+            @foreach (var project in projects)
+            {
+                <option value="@project.Id" selected="@(project.Id == selectedId)">@project.Name</option>
+            }
+        </select>
+    </div>
+
+    @if (dataState == LoadState.Loading)
+    {
+        <p class="page-loading" aria-busy="true">Henter resultater…</p>
+    }
+    else if (dataState == LoadState.Failed)
+    {
+        <div class="empty-state" role="alert">
+            <h2>Resultaterne kunne ikke hentes</h2>
+            <p>@dataError</p>
+            <button type="button" class="btn btn-secondary" @onclick="LoadDataAsync">Prøv igen</button>
+        </div>
+    }
+    else if (stats is not null)
+    {
+        <section class="tiles" aria-label="Samlet statistik">
+            <StatTile Value="@stats.TotalSessions.ToString()" Label="Spil startet" />
+            <StatTile Value="@stats.TotalAnswers.ToString()" Label="Spørgsmål besvaret" />
+            <StatTile Value="@Display.Percent(stats.AverageCorrectPercentage)" Label="Rigtige i gennemsnit" />
+        </section>
+
+        @if (boards.Count == 0)
+        {
+            <p class="section-lead">Udstillingen har ingen quizzer endnu, så der er ingen highscores at vise.</p>
+        }
+
+        @foreach (var board in boards)
+        {
+            var headingId = $"quiz-{board.Quiz.Id}";
+            var questions = QuestionsOf(board.Quiz).ToList();
+
+            <section class="page-section quiz-card" aria-labelledby="@headingId" @key="board.Quiz.Id">
+                <header class="quiz-head">
+                    <div>
+                        <h2 id="@headingId">@board.Quiz.Title</h2>
+                        <p class="quiz-meta">
+                            @board.Players @(board.Players == 1 ? "spiller har" : "spillere har") gemt en score
+                        </p>
+                    </div>
+                    <button type="button" class="btn btn-danger-ghost btn-sm" disabled="@(board.Players == 0)"
+                            @onclick="() => AskClear(board.Quiz)">
+                        Ryd highscores
+                    </button>
+                </header>
+
+                <div class="quiz-grid">
+                    <div>
+                        <h3>Top 10</h3>
+                        @if (board.Top.Count == 0)
+                        {
+                            <p class="muted">Ingen scores endnu.</p>
+                        }
+                        else
+                        {
+                            <ol class="leaders">
+                                @for (var i = 0; i < board.Top.Count; i++)
+                                {
+                                    var user = board.Top[i];
+                                    <li class="leader" @key="user.Id">
+                                        <span class="rank" aria-hidden="true">@(i + 1)</span>
+                                        <span class="nick">@user.Nickname</span>
+                                        <span class="score">@ScoreText(user)</span>
+                                    </li>
+                                }
+                            </ol>
+                        }
+                    </div>
+
+                    <div>
+                        <h3>Spørgsmål</h3>
+                        @if (questions.Count == 0)
+                        {
+                            <p class="muted">Quizzen har ingen spørgsmål endnu.</p>
+                        }
+                        else
+                        {
+                            <ul class="questions">
+                                @foreach (var question in questions)
+                                {
+                                    var isOpen = expanded.Contains(question.Id);
+                                    <li class="question" @key="question.Id">
+                                        <div class="question-head">
+                                            <span class="question-text">@question.Text</span>
+                                            <button type="button" class="btn btn-secondary btn-sm"
+                                                    aria-expanded="@(isOpen ? "true" : "false")"
+                                                    @onclick="() => ToggleQuestionAsync(question)">
+                                                @(isOpen ? "Skjul svar" : "Vis svar")
+                                            </button>
+                                        </div>
+
+                                        @if (isOpen)
+                                        {
+                                            if (loadingQuestions.Contains(question.Id))
+                                            {
+                                                <p class="muted">Henter…</p>
+                                            }
+                                            else if (questionStats.TryGetValue(question.Id, out var s))
+                                            {
+                                                <p class="q-summary">@s.TotalAnswers svar · @Display.Percent(s.CorrectPercentage) rigtige</p>
+                                                <ul class="bars">
+                                                    @foreach (var answer in s.Answers)
+                                                    {
+                                                        var def = question.Answers?.FirstOrDefault(a => a.Id == answer.AnswerId);
+                                                        var isCorrect = def?.IsCorrect == true;
+                                                        <li class="bar-row">
+                                                            <span class="bar-label">
+                                                                @(def?.Text ?? "Slettet svar")
+                                                                @if (isCorrect)
+                                                                {
+                                                                    <span class="tick">✓ rigtigt</span>
+                                                                }
+                                                            </span>
+                                                            <span class="bar" role="img" aria-label="@Display.Percent(answer.Percentage)">
+                                                                <span class="bar-fill @(isCorrect ? "bar-fill-correct" : "")"
+                                                                      style="width:@Display.CssWidth(answer.Percentage)"></span>
+                                                            </span>
+                                                            <span class="bar-value">@answer.Count · @Display.Percent(answer.Percentage)</span>
+                                                        </li>
+                                                    }
+                                                </ul>
+                                                <button type="button" class="btn btn-danger-ghost btn-sm"
+                                                        @onclick="() => AskReset(question)">
+                                                    Nulstil svar
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <p class="form-error" role="alert">
+                                                    @(questionErrors.GetValueOrDefault(question.Id) ?? "Svarene kunne ikke hentes.")
+                                                </p>
+                                            }
+                                        }
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                </div>
+            </section>
+        }
+
+        <section class="page-section danger-zone" aria-labelledby="danger-heading">
+            <h2 id="danger-heading">Start forfra</h2>
+            <p class="section-lead">
+                Sletter al statistik og alle gemte svar for «@SelectedProject?.Name». Brug det fx, når en udstilling
+                bliver sat op på ny.
+            </p>
+            <button type="button" class="btn btn-danger-ghost" @onclick="AskDeleteResults">
+                Slet alle resultater
+            </button>
+        </section>
+    }
+}
+
+@switch (dialog)
+{
+    case DialogKind.ClearBoard when activeQuiz is not null:
+        <ConfirmDialog Title="@($"Ryd highscores for «{activeQuiz.Title}»?")"
+                       Tone="DialogTone.Danger" ConfirmText="Ryd highscores" BusyText="Rydder…"
+                       Run="ClearBoardAsync" OnDone="OnBoardCleared" OnCancel="CloseDialog">
+            <p class="callout callout-danger">
+                <strong>Det kan ikke fortrydes.</strong>
+                Alle gemte scores og kaldenavne for denne quiz bliver slettet.
+            </p>
+        </ConfirmDialog>
+        break;
+
+    case DialogKind.ResetQuestion when activeQuestion is not null:
+        <ConfirmDialog Title="Nulstil svarene til spørgsmålet?"
+                       Tone="DialogTone.Danger" ConfirmText="Nulstil svar" BusyText="Nulstiller…"
+                       Run="ResetQuestionAsync" OnDone="OnQuestionReset" OnCancel="CloseDialog">
+            <p class="callout callout-danger">
+                <strong>Det kan ikke fortrydes.</strong>
+                Statistikken for «@activeQuestion.Text» starter forfra.
+            </p>
+            <p>Brug det, hvis spørgsmålet er ændret, så de gamle svar ikke passer mere.</p>
+        </ConfirmDialog>
+        break;
+
+    case DialogKind.DeleteResults:
+        <ConfirmDialog Title="@($"Slet alle resultater for «{SelectedProject?.Name}»?")"
+                       Tone="DialogTone.Danger" RequireTyped="@SelectedProject?.Name"
+                       ConfirmText="Slet alle resultater" BusyText="Sletter…"
+                       Run="DeleteResultsAsync" OnDone="OnResultsDeleted" OnCancel="CloseDialog">
+            <p class="callout callout-danger">
+                <strong>Det kan ikke fortrydes.</strong>
+                Al statistik og alle gemte svar for udstillingen bliver slettet.
+            </p>
+        </ConfirmDialog>
+        break;
+}

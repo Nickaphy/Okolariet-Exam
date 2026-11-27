@@ -9,7 +9,7 @@
     flex-direction: column;
     gap: 2rem;
     padding: 1.75rem 1.5rem;
-    background: var(--bg);
+    background: var(--colour-accent);
     border-right: 2px solid var(--ink);
     position: sticky;
     top: 0;
@@ -25,6 +25,7 @@
     letter-spacing: 0.18em;
     color: var(--ink);
     text-decoration: none;
+    background: var(--surface);
 }
 
 .nav {
@@ -48,25 +49,14 @@
     text-decoration: none;
 }
 
-.nav ::deep a.nav-item:hover {
-    background: var(--surface-sunk);
-}
+    .nav ::deep a.nav-item:hover {
+        background: var(--colour-accent-soft);
+    }
 
 .nav ::deep a.nav-item.active {
     background: var(--ink);
     color: #fff;
     font-weight: 700;
-}
-
-.nav-soon {
-    color: var(--muted) !important;
-    cursor: default;
-}
-
-.nav-soon small {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
 }
 
 .sidebar-foot {
@@ -85,7 +75,7 @@
 }
 
 .signed-in-label {
-    color: var(--muted);
+    color: var(--ink-soft);
 }
 
 .signed-in-email {
@@ -98,6 +88,14 @@
 .admin-main {
     padding: 2.5rem 3rem 4rem;
     min-width: 0;
+}
+
+.sidebar-foot .link-button {
+    color: var(--ink);
+}
+
+.sidebar ::deep :focus-visible {
+    outline-color: var(--ink);
 }
 
 @media (max-width: 900px) {

@@ -2,19 +2,43 @@
 
 namespace Web.Services.Editor
 {
-
-    // How templates that are meant to come after eacher other are stored. This is necessary because the Database doesn't store the base templates, and we thus we can't just "save the order".
-    // - a main-menu button slot points (targetModdedTemplateId) at the FIRST page of its path;
+    // How pages that come after each other are stored. The database doesn't keep the order of pages, so:
+    // - a menu button points (targetModdedTemplateId) at the FIRST page of its path;
     // - every page points at the NEXT page through a slot called "next".
-
-    // If in future development, the templates need to be stored in the database (and this problem becomes void), this file and ExhibitionEditor are the only places to change.
+    // If the order is ever stored in the database, this file, the loader and ExhibitionEditor are the only places to change.
     public static class PathConvention
     {
         public const string NextSlotKey = "next";
     }
 
-    // One button on the main menu and the pages it leads through, in order.
-    public sealed record ButtonPath(SlotDefinition Slot, string Label, IReadOnlyList<ModdedTemplate> Pages);
+    // One page in a path. A page built from a Menu template is a sub-menu: it has buttons of its own,
+    // each with a path of its own, and it ends the path it sits in (nothing comes "next" after a menu).
+    public sealed record PathPage(ModdedTemplate Page, Template? Template, IReadOnlyList<ButtonPath> Buttons)
+    {
+        public bool IsMenu => Template?.Category == TemplateCategory.Menu;
+
+        // Every page below this one (sub-menu buttons and their paths), parents before children.
+        public IEnumerable<ModdedTemplate> SubPages() =>
+            Buttons.SelectMany(b => b.Pages.SelectMany(p => p.WithSubPages()));
+
+        public IEnumerable<ModdedTemplate> WithSubPages() => SubPages().Prepend(Page);
+    }
+
+    // One button on a menu (the main menu or a sub-menu) and the pages it leads through, in order.
+    // OwnerId is the menu the button sits on.
+    public sealed record ButtonPath(Guid OwnerId, SlotDefinition Slot, string Label, IReadOnlyList<PathPage> Pages)
+    {
+        public bool EndsInMenu => Pages.Count > 0 && Pages[^1].IsMenu;
+
+        public bool LastIs(string templateType) => Pages.Count > 0 && Pages[^1].Page.TemplateType == templateType;
+
+        // 1-based page numbers in this path that use the template. Used for "Brugt på side 1".
+        public IReadOnlyList<int> PositionsOf(string templateType) => Pages
+            .Select((p, i) => (p, number: i + 1))
+            .Where(x => x.p.Page.TemplateType == templateType)
+            .Select(x => x.number)
+            .ToList();
+    }
 
     // Everything the editor page needs, loaded in one go.
     public sealed class ExhibitionModel

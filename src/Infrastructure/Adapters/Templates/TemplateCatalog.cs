@@ -4,12 +4,12 @@ using Domain.ValueObjects;
 
 namespace Infrastructure.Templates
 {
-    // All templates staff can build from. They live in code, not in the database.
+    // All templates staff can build from.
     public static class TemplateCatalog
     {
         public static readonly IReadOnlyList<Template> All =
         [
-            Template.Create("menu-ocean", "Menu (ocean)", TemplateCategory.Menu,
+            Template.Create("menu-two-buttons", "Menu (2 knapper)", TemplateCategory.Menu,
             [
                 new SlotDefinition("title", "Titel", SlotKind.Text, Required: true, MaxLength: 120),
                 new SlotDefinition("background", "Baggrund", SlotKind.Image),

@@ -11,6 +11,12 @@ namespace Web.Services.Editor
     // Everything the editor can change. Every method returns null on success or a error message,
     // which is exactly what NameDialog.Submit and ConfirmDialog.Run expect, so they plug straight in.
     // After a change the page reloads the model, so nothing here has to keep state.
+    //
+    // The rules of an exhibition live here and nowhere else:
+    // - the main menu comes first (no pages before it exists);
+    // - pages are only created, linked and removed through this class, so the "next" links stay in one piece;
+    // - a page built from a Menu template is a sub-menu and ends its path.
+    // Nothing else is required of the staff: a project with only a main menu is fine.
     public sealed class ExhibitionEditor(
         IProjectsApi projects,
         IModdedTemplatesApi pages,
@@ -20,7 +26,11 @@ namespace Web.Services.Editor
         // ---- project ----
 
         public Task<string?> RenameProjectAsync(ExhibitionModel m, string name) =>
-            Guard(() => SaveProjectAsync(m, name, m.Project.MainModdedTemplateId));
+            Guard(() => SaveProjectAsync(m, name, m.Project.MainModdedTemplateId, m.Project.Appearance));
+
+        // Colours and font for the whole exhibition. null = nothing chosen, so the neutral default is used.
+        public Task<string?> SaveAppearanceAsync(ExhibitionModel m, Appearance? appearance) =>
+            Guard(() => SaveProjectAsync(m, m.Project.Name, m.Project.MainModdedTemplateId, appearance));
 
         // Every exhibition has a main menu. It is created from one of the fixed menu templates.
         public Task<string?> CreateMenuAsync(ExhibitionModel m, string menuTemplateType) => Guard(async () =>
@@ -29,7 +39,7 @@ namespace Web.Services.Editor
                 new ModdedTemplateCreate { TemplateType = menuTemplateType, Title = "Hovedmenu", SortOrder = 0 });
             if (Fail(created) is { } error) return error;
 
-            return await SaveProjectAsync(m, m.Project.Name, created.Content!.Id);
+            return await SaveProjectAsync(m, m.Project.Name, created.Content!.Id, m.Project.Appearance);
         });
 
         public async Task<PublishResult> PublishAsync(Guid projectId)
@@ -51,45 +61,58 @@ namespace Web.Services.Editor
 
         // ---- menu buttons and their paths ----
 
-        public Task<string?> SaveButtonLabelAsync(ExhibitionModel m, ButtonPath button, string label) => Guard(() =>
+        // Works for the buttons of the main menu and of sub-menus: the button knows which menu it sits on.
+        public Task<string?> SaveButtonLabelAsync(ButtonPath button, string label) => Guard(() =>
         {
-            var firstPage = button.Pages.Count > 0 ? button.Pages[0].Id : (Guid?)null;
-            return WriteButtonAsync(m.Menu!.Id, button.Slot.Key, label.Trim(), firstPage);
+            var firstPage = button.Pages.Count > 0 ? button.Pages[0].Page.Id : (Guid?)null;
+            return WriteButtonAsync(button.OwnerId, button.Slot.Key, label.Trim(), firstPage);
         });
 
-        // Creates a template from a fixed template and puts it last in the button's path.
-        public Task<string?> AddPageAsync(ExhibitionModel m, ButtonPath button, string templateType, string title) => Guard(async () =>
+        // Creates a page from a fixed template and puts it last in the button's path.
+        // Any template can be used, also a menu template (that page then becomes a sub-menu).
+        public Task<string?> AddPageAsync(ExhibitionModel m, ButtonPath button, string templateType) => Guard(async () =>
         {
+            if (m.Menu is null) return "Opret hovedmenuen, før du tilføjer sider.";
+            if (button.EndsInMenu)
+                return "Forløbet slutter i en undermenu. Tilføj siden på en af undermenuens knapper i stedet.";
+
             var created = await pages.CreateModdedTemplate(m.Project.Id, new ModdedTemplateCreate
             {
                 TemplateType = templateType,
-                Title = title,
+                Title = TitleFor(m, templateType),
                 SortOrder = m.Pages.Count
             });
             if (Fail(created) is { } error) return error;
 
             var newId = created.Content!.Id;
             var linkError = button.Pages.Count == 0
-                ? await WriteButtonAsync(m.Menu!.Id, button.Slot.Key, button.Label, newId)
-                : await WriteNextAsync(button.Pages[^1].Id, newId);
+                ? await WriteButtonAsync(button.OwnerId, button.Slot.Key, button.Label, newId)
+                : await WriteNextAsync(button.Pages[^1].Page.Id, newId);
 
             return linkError is null
                 ? null
                 : $"Siden blev oprettet, men kunne ikke sættes ind i forløbet (den står under «Sider uden knap»). {linkError}";
         });
 
-        // Takes a template out of a path (the pages around it are joined up) and deletes it.
-        public Task<string?> RemovePageAsync(ExhibitionModel m, ButtonPath button, int index) => Guard(async () =>
+        // Takes a page out of a path (the pages around it are joined up) and deletes it.
+        // A sub-menu takes the pages below it with it, so nothing is left behind unreachable.
+        public Task<string?> RemovePageAsync(ButtonPath button, int index) => Guard(async () =>
         {
-            var page = button.Pages[index];
-            Guid? next = index + 1 < button.Pages.Count ? button.Pages[index + 1].Id : null;
+            var node = button.Pages[index];
+            Guid? next = index + 1 < button.Pages.Count ? button.Pages[index + 1].Page.Id : null;
 
             var relinkError = index == 0
-                ? await WriteButtonAsync(m.Menu!.Id, button.Slot.Key, button.Label, next)
-                : await WriteNextAsync(button.Pages[index - 1].Id, next);
+                ? await WriteButtonAsync(button.OwnerId, button.Slot.Key, button.Label, next)
+                : await WriteNextAsync(button.Pages[index - 1].Page.Id, next);
             if (relinkError is not null) return relinkError;
 
-            return Fail(await pages.DeleteModdedTemplate(page.Id), ignoreNotFound: true);
+            // Parents before children: the server refuses to delete a page that another page still links to.
+            foreach (var page in node.WithSubPages())
+            {
+                if (Fail(await pages.DeleteModdedTemplate(page.Id), ignoreNotFound: true) is { } error)
+                    return error;
+            }
+            return null;
         });
 
         public Task<string?> DeletePageAsync(ModdedTemplate page) => Guard(async () =>
@@ -97,7 +120,16 @@ namespace Web.Services.Editor
 
         // ---- helpers ----
 
-        private async Task<string?> SaveProjectAsync(ExhibitionModel m, string name, Guid? mainMenuId) // Save a project
+        // New pages are named after their template ("Faktaside", then "Faktaside 2" ...). Staff can rename them later.
+        private static string TitleFor(ExhibitionModel m, string templateType)
+        {
+            var name = m.DisplayNameOf(templateType);
+            var sameType = m.Pages.Count(p => p.TemplateType == templateType);
+            var title = sameType == 0 ? name : $"{name} {sameType + 1}";
+            return title.Length > 120 ? title[..120] : title;
+        }
+
+        private async Task<string?> SaveProjectAsync(ExhibitionModel m, string name, Guid? mainMenuId, Appearance? appearance) // Save a project
         {
             if (m.ETag is null) return "Siden skal hentes igen, før ændringen kan gemmes. Genindlæs siden.";
 
@@ -105,7 +137,7 @@ namespace Web.Services.Editor
             {
                 Name = name,
                 MainModdedTemplateId = mainMenuId,
-                Appearance = m.Project.Appearance
+                Appearance = appearance
             }, m.ETag);
 
             return Fail(response);

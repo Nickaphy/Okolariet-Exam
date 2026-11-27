@@ -1,0 +1,51 @@
+﻿@* A simple wireframe drawn from a template's slots: bars for text, crossed boxes for images, pills for buttons.
+   It is generic, so every template (also new ones) gets a thumbnail without any extra work. When the real
+   template components exist, a card can show the real thing instead. *@
+
+<div class="sketch" aria-hidden="true">
+    @if (headline)
+    {
+        <span class="sk-title"></span>
+    }
+
+    @if (media.Count > 0)
+    {
+        <div class="sk-media" style="--n:@Math.Min(media.Count, 3)">
+            @foreach (var slot in media)
+            {
+                <span class="sk-box @(slot.Kind == SlotDefinitionKind.Video ? "sk-video" : "")"></span>
+            }
+        </div>
+    }
+
+    @if (Template.QuestionRules is { } rules)
+    {
+        <span class="sk-line"></span>
+        <div class="sk-answers">
+            @for (var i = 0; i < Math.Min(rules.AnswersPerQuestion, 6); i++)
+            {
+                <span class="sk-answer"></span>
+            }
+        </div>
+    }
+
+    @for (var i = 0; i < Math.Min(bodyLines, 3); i++)
+    {
+        <span class="sk-line @(i == 2 ? "sk-line-short" : "")"></span>
+    }
+
+    @if (audio > 0)
+    {
+        <span class="sk-audio"></span>
+    }
+
+    @if (buttons > 0)
+    {
+        <div class="sk-buttons">
+            @for (var i = 0; i < Math.Min(buttons, 4); i++)
+            {
+                <span class="sk-button"></span>
+            }
+        </div>
+    }
+</div>

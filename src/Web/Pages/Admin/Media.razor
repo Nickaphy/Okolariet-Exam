@@ -1,0 +1,135 @@
+﻿@page "/admin/media"
+@layout AdminLayout
+@attribute [Authorize]
+@inject IAssetsApi AssetsApi
+@inject Microsoft.Extensions.Configuration.IConfiguration Config
+
+<PageTitle>Mediebibliotek · Økolariet</PageTitle>
+
+<header class="page-head">
+    <div>
+        <h1 tabindex="-1">Mediebibliotek</h1>
+        <p class="lead">Billeder, video og lyd, som kan bruges på siderne i udstillingerne.</p>
+    </div>
+
+    @* The real file input sits inside the label, so the whole button opens the file picker. *@
+    <label class="btn btn-primary btn-lg upload-button @(uploading ? "is-disabled" : "")">
+        + Upload filer
+        <InputFile @key="inputKey" class="file-input" OnChange="OnFilesSelectedAsync"
+                   multiple accept="@AcceptTypes" disabled="@uploading" />
+    </label>
+</header>
+
+@if (uploadStatus is not null)
+{
+    <NoticeBar Kind="info" Text="@uploadStatus" />
+}
+
+@if (notice is not null)
+{
+    <NoticeBar Kind="@notice.Kind" Text="@notice.Text" OnClose="() => notice = null" />
+}
+
+@if (uploadErrors.Count > 0)
+{
+    <div class="upload-errors callout callout-danger" role="alert">
+        <strong>Disse filer blev ikke uploadet:</strong>
+        <ul>
+            @foreach (var error in uploadErrors)
+            {
+                <li>@error</li>
+            }
+        </ul>
+        <button type="button" class="btn btn-secondary btn-sm" @onclick="() => uploadErrors.Clear()">Luk</button>
+    </div>
+}
+
+<div class="chip-row" role="group" aria-label="Vis">
+    @foreach (var (label, value) in Filters)
+    {
+        <button type="button" class="chip" aria-pressed="@(kind == value ? "true" : "false")"
+                @onclick="() => SetKindAsync(value)">
+            @label
+        </button>
+    }
+</div>
+
+@if (state == LoadState.Loading)
+{
+    <ul class="grid" aria-busy="true" aria-label="Henter filer">
+        @for (var i = 0; i < 6; i++)
+        {
+            <li class="asset skeleton" aria-hidden="true"></li>
+        }
+    </ul>
+}
+else if (state == LoadState.Failed)
+{
+    <div class="empty-state" role="alert">
+        <h2>Filerne kunne ikke hentes</h2>
+        <p>@loadError</p>
+        <button type="button" class="btn btn-secondary" @onclick="LoadAsync">Prøv igen</button>
+    </div>
+}
+else if (assets.Count == 0)
+{
+    <div class="empty-state">
+        <h2>@(kind is null ? "Der er ingen filer endnu" : "Ingen filer af den slags")</h2>
+        <p>Tryk på «Upload filer» for at lægge billeder, video eller lyd i biblioteket.</p>
+    </div>
+}
+else
+{
+    <ul class="grid">
+        @foreach (var asset in assets)
+        {
+            <li class="asset" @key="asset.Id">
+                <div class="preview preview-@asset.Kind.ToString().ToLowerInvariant()">
+                    @switch (asset.Kind)
+                    {
+                        case AssetKind.Image:
+                            <img src="@UrlOf(asset)" alt="@asset.OriginalName" loading="lazy" />
+                            break;
+                        case AssetKind.Video:
+                            <video src="@UrlOf(asset)" controls preload="metadata"></video>
+                            break;
+                        default:
+                            <span class="audio-icon" aria-hidden="true">♪</span>
+                            <audio src="@UrlOf(asset)" controls preload="none"></audio>
+                            break;
+                    }
+                </div>
+
+                <div class="asset-info">
+                    <strong class="asset-name" title="@asset.OriginalName">@asset.OriginalName</strong>
+                    <small>@KindName(asset.Kind) · @Display.FileSize(asset.SizeBytes) · @Display.Date(asset.UploadedAt)</small>
+                </div>
+
+                <button type="button" class="btn btn-danger-ghost btn-sm"
+                        aria-label="@($"Slet {asset.OriginalName}")" @onclick="() => assetToDelete = asset">
+                    Slet
+                </button>
+            </li>
+        }
+    </ul>
+
+    @if (assets.Count < total)
+    {
+        <button type="button" class="btn btn-secondary more" disabled="@loadingMore" @onclick="LoadMoreAsync">
+            @(loadingMore ? "Henter…" : $"Vis flere ({total - assets.Count} tilbage)")
+        </button>
+    }
+}
+
+@if (assetToDelete is not null)
+{
+    <ConfirmDialog Title="@($"Slet «{assetToDelete.OriginalName}»?")"
+                   Tone="DialogTone.Danger" ConfirmText="Slet filen" BusyText="Sletter…"
+                   Run="DeleteAsync" OnDone="OnDeletedAsync" OnCancel="() => assetToDelete = null">
+        <p class="callout callout-danger">
+            <strong>Det kan ikke fortrydes.</strong>
+            Filen bliver slettet for altid.
+        </p>
+        <p>Bruges filen stadig på en side i en udstilling, kan den ikke slettes. Fjern den fra siden først.</p>
+    </ConfirmDialog>
+}
