@@ -13,7 +13,15 @@ namespace Infrastructure.Database
         private static readonly string[] Words =
         [
             "Modig", "Glad", "Sej", "Klog", "Hurtig", "Stærk", "Venlig", "Snu", "Rolig", "Frisk",
-            "Odder", "Delfin", "Pingvin", "Skildpadde", "Hval", "Sæl", "Ræv", "Ugle", "Pindsvin", "Egern"
+            "Kvik", "Sjov", "Flink", "Vild", "Munter", "Livlig", "Smart", "Kæk", "Lystig", "Nysgerrig",
+            "Behændig", "Adræt", "Hjælpsom", "Ivrig", "Kreativ", "Rask", "Snild", "Tapper", "Trofast", "Vågen",
+            "Varm", "Blid", "Glitrende", "Lysende", "Strålende", "Funklende", "Sprudlende", "Hoppende", "Dansende", "Syngende",
+            "Smilende", "Grøn", "Blå", "Gylden", "Kosmisk", "Magisk", "Mægtig", "Super", "Lynhurtig", "Robust",
+            "Odder", "Delfin", "Pingvin", "Skildpadde", "Hval", "Sæl", "Ræv", "Ugle", "Pindsvin", "Egern",
+            "Krabbe", "Blæksprutte", "Søstjerne", "Gople", "Hummer", "Rokke", "Haj", "Laks", "Torsk", "Makrel",
+            "Hvalros", "Isbjørn", "Lunde", "Måge", "Pelikan", "Flamingo", "Ørn", "Falk", "Svane", "And",
+            "Frø", "Salamander", "Bæver", "Elg", "Hjort", "Grævling", "Mår", "Bi", "Humlebi", "Sommerfugl",
+            "Mariehøne", "Guldsmed", "Snegl", "Myre", "Musling", "Søhest", "Koral", "Narhval", "Sardin", "Rødspætte"
         ];
 
         public async Task SeedAsync(CancellationToken ct = default)
