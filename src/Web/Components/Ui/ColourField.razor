@@ -1,0 +1,38 @@
+@using Radzen.Blazor
+
+@* A colour field with Radzen's colour picker. Always hands back "#RRGGBB" (what the API accepts),
+   whatever format the picker itself produces. *@
+
+<div class="colour-field">
+    <span class="colour-label" id="@labelId">@Label</span>
+    <div class="colour-row">
+        <RadzenColorPicker @bind-Value="current" @bind-Value:after="OnPickedAsync"
+                           ShowHSV="true" ShowRGBA="false" ShowColors="true" ShowButton="false"
+                           Disabled="@Disabled" aria-labelledby="@labelId" />
+        <code class="colour-hex">@(Value ?? "–")</code>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = string.Empty;
+
+    // "#RRGGBB", or null when nothing is chosen (the picker then shows what would apply).
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+
+    // What the picker shows when Value is null.
+    [Parameter] public string? Fallback { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+
+    private readonly string labelId = $"colour-{Guid.NewGuid():N}";
+    private string? current;
+
+    protected override void OnParametersSet() => current = Value ?? Fallback;
+
+    private async Task OnPickedAsync()
+    {
+        var hex = Web.Theming.Theme.ToHex(current);
+        if (hex is null || string.Equals(hex, Value, StringComparison.OrdinalIgnoreCase)) return;
+        await ValueChanged.InvokeAsync(hex);
+    }
+}

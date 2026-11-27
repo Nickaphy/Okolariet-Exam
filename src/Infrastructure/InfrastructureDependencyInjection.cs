@@ -24,7 +24,6 @@ using Infrastructure.Adapters.QuizResults;
 using Infrastructure.Adapters.Templates;
 using Infrastructure.Database;
 using Infrastructure.Security;
-using Infrastructure.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -129,6 +128,7 @@ namespace Infrastructure
             services.AddScoped<IGetSessionSummaryAsync, GetSessionSummaryAdapter>();
 
             // User DI
+            services.AddScoped<ICreateUserAsync, CreateUserAdapter>();
             services.AddScoped<IClearQuizLeaderboardAsync, ClearQuizLeaderboardAdapter>();
             services.AddScoped<IDeleteUserAsync, DeleteUserAdapter>();
             services.AddScoped<IGetUserByIdAsync, GetUserByIdAdapter>();
@@ -140,17 +140,17 @@ namespace Infrastructure
             services.AddScoped<IGetLatestVersionAsync, GetLatestVersionAdapter>();
             services.AddScoped<IBuildSnapshotAsync, BuildSnapshotAdapter>();
 
-            // TEMPORARY: one shared instance behind all nine ports (singleton, so data survives between requests)
-            services.AddSingleton<InMemoryAuthStore>();
-            services.AddSingleton<IGetLoginLockoutAsync>(sp => sp.GetRequiredService<InMemoryAuthStore>());
-            services.AddSingleton<ISaveLoginLockoutAsync>(sp => sp.GetRequiredService<InMemoryAuthStore>());
-            services.AddSingleton<IAddLoginAsync>(sp => sp.GetRequiredService<InMemoryAuthStore>());
-            services.AddSingleton<IGetLoginByIdAsync>(sp => sp.GetRequiredService<InMemoryAuthStore>());
-            services.AddSingleton<IUpdateLoginAsync>(sp => sp.GetRequiredService<InMemoryAuthStore>());
-            services.AddSingleton<IRevokeAllLoginsForStaffAsync>(sp => sp.GetRequiredService<InMemoryAuthStore>());
-            services.AddSingleton<IAddRefreshTokenAsync>(sp => sp.GetRequiredService<InMemoryAuthStore>());
-            services.AddSingleton<IGetRefreshTokenByHashAsync>(sp => sp.GetRequiredService<InMemoryAuthStore>());
-            services.AddSingleton<IUpdateRefreshTokenAsync>(sp => sp.GetRequiredService<InMemoryAuthStore>());
+            // Auth storage DI: logins, refresh tokens and lockouts in the database (StaffLogins, RefreshTokens,
+            // LoginLockouts), so a restart of the Host doesn't log everyone out or forget a lockout.
+            services.AddScoped<IGetLoginLockoutAsync, GetLoginLockoutAdapter>();
+            services.AddScoped<ISaveLoginLockoutAsync, SaveLoginLockoutAdapter>();
+            services.AddScoped<IAddLoginAsync, AddLoginAdapter>();
+            services.AddScoped<IGetLoginByIdAsync, GetLoginByIdAdapter>();
+            services.AddScoped<IUpdateLoginAsync, UpdateLoginAdapter>();
+            services.AddScoped<IRevokeAllLoginsForStaffAsync, RevokeAllLoginsForStaffAdapter>();
+            services.AddScoped<IAddRefreshTokenAsync, AddRefreshTokenAdapter>();
+            services.AddScoped<IGetRefreshTokenByHashAsync, GetRefreshTokenByHashAdapter>();
+            services.AddScoped<IUpdateRefreshTokenAsync, UpdateRefreshTokenAdapter>();
 
             // File storage DI
             // The adapter that reads and writes the files belongs to the Asset feature.

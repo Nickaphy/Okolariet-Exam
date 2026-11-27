@@ -1,0 +1,128 @@
+@namespace Web.Templates.Quiz
+
+@* "Vælg dit highscore-navn". No free text, so no rude names and no personal data: the guest picks
+   two of ten approved words (GET /nickname-suggestions) and gets a random number. The server builds the
+   final name itself, e.g. "ModigRæv42". "Bland" fetches ten new words and a new number. *@
+
+<div class="np">
+    <div class="np-head">
+        <h2 class="np-title">Vælg dit highscore-navn</h2>
+        <button type="button" class="np-shuffle" disabled="@busy" @onclick="ShuffleAsync">🎲 Bland</button>
+    </div>
+
+    @if (words.Count < 2)
+    {
+        <p class="np-message">@(error ?? "Henter ord…")</p>
+    }
+    else
+    {
+        <div class="np-columns">
+            @foreach (var (heading, column, isFirst) in Columns)
+            {
+                <div class="np-column">
+                    <span class="np-caption">@heading</span>
+                    @foreach (var word in column)
+                    {
+                        var chosen = word == first || word == second;
+                        <button type="button" class="np-word @(chosen ? "np-word-on" : "")" @key="word.Id"
+                                @onclick="() => Pick(word, isFirst)">
+                            @word.Text
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    <div class="np-foot">
+        <span class="np-label">Dit navn:</span>
+        <strong class="np-name">@Preview</strong>
+        <button type="button" class="np-skip" disabled="@busy" @onclick="OnDone">Spring over</button>
+        <button type="button" class="slot-button np-save" disabled="@(busy || first is null || second is null)" @onclick="SaveAsync">
+            @(busy ? "Gemmer…" : "Gem ★")
+        </button>
+    </div>
+    @if (error is not null && words.Count >= 2)
+    {
+        <p class="np-message" role="alert">@error</p>
+    }
+</div>
+
+@code {
+    // Demo: example words, nothing is fetched or saved.
+    [Parameter] public bool Demo { get; set; }
+
+    // Saves the choice. Returns null on success, or a message to show.
+    [Parameter, EditorRequired] public Func<NicknameChoice, Task<string?>> Save { get; set; } = default!;
+
+    // Saved, or "Spring over".
+    [Parameter] public EventCallback OnDone { get; set; }
+
+    [Inject] private INicknameGateway NicknameGateway { get; set; } = default!;
+
+    private static readonly string[] DemoWords =
+        ["Glade", "Seje", "Skøre", "Lynhurtige", "Modige", "Grævling", "Regnorm", "Pindsvin", "Genbrugsrobot", "Mælkekarton"];
+
+    private IReadOnlyList<NicknameWord> words = [];
+    private NicknameWord? first, second;
+    private int number;
+    private bool busy;
+    private string? error;
+
+    // The ten words as two columns of five: "1 · vælg et ord" and "2 · vælg et dyr / en ting".
+    private IReadOnlyList<NicknameWord> FirstColumn => words.Take(words.Count / 2).ToList();
+    private IReadOnlyList<NicknameWord> SecondColumn => words.Skip(words.Count / 2).ToList();
+
+    private IEnumerable<(string Heading, IReadOnlyList<NicknameWord> Words, bool IsFirst)> Columns =>
+    [
+        ("1 · Vælg et ord", FirstColumn, true),
+        ("2 · Vælg et dyr / en ting", SecondColumn, false),
+    ];
+
+    // The same way the server builds it: the two words with a capital letter, then the number.
+    private string Preview => first is null || second is null
+        ? "…"
+        : $"{Capital(first.Text)}{Capital(second.Text)}{number}";
+
+    protected override Task OnInitializedAsync() => ShuffleAsync();
+
+    private async Task ShuffleAsync()
+    {
+        error = null;
+        first = second = null;
+        number = Random.Shared.Next(0, 100);   // 0-99, the API's rule
+
+        if (Demo)
+        {
+            words = DemoWords.Select(w => new NicknameWord { Id = Guid.NewGuid(), Text = w }).ToList();
+            return;
+        }
+
+        busy = true;
+        var (result, loadError) = await ApiCall.Get(() => NicknameGateway.GetSuggestionsAsync());
+        busy = false;
+        words = result ?? [];
+        error = loadError;
+    }
+
+    // One word from each column.
+    private void Pick(NicknameWord word, bool fromFirstColumn)
+    {
+        if (fromFirstColumn) first = word;
+        else second = word;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (first is null || second is null) return;
+
+        busy = true;
+        error = await Save(new NicknameChoice(first, second, number));
+        busy = false;
+
+        if (error is null) await OnDone.InvokeAsync();
+    }
+
+    private static string Capital(string word) =>
+        word.Length == 0 ? word : char.ToUpper(word[0]) + word[1..].ToLower();
+}

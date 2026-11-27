@@ -1,0 +1,109 @@
+.at {
+    display: grid;
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    gap: 1.6cqw;
+    width: 100%;
+}
+
+.at-tile {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.2cqh;
+    min-height: 13cqh;
+    padding: 1.6cqh 2cqw;
+    border: max(1px, 0.25cqw) solid color-mix(in srgb, var(--tpl-text) 35%, transparent);
+    border-radius: 1.6cqw;
+    background: color-mix(in srgb, var(--tpl-text) 8%, transparent);
+    color: var(--tpl-text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.12s ease, opacity 0.2s ease, background 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+    .at-tile:active:not(:disabled) {
+        transform: scale(0.97);
+    }
+
+    .at-tile:disabled {
+        cursor: default;
+    }
+
+.at-row {
+    display: flex;
+    align-items: center;
+    gap: 1.6cqw;
+}
+
+/* The shape sits on a badge in the button colour, the theme's accent. */
+.at-shape {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 4.6cqw;
+    height: 4.6cqw;
+    border-radius: 1cqw;
+    background: var(--tpl-button);
+    color: var(--tpl-button-ink);
+    font-size: 2.4cqw;
+    line-height: 1;
+}
+
+.at-text {
+    flex: 1;
+    min-width: 0;
+    font-size: 2.5cqw;
+    font-weight: 700;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.at-mark {
+    flex: none;
+    font-size: 3cqw;
+    font-weight: 800;
+}
+
+/* Waiting for the server's answer. */
+.at-chosen {
+    border-color: var(--tpl-button);
+    box-shadow: 0 0 0 0.4cqw var(--tpl-button);
+}
+
+.at-correct {
+    border-color: var(--tpl-button);
+    background: var(--tpl-button);
+    color: var(--tpl-button-ink);
+}
+
+    .at-correct .at-shape {
+        background: var(--tpl-button-ink);
+        color: var(--tpl-button);
+    }
+
+.at-wrong {
+    border-style: dashed;
+    opacity: 0.75;
+}
+
+.at-faded {
+    opacity: 0.35;
+}
+
+/* ---- the picture quiz: a picture above every answer ---- */
+.at-images .at-tile {
+    min-height: 0;
+    height: 100%;
+    padding: 1.2cqw;
+}
+
+.at-images ::deep .at-image {
+    width: 100%;
+    flex: 1 1 0;
+    min-height: 0;
+    object-fit: cover;
+    border-radius: 1cqw;
+}

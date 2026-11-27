@@ -1,0 +1,22 @@
+.tile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 1.1rem 1.4rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-top: 5px solid var(--colour-accent);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+}
+
+.tile-value {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.tile-label {
+    color: var(--ink-soft);
+    font-weight: 600;
+}

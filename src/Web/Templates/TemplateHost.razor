@@ -1,0 +1,56 @@
+@inject AssetUrls Assets
+
+@* Draws one page with the right template component, on a 16:9 stage that scales to any width.
+   Used by the kiosk, the editor's preview, the Udseende preview, the template picker and the template gallery.
+
+   How it works:
+   1. TemplateRegistry says which component draws Page.TemplateType (e.g. "fact-hero" → FactHero).
+   2. DynamicComponent creates that component.
+   3. Every component inside gets a TemplateScope (the page's content and settings) as a cascading value.
+   4. The colours become CSS variables on the stage (Theme.Style): the page's Appearance, else the project's (Inherited),
+      else the neutral default. Templates only read those variables, so a template never contains a colour. *@
+
+<div class="stage @(Preview ? "stage-preview" : "")" style="@Theme.Style(Page.Appearance, Inherited)">
+    <CascadingValue Value="scope">
+        @if (entry is not null)
+        {
+            <DynamicComponent Type="entry.Component" />
+        }
+        else
+        {
+            <div class="unknown">
+                <strong>Skabelonen kan ikke vises</strong>
+                <span>«@Page.TemplateType» findes ikke i denne version af appen.</span>
+            </div>
+        }
+    </CascadingValue>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public PageContent Page { get; set; } = default!;
+
+    // The project's look. Used for every colour the page itself hasn't set.
+    [Parameter] public Appearance? Inherited { get; set; }
+
+    // The template's definition from the server (for placeholder labels). Optional.
+    [Parameter] public Template? Definition { get; set; }
+
+    // Preview: nothing can be tapped. Placeholders: empty slots are drawn as dashed boxes.
+    [Parameter] public bool Preview { get; set; }
+    [Parameter] public bool Placeholders { get; set; }
+
+    // A button was tapped (gets the target page's id). Only the kiosk uses it.
+    [Parameter] public EventCallback<Guid> OnNavigate { get; set; }
+
+    // The exhibition the page belongs to. Only the kiosk sets it (a quiz needs it to save guests' answers).
+    [Parameter] public Guid? ProjectId { get; set; }
+
+    private TemplateScope scope = default!;
+    private TemplateEntry? entry;
+
+    protected override void OnParametersSet()
+    {
+        entry = TemplateRegistry.Find(Page.TemplateType);
+        scope = new TemplateScope(Page, Definition, Preview, Placeholders, ProjectId, Assets, OnNavigate);
+    }
+}

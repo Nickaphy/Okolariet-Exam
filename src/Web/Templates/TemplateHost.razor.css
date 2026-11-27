@@ -1,0 +1,44 @@
+/* The stage: always 16:9. container-type makes cqw/cqh mean "percent of the stage",
+   so templates scale the same in a small preview and on the big kiosk screen. */
+.stage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    container-type: size;
+    overflow: hidden;
+    background: var(--tpl-bg);
+    color: var(--tpl-text);
+    font-family: var(--tpl-font);
+    text-align: center;
+}
+
+.stage-preview {
+    pointer-events: none;
+    user-select: none;
+}
+
+.unknown {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1cqh;
+    padding: 5cqw;
+    font-size: 2.2cqw;
+}
+
+/* Shared by all slot components: how an empty slot looks when placeholders are on. */
+.stage ::deep .slot-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1cqh 2cqw;
+    border: max(1px, 0.22cqw) dashed currentColor;
+    border-radius: 1.4cqw;
+    opacity: 0.55;
+    font-size: 1.8cqw;
+    font-weight: 600;
+    line-height: 1.2;
+}

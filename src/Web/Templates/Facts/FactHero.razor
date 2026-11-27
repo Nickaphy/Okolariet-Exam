@@ -1,0 +1,25 @@
+@namespace Web.Templates.Facts
+@using Web.Templates.Slots
+
+@* Template "fact-hero": one big image over the whole screen, with a text card at the bottom.
+   Slot keys: title, body, image, audio. *@
+
+<div class="fhr">
+    <SlotImage Key="image" Class="fhr-image" />
+    @* No empty card floating on the image. *@
+    @if (Scope.Show("title", "body", "audio"))
+    {
+        <div class="fhr-card">
+            <FactHead Left="true" Small="true" />
+            <SlotText Key="body" Class="fhr-body" />
+        </div>
+    }
+</div>
+
+@code {
+    [CascadingParameter] public TemplateScope Scope { get; set; } = default!;
+
+    public static PageContent Sample() => PageContent.Sample("fact-hero",
+        ("title", "Plastik i havet"),
+        ("body", "Hvert år ender omkring otte millioner ton plastik i verdenshavene."));
+}

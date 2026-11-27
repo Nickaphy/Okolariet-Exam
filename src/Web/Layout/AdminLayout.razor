@@ -2,39 +2,64 @@
 @inject AuthService Auth
 @inject NavigationManager Nav
 
+@* The frame around every admin page: the green menu on the left (logo, pages, who is logged in, log out) and the page itself. *@
+
 <div class="admin-shell">
     <aside class="sidebar">
-        <a class="brand" href="admin/projects">ØKOLARIET</a>
+        <a class="brand" href="admin/projects">
+            <span class="brand-mark"><Icon Name="eco" /></span>
+            <span class="brand-text">
+                <strong>ØKOLARIET</strong>
+                <small>Administration</small>
+            </span>
+        </a>
 
         <nav class="nav" aria-label="Hovedmenu">
-            <NavLink class="nav-item" href="admin/projects" Match="NavLinkMatch.Prefix">Udstillinger</NavLink>
-            @* Not built yet. Shown so staff can see what is coming, but not clickable. *@
-            <span class="nav-item nav-soon" aria-disabled="true">Highscores <small>snart</small></span>
-            <span class="nav-item nav-soon" aria-disabled="true">Mediebibliotek <small>snart</small></span>
-            <span class="nav-item nav-soon" aria-disabled="true">Indstillinger <small>snart</small></span>
+            <p class="nav-caption">Menu</p>
+            @foreach (var item in NavItems)
+            {
+                <NavLink class="nav-item" href="@item.Href" Match="NavLinkMatch.Prefix">
+                    <Icon Name="@item.Icon" /> <span>@item.Text</span>
+                </NavLink>
+            }
         </nav>
 
         <div class="sidebar-foot">
             <AuthorizeView>
                 <Authorized>
-                    <p class="signed-in">
-                        <span class="signed-in-label">Logget ind som</span>
-                        <span class="signed-in-email">@context.User.Identity?.Name</span>
-                    </p>
+                    <div class="signed-in">
+                        <span class="avatar"><Icon Name="person" /></span>
+                        <span class="signed-in-text">
+                            <span class="signed-in-label">Logget ind som</span>
+                            <span class="signed-in-email" title="@context.User.Identity?.Name">@context.User.Identity?.Name</span>
+                        </span>
+                    </div>
                 </Authorized>
             </AuthorizeView>
-            <button type="button" class="link-button" @onclick="LogoutAsync" disabled="@loggingOut">
-                @(loggingOut ? "Logger ud…" : "Log ud")
+            <button type="button" class="logout" @onclick="LogoutAsync" disabled="@loggingOut">
+                <Icon Name="logout" /> @(loggingOut ? "Logger ud…" : "Log ud")
             </button>
         </div>
     </aside>
 
     <main class="admin-main">
-        @Body
+        <div class="admin-content">
+            @Body
+        </div>
     </main>
 </div>
 
 @code {
+    // The menu on the left. NavLink marks the item whose address the current page starts with.
+    private static readonly (string Href, string Icon, string Text)[] NavItems =
+    [
+        ("admin/projects", "slideshow", "Udstillinger"),
+        ("admin/highscores", "leaderboard", "Highscores"),
+        ("admin/media", "perm_media", "Mediebibliotek"),
+        ("admin/templates", "dashboard", "Skabeloner"),
+        ("admin/settings", "settings", "Indstillinger"),
+    ];
+
     private bool loggingOut;
 
     private async Task LogoutAsync()

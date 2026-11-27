@@ -1,0 +1,109 @@
+.np {
+    display: flex;
+    flex-direction: column;
+    gap: 1.8cqh;
+    height: 100%;
+}
+
+.np-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2cqw;
+}
+
+.np-title {
+    margin: 0;
+    font-size: 2.6cqw;
+    font-weight: 800;
+}
+
+.np-shuffle,
+.np-skip {
+    padding: 1cqh 1.6cqw;
+    border: max(1px, 0.2cqw) solid currentColor;
+    border-radius: 1cqw;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 1.7cqw;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.np-skip {
+    border-style: dashed;
+}
+
+.np-columns {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2cqw;
+}
+
+.np-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1cqh;
+}
+
+.np-caption {
+    font-size: 1.3cqw;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.75;
+}
+
+.np-word {
+    padding: 1.2cqh 1.4cqw;
+    border: max(1px, 0.2cqw) solid currentColor;
+    border-radius: 1cqw;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 1.9cqw;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+}
+
+.np-word-on {
+    background: var(--tpl-button);
+    border-color: var(--tpl-button);
+    color: var(--tpl-button-ink);
+}
+
+.np-foot {
+    display: flex;
+    align-items: center;
+    gap: 1.6cqw;
+    padding-top: 1.8cqh;
+    border-top: max(1px, 0.2cqw) dashed color-mix(in srgb, var(--tpl-text) 35%, transparent);
+}
+
+.np-label {
+    font-size: 1.6cqw;
+    opacity: 0.75;
+}
+
+.np-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 2.6cqw;
+    overflow-wrap: anywhere;
+}
+
+.np-foot ::deep .np-save {
+    min-height: 8cqh;
+    padding: 0 2.4cqw;
+    font-size: 2.2cqw;
+}
+
+.np-message {
+    margin: 0;
+    font-size: 1.8cqw;
+    font-weight: 700;
+}

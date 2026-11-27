@@ -1,4 +1,4 @@
-using Api.Helpers;                                       // .ToProblem()
+﻿using Api.Helpers;                                       // .ToProblem()
 using Api.Requests.ItemRequests;                         // SetItemRequest
 using Api.Responses.ModdedTemplateResponses;             // ModdedTemplateItemResponse
 using Application.Commands.ModdedTemplateCommands;       // SetItemCommand, ClearItemCommand
@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Mvc;                          // ControllerBase, [Htt
 namespace Api.Controllers
 {
     [ApiController]
-    [Authorize(Roles = "Admin")]
     [Route("api/v1/modded-templates/{moddedTemplateId:guid}/items")]
     public class ItemsController(
         ISetItemUseCase setItemUseCase,

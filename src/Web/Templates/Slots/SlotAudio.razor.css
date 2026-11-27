@@ -1,0 +1,28 @@
+﻿.slot-audio {
+    display: inline-flex;
+    flex: none;
+}
+
+.slot-audio-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 5.2cqw;
+    height: 5.2cqw;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--tpl-button);
+    color: var(--tpl-button-ink);
+    cursor: pointer;
+    box-shadow: 0 0.5cqh 1.6cqh rgba(0, 0, 0, 0.18);
+    -webkit-tap-highlight-color: transparent;
+}
+
+    .slot-audio-button:active {
+        transform: scale(0.94);
+    }
+
+    .slot-audio-button ::deep .ui-icon {
+        font-size: 3cqw;
+    }

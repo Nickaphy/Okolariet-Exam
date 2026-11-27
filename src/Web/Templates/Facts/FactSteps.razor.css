@@ -1,0 +1,72 @@
+﻿.fss {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4cqh;
+    padding: 6cqh 4cqw;
+}
+
+.fss-steps {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: 1.2cqw;
+}
+
+.fss-step {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 21cqw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.6cqh;
+    padding: 2.5cqh 1.4cqw;
+    border-radius: 1.4cqw;
+    background: color-mix(in srgb, var(--tpl-text) 7%, transparent);
+    border: max(1px, 0.2cqw) solid color-mix(in srgb, var(--tpl-text) 20%, transparent);
+}
+
+.fss-steps ::deep .fss-arrow {
+    align-self: center;
+    flex: none;
+    font-size: 3cqw;
+    opacity: 0.55;
+}
+
+.fss-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 4.6cqw;
+    height: 4.6cqw;
+    border-radius: 50%;
+    background: var(--tpl-text);
+    color: var(--tpl-bg);
+    font-size: 2.4cqw;
+    font-weight: 800;
+}
+
+.fss-step ::deep .fss-image {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: 1cqw;
+}
+
+.fss-step ::deep .fss-label {
+    font-size: 2.1cqw;
+    font-weight: 800;
+    line-height: 1.15;
+}
+
+.fss-step ::deep .fss-text {
+    font-size: 1.7cqw;
+    line-height: 1.35;
+    opacity: 0.9;
+}

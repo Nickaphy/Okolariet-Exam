@@ -1,0 +1,14 @@
+@* Shown in place of a page's content when fetching it failed: a heading, the reason and a "Prøv igen" button.
+   Example:  <LoadError Title="Udstillingerne kunne ikke hentes" Message="@loadError" OnRetry="LoadAsync" /> *@
+
+<div class="empty-state" role="alert">
+    <h2>@Title</h2>
+    <p>@Message</p>
+    <button type="button" class="btn btn-secondary" @onclick="OnRetry"><Icon Name="refresh" /> Prøv igen</button>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public EventCallback OnRetry { get; set; }
+}

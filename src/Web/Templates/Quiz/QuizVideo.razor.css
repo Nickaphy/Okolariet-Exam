@@ -1,0 +1,22 @@
+.qv {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2.2cqh;
+}
+
+    .qv ::deep .qv-video {
+        flex: 1 1 0;
+        width: 100%;
+        max-width: 70cqw;
+    }
+
+    .qv ::deep .qt-text {
+        font-size: 3cqw;
+    }
+
+    .qv ::deep .at-tile {
+        min-height: 11cqh;
+    }

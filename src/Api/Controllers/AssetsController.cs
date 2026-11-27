@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using Api.Helpers;
 using Api.Responses.AssetResponses;
 using Application.Commands.AssetCommands;
@@ -13,7 +13,6 @@ namespace Api.Controllers
     // Media files (images, video, audio) used by templates, questions and answers.
     // Everything is Admin-only, EXCEPT Get, because the kiosk has to load the media without logging in.
     [ApiController]
-    [Authorize(Roles = "Admin")]
     [Route("api/v1/assets")]
     public class AssetsController(
         IListAssetsUseCase listAssetsUseCase,

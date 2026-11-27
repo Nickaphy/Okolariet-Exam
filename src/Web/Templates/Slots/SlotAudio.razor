@@ -1,0 +1,22 @@
+@namespace Web.Templates.Slots
+@inherits SlotBase
+
+@* An audio slot: a round "read aloud" button that plays or pauses the sound file.
+   The play/pause is a line of plain JavaScript in onclick (no Blazor round trip needed):
+   "this.nextElementSibling" is the <audio> element right after the button. *@
+
+@if (Content?.AssetId is Guid id)
+{
+    <span class="slot-audio @Class" data-slot="@Key">
+        <button type="button" class="slot-audio-button" aria-label="Afspil oplæsning"
+                tabindex="@(Scope.Preview ? "-1" : null)"
+                onclick="var a = this.nextElementSibling; if (a.paused) { a.play(); } else { a.pause(); }">
+            <Icon Name="volume_up" />
+        </button>
+        <audio preload="none" src="@Scope.AssetUrl(id)"></audio>
+    </span>
+}
+else if (Scope.Placeholders)
+{
+    <div class="slot-placeholder @Class" data-slot="@Key">@Scope.LabelOf(Key)</div>
+}

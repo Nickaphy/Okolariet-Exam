@@ -1,0 +1,43 @@
+@namespace Web.Templates.Facts
+@using Web.Templates.Slots
+
+@* Template "fact-steps": heading and up to four steps in a row with arrows between them.
+   The step numbers follow the steps that are shown (fill in 1, 2 and 4: they show as 1, 2, 3).
+   Slot keys: title, audio, and for n = 1-4: step{n}Image, step{n} (heading), step{n}Text. *@
+
+<div class="fss">
+    <FactHead />
+    <div class="fss-steps">
+        @foreach (var (n, position) in Used)
+        {
+            @if (position > 1)
+            {
+                <Icon Name="arrow_forward" Class="fss-arrow" />
+            }
+            <article class="fss-step" @key="n">
+                <span class="fss-num" aria-hidden="true">@position</span>
+                <SlotImage Key="@($"step{n}Image")" Class="fss-image" />
+                <SlotText Key="@($"step{n}")" Class="fss-label" />
+                <SlotText Key="@($"step{n}Text")" Class="fss-text" />
+            </article>
+        }
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] public TemplateScope Scope { get; set; } = default!;
+
+    // The steps to draw, each with the number shown on it.
+    // Slot = which step's slots (1-4). Position = the number on screen, counted over the steps that are drawn,
+    // so filling in steps 1, 2 and 4 shows them as 1, 2, 3. (Select((n, i) => ...) gives each item its index i.)
+    private IEnumerable<(int Slot, int Position)> Used => new[] { 1, 2, 3, 4 }
+        .Where(n => Scope.Show($"step{n}", $"step{n}Text", $"step{n}Image"))
+        .Select((n, i) => (n, i + 1));
+
+    public static PageContent Sample() => PageContent.Sample("fact-steps",
+        ("title", "Sådan bliver en flaske til en ny"),
+        ("step1", "Du sorterer"), ("step1Text", "Flasken kommer i plastbeholderen"),
+        ("step2", "Skraldebilen henter"), ("step2Text", "Plasten køres til genbrugsanlægget"),
+        ("step3", "Den bliver smeltet"), ("step3Text", "Plasten bliver til nye korn"),
+        ("step4", "En ny flaske!"), ("step4Text", "Kornene formes til en ny flaske"));
+}

@@ -1,0 +1,33 @@
+@namespace Web.Templates.Quiz
+@using Web.Templates.Slots
+
+@* Template "quiz-factbox": the question and the answers in a column on the left, a "Vidste du?" box on the right
+   with a text and a picture or video. The box is the same for every question in the quiz.
+   Slot keys: title, intro, background, factTitle, factText, factImage, factVideo. *@
+
+<QuizRunner>
+    <div class="qf">
+        <div class="qf-quiz">
+            <QuizQuestionText Left="true" />
+            <AnswerTiles Columns="1" />
+        </div>
+        @if (Scope.Show("factTitle", "factText", "factImage", "factVideo"))
+        {
+            <aside class="qf-box">
+                <div class="qf-box-title"><Icon Name="lightbulb" /> <SlotText Key="factTitle" Class="qf-box-heading" /></div>
+                <SlotVideo Key="factVideo" Class="qf-box-media" />
+                @if (!Scope.HasAny("factVideo"))
+                {
+                    <SlotImage Key="factImage" Class="qf-box-media" />
+                }
+                <SlotText Key="factText" Class="qf-box-text" />
+            </aside>
+        }
+    </div>
+</QuizRunner>
+
+@code {
+    [CascadingParameter] public TemplateScope Scope { get; set; } = default!;
+
+    public static PageContent Sample() => QuizSamples.Page("quiz-factbox", QuizSamples.FourAnswers);
+}

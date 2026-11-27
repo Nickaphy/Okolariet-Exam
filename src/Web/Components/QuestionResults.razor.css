@@ -1,0 +1,83 @@
+/* Moved here from Highscores.razor.css when a question became its own component. */
+.question {
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+}
+
+.question-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.question-text {
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.q-summary {
+    margin: 0.75rem 0 0.5rem;
+    color: var(--ink-soft);
+    font-weight: 600;
+}
+
+.bars {
+    list-style: none;
+    margin: 0 0 0.75rem;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.bar-row {
+    display: grid;
+    grid-template-columns: minmax(110px, 1fr) minmax(90px, 1.2fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.bar-label {
+    overflow-wrap: anywhere;
+}
+
+.tick {
+    margin-left: 0.4rem;
+    color: var(--ok);
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.bar {
+    display: block;
+    height: 16px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: var(--surface-sunk);
+    overflow: hidden;
+}
+
+.bar-fill {
+    display: block;
+    height: 100%;
+    background: var(--colour-accent);
+}
+
+.bar-fill-correct {
+    background: var(--ok);
+}
+
+.bar-value {
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+    .bar-row {
+        grid-template-columns: 1fr;
+        gap: 0.25rem;
+    }
+}

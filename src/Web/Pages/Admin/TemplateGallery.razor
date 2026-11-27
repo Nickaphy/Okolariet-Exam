@@ -1,0 +1,123 @@
+@page "/admin/templates"
+@layout AdminLayout
+@attribute [Authorize]
+@inject ITemplateGateway TemplateGateway
+
+@* Every template the app can draw, with example content. Lets you test a template and the themes
+   without a published exhibition (quizzes can be played in demo mode).
+
+   It also checks the contract between the app and the server: every template here should exist in the
+   server's catalog (TemplateCatalog) and the other way round. The names come from the server, which is the
+   only place they are written. *@
+
+<PageTitle>Skabeloner · Økolariet</PageTitle>
+
+<header class="page-head">
+    <div>
+        <h1 tabindex="-1">Skabeloner</h1>
+        <p class="lead">Sådan ser skabelonerne ud med eksempeltekst. Prøv temaerne, og se hvor felterne sidder.</p>
+    </div>
+</header>
+
+<NoticeBar Notice="notice" OnClose="() => notice = null" />
+
+@if (serverError is not null)
+{
+    <p class="callout callout-warn">Skabelonernes navne kommer fra serveren, men den kunne ikke nås: @serverError</p>
+}
+else if (missingInApp.Count > 0)
+{
+    <p class="callout callout-danger">
+        Serveren har skabeloner, som appen ikke kan vise endnu: <strong>@string.Join(", ", missingInApp)</strong>.
+    </p>
+}
+
+<div class="gallery-tools panel">
+    <div class="tool">
+        <span class="field-label">Tema</span>
+        <div class="chip-row">
+            @foreach (var preset in AppearancePresets.All)
+            {
+                <button type="button" class="chip" aria-pressed="@(preset.Key == presetKey ? "true" : "false")"
+                        @onclick="() => presetKey = preset.Key">
+                    <span class="chip-dot" style="background:@(Theme.Resolve(preset.Appearance).BackgroundColor)"></span>
+                    @preset.Name
+                </button>
+            }
+        </div>
+    </div>
+    <div class="tool">
+        <span class="field-label">Indhold</span>
+        <div class="chip-row">
+            <button type="button" class="chip" aria-pressed="@(!empty ? "true" : "false")" @onclick="() => empty = false">
+                <Icon Name="article" /> Eksempeltekst
+            </button>
+            <button type="button" class="chip" aria-pressed="@(empty ? "true" : "false")" @onclick="() => empty = true">
+                <Icon Name="crop_free" /> Tomme felter
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="gallery">
+    @foreach (var entry in TemplateRegistry.All)
+    {
+        var definition = DefinitionOf(entry);
+        <section class="panel gallery-item" @key="entry.Type" aria-label="@NameOf(entry)">
+            <div class="gallery-head">
+                <div>
+                    <h2>@NameOf(entry)</h2>
+                    <code class="type-code">@entry.Type</code>
+                </div>
+                @if (serverTemplates is not null && definition is null)
+                {
+                    <span class="chip chip-warn"><Icon Name="warning" /> Findes ikke på serveren</span>
+                }
+            </div>
+            <div class="gallery-stage">
+                @* Placeholders always on: the examples have no pictures or videos, so those spots show as dashed boxes. *@
+                <TemplateHost Page="PageFor(entry)" Definition="definition" Placeholders="true"
+                              OnNavigate="@(_ => ShowTap(entry))" />
+            </div>
+        </section>
+    }
+</div>
+
+@code {
+    private string presetKey = AppearancePresets.All[0].Key;
+    private bool empty;
+    private Notice? notice;
+
+    // The server's catalog (null until loaded, or when the server can't be reached).
+    private IReadOnlyList<Template>? serverTemplates;
+    private string? serverError;
+    private List<string> missingInApp = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        (serverTemplates, serverError) = await ApiCall.Get(() => TemplateGateway.ListTemplates());
+
+        // Templates the server offers but this app has no component for (staff could pick them, and the kiosk couldn't draw them).
+        missingInApp = (serverTemplates ?? [])
+            .Where(t => TemplateRegistry.Find(t.Type) is null)
+            .Select(t => t.DisplayName)
+            .ToList();
+    }
+
+    private Template? DefinitionOf(TemplateEntry entry) => serverTemplates?.FirstOrDefault(t => t.Type == entry.Type);
+
+    // The server's name for the template; the type key when the server is unknown.
+    private string NameOf(TemplateEntry entry) => DefinitionOf(entry)?.DisplayName ?? entry.Type;
+
+    // In the gallery a tapped button only says that it works (there is no next page to go to).
+    private void ShowTap(TemplateEntry entry) =>
+        notice = Notice.Info($"Knappen i «{NameOf(entry)}» virker. I kiosken fører den videre til næste side.");
+
+    // The example content (or nothing, with "Tomme felter"), drawn with the chosen theme.
+    private PageContent PageFor(TemplateEntry entry)
+    {
+        var page = empty ? PageContent.Empty(entry.Type) : entry.Sample();
+        var preset = AppearancePresets.All.First(p => p.Key == presetKey);
+        return page with { Appearance = preset.Appearance };
+    }
+}

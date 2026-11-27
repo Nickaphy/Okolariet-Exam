@@ -1,109 +1,202 @@
 .admin-shell {
     display: grid;
-    grid-template-columns: 280px 1fr;
+    grid-template-columns: 264px minmax(0, 1fr);
     min-height: 100vh;
 }
 
+/* ---- sidebar */
 .sidebar {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-    padding: 1.75rem 1.5rem;
-    background: var(--bg);
-    border-right: 2px solid var(--ink);
     position: sticky;
     top: 0;
     height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+    padding: 1.5rem 1rem;
+    background: var(--colour-accent);
+    border-right: 1px solid var(--colour-accent-strong);
+    overflow-y: auto;
 }
 
 .brand {
-    display: block;
-    padding: 0.5rem 1rem;
-    border: 2px solid var(--ink);
-    border-radius: 10px;
-    font-weight: 800;
-    letter-spacing: 0.18em;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: var(--radius);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
     color: var(--ink);
     text-decoration: none;
 }
+
+.brand-mark {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--ink);
+    color: var(--colour-accent);
+    font-size: 1.2rem;
+}
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+}
+
+    .brand-text strong {
+        font-weight: 800;
+        letter-spacing: 0.14em;
+    }
+
+    .brand-text small {
+        color: var(--muted);
+        font-size: 0.8rem;
+    }
 
 .nav {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.25rem;
 }
 
-/* NavLink and the spans are rendered here, so no ::deep needed for the spans,
-   but NavLink is a child component → ::deep. */
+.nav-caption {
+    margin: 0 0 0.35rem 0.75rem;
+    color: color-mix(in srgb, var(--ink) 75%, transparent);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+/* NavLink is a child component, so its <a> needs ::deep. */
 .nav ::deep .nav-item {
+    position: relative;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 0.6rem;
-    min-height: 48px;
-    padding: 0 1rem;
+    gap: 0.75rem;
+    min-height: 46px;
+    padding: 0 0.85rem;
     border-radius: 10px;
     color: var(--ink);
-    font-size: 1.1rem;
+    font-size: 1rem;
+    font-weight: 500;
     text-decoration: none;
+    transition: background-color 0.12s;
 }
 
-.nav ::deep a.nav-item:hover {
-    background: var(--surface-sunk);
-}
+    .nav ::deep .nav-item:hover {
+        background: color-mix(in srgb, #fff 35%, transparent);
+    }
 
-.nav ::deep a.nav-item.active {
-    background: var(--ink);
-    color: #fff;
-    font-weight: 700;
-}
+    /* The page you are on: a white tab with a dark marker, clearly different from the rest. */
+    .nav ::deep .nav-item.active {
+        background: var(--surface);
+        font-weight: 700;
+        box-shadow: var(--shadow-sm);
+    }
 
-.nav-soon {
-    color: var(--muted) !important;
-    cursor: default;
-}
-
-.nav-soon small {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-}
+        .nav ::deep .nav-item.active::before {
+            content: "";
+            position: absolute;
+            left: -1rem;
+            top: 10px;
+            bottom: 10px;
+            width: 5px;
+            border-radius: 0 4px 4px 0;
+            background: var(--ink);
+        }
 
 .sidebar-foot {
     margin-top: auto;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
 }
 
 .signed-in {
-    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+    padding: 0 0.25rem;
+}
+
+.avatar {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--ink);
+}
+
+.signed-in-text {
     display: flex;
     flex-direction: column;
-    font-size: 0.9rem;
     min-width: 0;
+    font-size: 0.85rem;
+    line-height: 1.3;
 }
 
 .signed-in-label {
-    color: var(--muted);
+    color: var(--ink-soft);
 }
 
 .signed-in-email {
-    font-weight: 600;
+    font-weight: 700;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
+.logout {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 42px;
+    padding: 0 0.85rem;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+    .logout:hover:not(:disabled) {
+        background: color-mix(in srgb, #fff 35%, transparent);
+    }
+
+.sidebar ::deep :focus-visible {
+    outline-color: var(--ink);
+}
+
+/* ---- content */
 .admin-main {
-    padding: 2.5rem 3rem 4rem;
     min-width: 0;
+    padding: 2rem 2.5rem 4rem;
+}
+
+.admin-content {
+    max-width: var(--content-max);
+    margin: 0 auto;
 }
 
 @media (max-width: 900px) {
     .admin-shell { grid-template-columns: 1fr; }
-    .sidebar { position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; border-right: 0; border-bottom: 2px solid var(--ink); }
+    .sidebar { position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
     .nav { flex-direction: row; flex-wrap: wrap; }
-    .sidebar-foot { margin: 0 0 0 auto; flex-direction: row; align-items: center; }
-    .admin-main { padding: 1.5rem; }
+    .nav-caption { display: none; }
+    .nav ::deep .nav-item.active::before { display: none; }
+    .sidebar-foot { margin: 0 0 0 auto; flex-direction: row; align-items: center; border-top: 0; padding-top: 0; }
+    .admin-main { padding: 1.25rem; }
 }

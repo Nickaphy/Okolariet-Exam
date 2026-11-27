@@ -1,0 +1,79 @@
+@* "Which button should the page go under?" Lists every button in the exhibition (main menu and sub-menus)
+   as a radio group. Buttons whose path ends in a sub-menu are shown but can't be chosen (pages can't come
+   after a sub-menu). Submit gets the chosen button and returns null on success or a message, like the other dialogs. *@
+
+<DialogShell Title="@Title" Busy="busy" OnClose="CancelAsync">
+    <ChildContent>
+        @if (Intro is not null)
+        {
+            <p>@Intro</p>
+        }
+
+        <fieldset class="bp">
+            <legend class="visually-hidden">Vælg knap</legend>
+            @foreach (var (button, where) in Buttons)
+            {
+                var blocked = button.EndsInMenu;
+                <label class="bp-option @(selected == button ? "bp-option-on" : "") @(blocked ? "bp-option-blocked" : "")">
+                    <input type="radio" name="@groupName" checked="@(selected == button)" disabled="@(blocked || busy)"
+                           @onchange="() => selected = button" />
+                    <span class="bp-text">
+                        <strong>@where</strong>
+                        <small>@DetailOf(button)</small>
+                    </span>
+                </label>
+            }
+        </fieldset>
+
+        @if (error is not null)
+        {
+            <p class="form-error" role="alert">@error</p>
+        }
+    </ChildContent>
+    <Actions>
+        <button type="button" class="btn btn-secondary" disabled="@busy" @onclick="CancelAsync">Annuller</button>
+        <button type="button" class="btn btn-primary" disabled="@(busy || selected is null)" @onclick="SubmitAsync">
+            <Icon Name="add_link" /> @(busy ? "Gemmer…" : SubmitText)
+        </button>
+    </Actions>
+</DialogShell>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Intro { get; set; }
+    [Parameter] public string SubmitText { get; set; } = "Sæt ind";
+
+    // Every button, with a description of where it is (ExhibitionModel.AllButtons).
+    [Parameter, EditorRequired] public IReadOnlyList<(ButtonPath Button, string Where)> Buttons { get; set; } = [];
+
+    // Gets the chosen button. Returns null on success, or a message to show.
+    [Parameter, EditorRequired] public Func<ButtonPath, Task<string?>> Submit { get; set; } = default!;
+    [Parameter] public EventCallback OnDone { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private readonly string groupName = $"buttons-{Guid.NewGuid():N}";
+    private ButtonPath? selected;
+    private bool busy;
+    private string? error;
+
+    private static string DetailOf(ButtonPath button) => button switch
+    {
+        { EndsInMenu: true } => "Forløbet slutter i en undermenu",
+        { Pages.Count: 0 } => "Fører ingen steder hen endnu: siden bliver den første",
+        _ => $"Siden kommer efter de {button.Pages.Count} sider, der er der nu"
+    };
+
+    private Task CancelAsync() => busy ? Task.CompletedTask : OnCancel.InvokeAsync();
+
+    private async Task SubmitAsync()
+    {
+        if (selected is null) return;
+
+        busy = true;
+        error = null;
+        error = await ApiCall.Try(() => Submit(selected));
+        busy = false;
+
+        if (error is null) await OnDone.InvokeAsync();
+    }
+}

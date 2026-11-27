@@ -1,0 +1,10 @@
+@namespace Web.Templates.Menus.MenuTemplates
+@using Web.Templates.Menus
+
+@* Template "menu-split-4": heading and intro on the left, four buttons in a 2x2 grid on the right. *@
+
+<MenuFrame Buttons="4" Columns="2" Size="MenuButtonSize.Large" Split="true" />
+
+@code {
+    public static PageContent Sample() => MenuFrame.Sample("menu-split-4", 4);
+}

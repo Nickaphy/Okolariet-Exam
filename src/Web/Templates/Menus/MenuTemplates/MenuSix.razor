@@ -1,0 +1,10 @@
+@namespace Web.Templates.Menus.MenuTemplates
+@using Web.Templates.Menus
+
+@* Template "menu-six": compact heading, six buttons in a 3x2 grid. *@
+
+<MenuFrame Buttons="6" Columns="3" Size="MenuButtonSize.Medium" Compact="true" />
+
+@code {
+    public static PageContent Sample() => MenuFrame.Sample("menu-six", 6);
+}

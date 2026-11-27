@@ -9,7 +9,7 @@ namespace Domain.Entities
         private readonly List<ModdedTemplateItem> items = new();
 
         public Guid ProjectId { get; private set; }
-        public string TemplateType { get; private set; } = "";   // which Template it's built from, e.g. "menu-ocean". Never changes.
+        public string TemplateType { get; private set; } = "";   // which Template it's built from, e.g. "menu-buttons". Never changes.
         public string Title { get; private set; } = "";
         public Appearance Appearance { get; private set; } = Appearance.Empty;
         public int SortOrder { get; private set; }

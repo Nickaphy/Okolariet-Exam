@@ -1,0 +1,51 @@
+﻿.fst {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4cqh;
+    padding: 6cqh 5cqw;
+}
+
+.fst-cards {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 2.5cqw;
+}
+
+.fst-card {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 30cqw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2cqh;
+    padding: 3cqh 2cqw;
+    border-radius: 1.6cqw;
+    background: color-mix(in srgb, var(--tpl-text) 7%, transparent);
+    border: max(1px, 0.2cqw) solid color-mix(in srgb, var(--tpl-text) 20%, transparent);
+}
+
+    .fst-card ::deep .fst-icon {
+        width: 9cqw;
+        height: 9cqw;
+        border-radius: 50%;
+    }
+
+    .fst-card ::deep .fst-value {
+        font-size: 4.2cqw;
+        font-weight: 800;
+        line-height: 1.05;
+    }
+
+    .fst-card ::deep .fst-label {
+        font-size: 2.1cqw;
+        line-height: 1.35;
+        opacity: 0.9;
+    }

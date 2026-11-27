@@ -1,0 +1,22 @@
+@* The heading of a white panel: an icon (IconName), a title and a line of explanation (the content between the tags).
+   Id is put on the <h2>, so the panel can point at it with aria-labelledby.
+   Anything in <Aside> is placed to the right of the heading (e.g. a tag with the template's name). *@
+
+<div class="panel-head">
+    <div>
+        <h2 id="@Id"><span class="head-icon"><Icon Name="@IconName" /></span> @Title</h2>
+        @if (ChildContent is not null)
+        {
+            <p>@ChildContent</p>
+        }
+    </div>
+    @Aside
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string IconName { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Id { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? Aside { get; set; }
+}

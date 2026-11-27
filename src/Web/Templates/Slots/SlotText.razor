@@ -1,0 +1,24 @@
+@namespace Web.Templates.Slots
+@inherits SlotBase
+
+@* A text slot. Heading=true draws it as the page's <h1>. Draws nothing when empty (a dashed box in placeholder mode). *@
+
+@if (Content?.Text is { Length: > 0 } text)
+{
+    if (Heading)
+    {
+        <h1 class="slot-text @Class" data-slot="@Key">@text</h1>
+    }
+    else
+    {
+        <p class="slot-text @Class" data-slot="@Key">@text</p>
+    }
+}
+else if (Scope.Placeholders)
+{
+    <div class="slot-placeholder @Class" data-slot="@Key">@Scope.LabelOf(Key)</div>
+}
+
+@code {
+    [Parameter] public bool Heading { get; set; }
+}

@@ -1,0 +1,26 @@
+@namespace Web.Templates.Slots
+@inherits SlotBase
+
+@* A button slot: its text, and the page it leads to (TargetId). Tapping does nothing in previews. *@
+
+@if (Content is { Text: { Length: > 0 } text } slot)
+{
+    <button type="button" class="slot-button @(slot.TargetId is null ? "slot-button-dead" : "") @Class"
+            data-slot="@Key" tabindex="@(Scope.Preview ? "-1" : null)"
+            @onclick="() => TapAsync(slot)">
+        @text
+    </button>
+}
+else if (Scope.Placeholders)
+{
+    <div class="slot-placeholder @Class" data-slot="@Key">@Scope.LabelOf(Key)</div>
+}
+
+@code {
+    // Tells the kiosk (through TemplateHost's OnNavigate) to show the target page.
+    private async Task TapAsync(SlotContent slot)
+    {
+        if (!Scope.Preview && slot.TargetId is Guid target)
+            await Scope.Navigate.InvokeAsync(target);
+    }
+}

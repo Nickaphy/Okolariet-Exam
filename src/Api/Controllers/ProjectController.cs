@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Mvc;
 // Controlleren modtager HTTP-kald, kalder det rette use case og oversætter resultatet til et HTTP-svar.
 // Den indeholder ingen forretningsregler.
 [ApiController]                // aktiverer automatisk validering af Request-klasserne (HTTP 400 ved fejl)
-[Authorize(Roles = "Admin")]   // kun personale med Admin-rollen har adgang
 [Route("api/v1/projects")]     // grundstien. Skal matche stierne i Generated/Output.cs
 public class ProjectsController(
     IListProjectsUseCase listUseCase,

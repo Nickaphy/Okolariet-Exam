@@ -1,0 +1,15 @@
+.qc {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2.6cqh;
+}
+
+    .qc ::deep .qc-media {
+        flex: 1 1 0;
+        width: auto;
+        max-width: 50cqw;
+        max-height: 100%;
+    }

@@ -34,6 +34,10 @@ namespace Infrastructure.Database.Configurations
 
             // Supports the leaderboard per quiz.
             b.HasIndex(u => new { u.ModdedTemplateId, u.CreatedAt });
+
+            // One saved score per session and quiz (the API's rule, otherwise 409). The database enforces it,
+            // so it also holds when two requests arrive at the same moment (see CreateUserAdapter).
+            b.HasIndex(u => new { u.SessionId, u.ModdedTemplateId }).IsUnique();
         }
     }
 }

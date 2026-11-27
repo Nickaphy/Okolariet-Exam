@@ -1,12 +1,13 @@
-using Application.Auth;                        // JwtSettings
+﻿using Application.Auth;                        // JwtSettings
 using Application.Commands.AuthCommands;       // LoginCommand, RefreshTokenCommand, LogoutCommand
 using Application.ErrorMessages;               // UnauthorizedError, TooManyRequestsError
 using Application.Helpers;                     // TokenIssuer
 using Application.UseCases.Auth;               // LoginUseCase, RefreshTokensUseCase, LogoutUseCase
 using Domain.Entities;                         // StaffMember
-using Domain.Entities.AuthEntities;            // StaffLogin, RefreshToken
+using Domain.Entities.AuthEntities;            // StaffLogin, RefreshToken, LoginLockout
+using Application.Commands.StaffCommands;      // SetStaffPasswordCommand
+using Application.UseCases.Staff;              // SetStaffPasswordUseCase
 using Domain.Enums;                            // StaffRole
-using Domain.ValueObjects;                     // LoginLockout
 using Microsoft.Extensions.Options;            // Options.Create
 using xUnitTests.ApplicationTests.Fakes;       // fakes
 
@@ -256,6 +257,70 @@ namespace xUnitTests.ApplicationTests.UseCases
             var result = await useCase.ExecuteAsync(new LogoutCommand(Guid.NewGuid()), Ct);
 
             Assert.True(result.IsSuccess);
+        }
+
+        // ---------- Changing a password ends every login ----------
+
+        private const string NewPassword = "Gr0nneBlade!Skov2026";   // meets the password policy
+
+        private SetStaffPasswordUseCase SetPassword() =>
+            new(staff, staff, hasher, hasher, store, new FixedTimeProvider(Now));
+
+        [Fact]
+        public async Task Changing_your_own_password_revokes_all_your_logins()
+        {
+            var anna = AddAnna();
+            var (phone, _) = AddSession(anna);
+            var (laptop, _) = AddSession(anna);
+
+            var result = await SetPassword().SetPasswordAsync(new SetStaffPasswordCommand(anna.Id, anna.Id, "secret", NewPassword), Ct);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal("hashed-" + NewPassword, anna.PasswordHash);
+            Assert.Equal(Now, phone.RevokedAt);
+            Assert.Equal(Now, laptop.RevokedAt);
+        }
+
+        [Fact]
+        public async Task After_a_password_change_the_old_refresh_token_no_longer_works()
+        {
+            var anna = AddAnna();
+            AddSession(anna);   // refresh token "token"
+
+            await SetPassword().SetPasswordAsync(new SetStaffPasswordCommand(anna.Id, anna.Id, "secret", NewPassword), Ct);
+            var refresh = await Refresh().ExecuteAsync(new RefreshTokenCommand("token"), Ct);
+
+            Assert.True(refresh.HasError<UnauthorizedError>());
+        }
+
+        [Fact]
+        public async Task Admin_resetting_someone_else_revokes_only_that_persons_logins()
+        {
+            var anna = AddAnna();
+            var bo = new StaffMember { Id = Guid.NewGuid(), Email = "bo@test.dk", PasswordHash = "hashed-x", Role = StaffRole.Admin };
+            staff.Staff.Add(bo);
+            var (annasLogin, _) = AddSession(anna);
+            var (bosLogin, _) = AddSession(bo);
+
+            // Anna resets Bo's password (no current password needed for someone else).
+            var result = await SetPassword().SetPasswordAsync(new SetStaffPasswordCommand(bo.Id, anna.Id, null, NewPassword), Ct);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal(Now, bosLogin.RevokedAt);
+            Assert.Null(annasLogin.RevokedAt);
+        }
+
+        [Fact]
+        public async Task Wrong_current_password_changes_nothing_and_keeps_the_logins()
+        {
+            var anna = AddAnna();
+            var (login, _) = AddSession(anna);
+
+            var result = await SetPassword().SetPasswordAsync(new SetStaffPasswordCommand(anna.Id, anna.Id, "wrong", NewPassword), Ct);
+
+            Assert.True(result.HasError<BusinessRuleError>());
+            Assert.Equal("hashed-secret", anna.PasswordHash);
+            Assert.Null(login.RevokedAt);
         }
 
         // ---------- TokenIssuer ----------

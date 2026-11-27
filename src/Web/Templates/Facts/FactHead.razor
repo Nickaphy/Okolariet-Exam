@@ -1,0 +1,14 @@
+﻿@namespace Web.Templates.Facts
+@using Web.Templates.Slots
+
+@* The heading of a fact page: title plus the "read aloud" button. Left = left-aligned, Small = for side-by-side layouts. *@
+
+<div class="fh @(Left ? "fh-left" : null) @(Small ? "fh-small" : null)">
+    <SlotText Key="title" Class="fh-title" Heading="true" />
+    <SlotAudio Key="audio" Class="fh-audio" />
+</div>
+
+@code {
+    [Parameter] public bool Left { get; set; }
+    [Parameter] public bool Small { get; set; }
+}

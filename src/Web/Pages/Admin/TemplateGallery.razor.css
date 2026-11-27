@@ -1,0 +1,57 @@
+.gallery-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem 3rem;
+    margin-bottom: 1.5rem;
+}
+
+.tool .chip-row {
+    margin: 0;
+}
+
+.chip-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.35);
+}
+
+.gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 720px), 1fr));
+    gap: 1.5rem;
+}
+
+.gallery-item {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.gallery-head h2 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.type-code {
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.gallery-stage {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+}
+
+.gallery-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.chip-warn {
+    border-color: var(--warn, #b26a00);
+    color: var(--warn, #b26a00);
+}

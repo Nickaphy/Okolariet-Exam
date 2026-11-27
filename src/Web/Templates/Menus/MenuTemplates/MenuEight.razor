@@ -1,0 +1,10 @@
+@namespace Web.Templates.Menus.MenuTemplates
+@using Web.Templates.Menus
+
+@* Template "menu-eight": compact heading, eight buttons in a 4x2 grid. *@
+
+<MenuFrame Buttons="8" Columns="4" Size="MenuButtonSize.Small" Compact="true" />
+
+@code {
+    public static PageContent Sample() => MenuFrame.Sample("menu-eight", 8);
+}

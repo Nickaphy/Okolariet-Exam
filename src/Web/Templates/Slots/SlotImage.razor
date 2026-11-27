@@ -1,0 +1,17 @@
+@namespace Web.Templates.Slots
+@inherits SlotBase
+
+@* An image slot. ShowPlaceholder=false for an image that sits behind everything (a background). *@
+
+@if (Content?.AssetId is Guid id)
+{
+    <img class="slot-image @Class" data-slot="@Key" alt="" src="@Scope.AssetUrl(id)" />
+}
+else if (Scope.Placeholders && ShowPlaceholder)
+{
+    <div class="slot-placeholder @Class" data-slot="@Key">@Scope.LabelOf(Key)</div>
+}
+
+@code {
+    [Parameter] public bool ShowPlaceholder { get; set; } = true;
+}

@@ -1,9 +1,11 @@
 @page "/admin/projects"
 @layout AdminLayout
 @attribute [Authorize]
-@inject IProjectsApi ProjectsApi
+@inject IProjectGateway ProjectGateway
 @inject IJSRuntime JS
 @inject NavigationManager Nav
+
+@* The start page of the admin: every exhibition with Start (opens the kiosk window), Rediger and Slet. *@
 
 <PageTitle>Udstillinger · Økolariet</PageTitle>
 
@@ -13,14 +15,11 @@
         <p class="lead">Start en udstilling på skærmen, ret i den, eller slet den.</p>
     </div>
     <button type="button" class="btn btn-primary btn-lg" @onclick="() => showNewDialog = true">
-        + Ny udstilling
+        <Icon Name="add" /> Ny udstilling
     </button>
 </header>
 
-@if (notice is not null)
-{
-    <NoticeBar Kind="@notice.Kind" Text="@notice.Text" OnClose="() => notice = null" />
-}
+<NoticeBar Notice="notice" OnClose="() => notice = null" />
 
 @switch (state)
 {
@@ -34,11 +33,7 @@
         break;
 
     case LoadState.Failed:
-        <div class="empty-state" role="alert">
-            <h2>Udstillingerne kunne ikke hentes</h2>
-            <p>@loadError</p>
-            <button type="button" class="btn btn-secondary" @onclick="LoadAsync">Prøv igen</button>
-        </div>
+        <LoadError Title="Udstillingerne kunne ikke hentes" Message="@loadError" OnRetry="LoadAsync" />
         break;
 
     default:
@@ -48,7 +43,7 @@
                 <h2>Der er ingen udstillinger endnu</h2>
                 <p>Opret den første, så kan du starte den herfra.</p>
                 <button type="button" class="btn btn-primary" @onclick="() => showNewDialog = true">
-                    + Ny udstilling
+                    <Icon Name="add" /> Ny udstilling
                 </button>
             </div>
         }
@@ -59,17 +54,13 @@
                 {
                     var isPublished = project.LatestVersionNumber is not null;
                     <li class="project-row" @key="project.Id">
-                        <span class="swatch" style="@SwatchStyle(project)" aria-hidden="true"></span>
+                        <span class="swatch" style="@SwatchStyle(project)" aria-hidden="true"><Icon Name="slideshow" /></span>
 
                         <div class="project-info">
                             <h2 class="project-name">@project.Name</h2>
-                            @if (isPublished)
+                            <PublishStatus Version="project.LatestVersionNumber" />
+                            @if (!isPublished)
                             {
-                                <span class="status status-live"><span class="dot"></span>Udgivet · version @project.LatestVersionNumber</span>
-                            }
-                            else
-                            {
-                                <span class="status status-draft"><span class="dot"></span>Ikke udgivet endnu</span>
                                 <span class="hint">Udgiv den under Rediger, før den kan startes.</span>
                             }
                         </div>
@@ -77,15 +68,15 @@
                         <div class="project-actions">
                             <button type="button" class="btn btn-primary" disabled="@(!isPublished)"
                                     aria-label="@($"Start {project.Name}")" @onclick="() => StartAsync(project)">
-                                <span aria-hidden="true">▶</span> Start
+                                <Icon Name="play_arrow" /> Start
                             </button>
                             <button type="button" class="btn btn-secondary"
                                     aria-label="@($"Rediger {project.Name}")" @onclick="() => Edit(project)">
-                                Rediger
+                                <Icon Name="edit" /> Rediger
                             </button>
                             <button type="button" class="btn btn-danger-ghost"
                                     aria-label="@($"Slet {project.Name}")" @onclick="() => projectToDelete = project">
-                                Slet
+                                <Icon Name="delete" /> Slet
                             </button>
                         </div>
                     </li>

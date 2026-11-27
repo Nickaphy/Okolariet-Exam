@@ -1,0 +1,30 @@
+@namespace Web.Templates.Facts
+@using Web.Templates.Slots
+
+@* Template "fact-two-images": heading, then two images side by side, each with a caption (before/after, A/B).
+   Slot keys: title, audio, image1, caption1, image2, caption2. *@
+
+<div class="fti">
+    <FactHead />
+    <div class="fti-cols">
+        @foreach (var n in Used)
+        {
+            <figure class="fti-col" @key="n">
+                <SlotImage Key="@($"image{n}")" Class="fti-image" />
+                <SlotText Key="@($"caption{n}")" Class="fti-caption" />
+            </figure>
+        }
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] public TemplateScope Scope { get; set; } = default!;
+
+    // The columns to draw. With only one filled in, it gets the whole width.
+    private IEnumerable<int> Used => new[] { 1, 2 }.Where(n => Scope.Show($"image{n}", $"caption{n}"));
+
+    public static PageContent Sample() => PageContent.Sample("fact-two-images",
+        ("title", "Før og efter oprydningen"),
+        ("caption1", "Stranden før"),
+        ("caption2", "Stranden efter"));
+}

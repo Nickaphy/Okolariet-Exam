@@ -5,38 +5,98 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    background: var(--tpl-bg, var(--ink));
+    color: var(--tpl-text, #fff);
+    font-family: var(--tpl-font, var(--font));
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;   /* no "save image" menu on a long press (iPad / Safari) */
+    overflow: hidden;
+}
+
+/* The 16:9 screen leaves the bottom 11vh free for the navigation bar, so the bar never covers
+   anything on the page (answer tiles, buttons at the bottom of a template). */
+.screen {
+    width: min(100vw, calc(89vh * 16 / 9));
+}
+
+.kiosk-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5vw;
+    height: 11vh;
+    pointer-events: none;
+}
+
+.kiosk-btn {
+    pointer-events: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6vw;
+    min-height: max(56px, 7vh);
+    padding: 0 max(20px, 2vw);
+    border: 2px solid var(--tpl-text, #fff);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--tpl-bg, #000) 80%, transparent);
+    color: var(--tpl-text, #fff);
+    font: inherit;
+    font-size: max(18px, 2.2vh);
+    font-weight: 700;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+    .kiosk-btn:active {
+        transform: scale(0.97);
+    }
+
+.kiosk-btn-next {
+    border-color: var(--tpl-button, #fff);
+    background: var(--tpl-button, #fff);
+    color: var(--tpl-button-ink, #000);
+}
+
+.kiosk-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     gap: 1rem;
     padding: 2rem;
-    background: var(--surface);
+    font-size: 1.4rem;
     text-align: center;
-    user-select: none;
 }
 
-h1 {
-    margin: 0;
-    font-size: 3rem;
-    font-weight: 800;
-}
+    .kiosk-message h1 {
+        margin: 0;
+        font-size: 2.6rem;
+        font-weight: 800;
+    }
 
-p {
-    font-size: 1.3rem;
-    color: var(--ink-soft);
-}
+    .kiosk-message ::deep .kiosk-message-icon {
+        font-size: 4rem;
+    }
 
 .fullscreen-overlay {
     position: fixed;
     inset: 0;
+    z-index: 10;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.75rem;
+    gap: 1rem;
     border: 0;
-    background: var(--ink);
+    background: #1f1f1f;
     color: #fff;
     font: inherit;
     cursor: pointer;
 }
+
+    .fullscreen-overlay ::deep .overlay-icon {
+        font-size: 6rem;
+        color: var(--colour-accent);
+    }
 
 .overlay-title {
     font-size: 4rem;
@@ -46,4 +106,31 @@ p {
 .overlay-sub {
     font-size: 1.5rem;
     opacity: 0.75;
+}
+
+.kiosk-progress {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6vw;
+    padding: 0 1.2vw;
+    color: var(--tpl-text);
+    font-weight: 700;
+    font-size: 1.4vw;
+}
+
+.kiosk-dot {
+    width: 0.9vw;
+    height: 0.9vw;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    opacity: 0.5;
+}
+
+.kiosk-dot-on {
+    background: currentColor;
+    opacity: 1;
+}
+
+.kiosk-progress-text {
+    margin-left: 0.6vw;
 }

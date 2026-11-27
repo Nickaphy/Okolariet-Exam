@@ -1,0 +1,78 @@
+@* Colours and font for the whole exhibition (later also for a single page): ready-made themes, own colours, and a live preview.
+   Save gets null when nothing is chosen (= the neutral default) and returns null on success or an error message,
+   like the dialogs. What is saved is plain colours, so a theme is only a shortcut for filling them in. *@
+
+<div class="ap">
+    <div class="ap-controls">
+        <fieldset class="ap-group">
+            <legend class="ap-legend">Færdige temaer</legend>
+            <div class="presets">
+                @foreach (var preset in AppearancePresets.All)
+                {
+                    var look = Theme.Resolve(preset.Appearance);
+                    var chosen = IsChosen(preset);
+                    <button type="button" class="preset @(chosen ? "preset-on" : "")"
+                            aria-pressed="@(chosen ? "true" : "false")" disabled="@busy"
+                            @onclick="() => Apply(preset)">
+                        <span class="preset-swatch" style="background:@look.BackgroundColor; color:@look.TextColor">
+                            <span class="preset-aa">Aa</span>
+                            <span class="preset-pill" style="background:@look.ButtonColor"></span>
+                        </span>
+                        <span class="preset-name">
+                            @preset.Name
+                            @if (chosen)
+                            {
+                                <Icon Name="check_circle" Class="preset-check" />
+                            }
+                        </span>
+                    </button>
+                }
+            </div>
+        </fieldset>
+
+        <fieldset class="ap-group">
+            <legend class="ap-legend">Egne farver</legend>
+            <div class="fields">
+                @* "draft with { ... }" makes a copy of the draft with one value changed. *@
+                <ColourField Label="Baggrund" Value="@draft.Background" ValueChanged="v => draft = draft with { Background = v }"
+                             Fallback="@Resolved.BackgroundColor" Disabled="@busy" />
+                <ColourField Label="Knapper" Value="@draft.Button" ValueChanged="v => draft = draft with { Button = v }"
+                             Fallback="@Resolved.ButtonColor" Disabled="@busy" />
+                <ColourField Label="Tekst" Value="@draft.Text" ValueChanged="v => draft = draft with { Text = v }"
+                             Fallback="@Resolved.TextColor" Disabled="@busy" />
+                <FontField Label="Skrifttype" Value="@draft.Font" ValueChanged="v => draft = draft with { Font = v }" Disabled="@busy" />
+            </div>
+
+            @* 4.5 is the WCAG minimum contrast for normal text. *@
+            @if (Theme.Contrast(Resolved.TextColor!, Resolved.BackgroundColor!) < 4.5)
+            {
+                <p class="ap-warn"><Icon Name="warning" /> Teksten og baggrunden ligner hinanden meget, så teksten kan være svær at læse.</p>
+            }
+        </fieldset>
+
+        @if (error is not null)
+        {
+            <p class="form-error" role="alert">@error</p>
+        }
+
+        <div class="ap-actions">
+            <button type="button" class="btn btn-primary" disabled="@(busy || !Dirty)" @onclick="SaveAsync">
+                <Icon Name="save" /> @(busy ? "Gemmer…" : "Gem udseende")
+            </button>
+            @if (Dirty && !busy)
+            {
+                <button type="button" class="btn btn-ghost" @onclick="Revert">
+                    <Icon Name="undo" /> Fortryd ændringer
+                </button>
+            }
+        </div>
+    </div>
+
+    <div class="ap-preview">
+        <span class="ap-legend">Forhåndsvisning</span>
+        <div class="ap-stage">
+            <TemplateHost Page="PreviewWithLook" Definition="PreviewDefinition" Preview="true" />
+        </div>
+        <p class="field-hint">Ændringerne ses her med det samme. De gemmes først, når du trykker «Gem udseende».</p>
+    </div>
+</div>

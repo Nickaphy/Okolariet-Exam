@@ -1,0 +1,16 @@
+@namespace Web.Templates.Quiz
+
+@* Template "quiz-video": every question starts with a short video (the question's own video), then the question
+   and four answers in a row below it. Slot keys: title, intro, background. *@
+
+<QuizRunner>
+    <div class="qv">
+        <QuizMedia Video="true" Class="qv-video" />
+        <QuizQuestionText />
+        <AnswerTiles Columns="4" />
+    </div>
+</QuizRunner>
+
+@code {
+    public static PageContent Sample() => QuizSamples.Page("quiz-video", QuizSamples.FourAnswers);
+}

@@ -1,23 +1,29 @@
-﻿using Refit;
+using Refit;
 using Web.Exceptions;
 
 namespace Web.Helpers
 {
-    // Helper method since most API's return IApiResponse<T> and we want to throw a GatewayException if the response is not successful or the content is null.
-    // Helps us become more DRY compliant.
+    // Used inside the gateways (Adapters/...) only. Refit hands back an IApiResponse instead of throwing,
+    // so every gateway method ends with one of these two:
+    //   .Unwrap()        the call returns data:    give back the data, or throw GatewayException on an error status;
+    //   .EnsureSuccess() the call returns nothing: throw GatewayException on an error status (typically deletes).
     public static class ApiResponseExceptionHelper
     {
-        public static T Unwrap<T>(this IApiResponse<T> res)
+        public static T Unwrap<T>(this IApiResponse<T> response)
         {
-            if (!res.IsSuccessStatusCode || res.Content is null)
-                throw new GatewayException(res.StatusCode); //Sends any response message that is not successful to the GatewayException, which then seperates them based off responsetype.
-            return res.Content;
+            if (!response.IsSuccessStatusCode || response.Content is null)
+                throw Failure(response);
+            return response.Content;
         }
 
-        public static void EnsureSuccess(this IApiResponse res) //This method is used if the IApiResponse doesn't wrap anything (no content -> Missing the <T>). Typically happens on Deletes
+        public static void EnsureSuccess(this IApiResponse response)
         {
-            if (!res.IsSuccessStatusCode)
-                throw new GatewayException(res.StatusCode);
+            if (!response.IsSuccessStatusCode)
+                throw Failure(response);
         }
+
+        // The status code, and the Retry-After header if the server sent one (e.g. "wait 15 minutes" after 5 wrong passwords).
+        private static GatewayException Failure(IApiResponse response) =>
+            new(response.StatusCode ?? System.Net.HttpStatusCode.InternalServerError, response.Headers?.RetryAfter?.Delta);
     }
 }

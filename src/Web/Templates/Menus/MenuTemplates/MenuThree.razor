@@ -1,0 +1,10 @@
+@namespace Web.Templates.Menus.MenuTemplates
+@using Web.Templates.Menus
+
+@* Template "menu-three": heading on top, three big tall cards below. *@
+
+<MenuFrame Buttons="3" Columns="3" Size="MenuButtonSize.Tall" />
+
+@code {
+    public static PageContent Sample() => MenuFrame.Sample("menu-three", 3);
+}

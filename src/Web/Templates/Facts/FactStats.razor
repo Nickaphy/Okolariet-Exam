@@ -1,0 +1,33 @@
+@namespace Web.Templates.Facts
+@using Web.Templates.Slots
+
+@* Template "fact-stats": heading and up to three cards, each with a small picture, a big number and a short explanation.
+   Slot keys: title, audio, and for n = 1-3: stat{n}Image, stat{n}, stat{n}Text. *@
+
+<div class="fst">
+    <FactHead />
+    <div class="fst-cards">
+        @foreach (var n in Used)
+        {
+            <article class="fst-card" @key="n">
+                <SlotImage Key="@($"stat{n}Image")" Class="fst-icon" />
+                <SlotText Key="@($"stat{n}")" Class="fst-value" />
+                <SlotText Key="@($"stat{n}Text")" Class="fst-label" />
+            </article>
+        }
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] public TemplateScope Scope { get; set; } = default!;
+
+    // The cards to draw: those with something filled in (all three in placeholder mode).
+    // The cards that are left share the width, so two cards are wider than three.
+    private IEnumerable<int> Used => new[] { 1, 2, 3 }.Where(n => Scope.Show($"stat{n}", $"stat{n}Text", $"stat{n}Image"));
+
+    public static PageContent Sample() => PageContent.Sample("fact-stats",
+        ("title", "Plastik i tal"),
+        ("stat1", "450 år"), ("stat1Text", "Så længe tager det en plastflaske at nedbrydes"),
+        ("stat2", "1 ud af 3"), ("stat2Text", "Sådan en andel af havets fisk har plastik i maven"),
+        ("stat3", "8 mio. ton"), ("stat3Text", "Så meget plastik ender i havet hvert år"));
+}

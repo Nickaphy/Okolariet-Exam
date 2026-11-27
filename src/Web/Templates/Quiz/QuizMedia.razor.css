@@ -1,0 +1,10 @@
+.qm {
+    display: block;
+    min-height: 0;
+    object-fit: contain;
+    border-radius: 1.6cqw;
+}
+
+video.qm {
+    background: #000;
+}

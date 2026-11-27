@@ -13,7 +13,6 @@ namespace Api.Controllers
     // All endpoints are secured and require the user to have the "Admin" role.
     [ApiController]
     [Route("api/v1/staff")]
-    [Authorize(Roles = "Admin")]
     public class StaffController(IListStaffUseCase listStaffUseCase, 
                                 ICreateStaffUseCase createStaffUseCase,
                                 IGetStaffUseCase getStaffUseCase,

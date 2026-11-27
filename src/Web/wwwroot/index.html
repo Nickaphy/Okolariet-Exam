@@ -7,6 +7,8 @@
     <title>Økolariet</title>
     <base href="/" />
     <link rel="preload" id="webassembly" />
+    <!-- Radzen first, so our own app.css can override it. "-base" = Radzen styles its components only, not the whole page. -->
+    <link rel="stylesheet" href="_content/Radzen.Blazor/css/standard-base.css" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <link href="Web.styles.css" rel="stylesheet" />
@@ -24,6 +26,7 @@
         <span class="dismiss">🗙</span>
     </div>
 
+    <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
     <script src="js/oekolariet.js"></script>
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
 </body>

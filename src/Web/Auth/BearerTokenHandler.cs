@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Components;
 
@@ -7,7 +7,7 @@ namespace Web.Auth;
 /// <summary>
 /// Adds the access token to every API call, refreshes it when it is about to
 /// expire, and retries once if the server still answers 401.
-/// Used by every Refit client except <see cref="Web.Api.IAuthApi"/>.
+/// Used by every Refit client except the auth gateway's (see Program.cs: that one uses AttachAccessTokenHandler).
 /// </summary>
 public sealed class BearerTokenHandler(AuthService auth, NavigationManager nav) : DelegatingHandler
 {
@@ -60,7 +60,7 @@ public sealed class BearerTokenHandler(AuthService auth, NavigationManager nav) 
 }
 
 /// <summary>
-/// Adds the stored access token without refreshing. Only used for IAuthApi,
+/// Adds the stored access token without refreshing. Only used for the auth gateway's Refit client (IAuthApi),
 /// which the refresh logic itself depends on (avoids a circular dependency).
 /// </summary>
 public sealed class AttachAccessTokenHandler(TokenStore store) : DelegatingHandler

@@ -1,0 +1,14 @@
+@namespace Web.Templates.Facts
+@using Web.Templates.Slots
+
+@* Template "fact-video": a big video with a caption below. Slot keys: video, title. *@
+
+<div class="fv">
+    <SlotVideo Key="video" Class="fv-video" />
+    <SlotText Key="title" Class="fv-title" Heading="true" />
+</div>
+
+@code {
+    public static PageContent Sample() => PageContent.Sample("fact-video",
+        ("title", "Mød skildpadden, der spiste en pose"));
+}

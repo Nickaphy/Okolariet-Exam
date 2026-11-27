@@ -1,4 +1,4 @@
-﻿using Web.Api.Contracts;
+using Web.Api.Contracts;
 using Web.Ports.Helpers;
 
 namespace Web.Ports.Projects
@@ -23,6 +23,10 @@ namespace Web.Ports.Projects
 
         // Henter ét projekt ud fra id.
         Task<Project> GetProject(Guid projectId, CancellationToken ct = default);
+
+        // Det samme, men også med projektets ETag (se Versioned), som skal sendes med til UpdateProject.
+        // Bruges af editoren, der gemmer ændringer på projektet.
+        Task<Versioned<Project>> GetProjectWithETag(Guid projectId, CancellationToken ct = default);
 
         // Opdaterer et projekt. ifMatch er projektets ETag (en versionsmærkat) fra sidste hentning.
         // API'et kræver den for at undgå, at to brugere overskriver hinandens ændringer:

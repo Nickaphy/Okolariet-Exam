@@ -1,0 +1,24 @@
+.qtf {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3cqh;
+}
+
+    .qtf ::deep .qtf-media {
+        flex: 1 1 0;
+        max-width: 45cqw;
+        max-height: 100%;
+    }
+
+    .qtf ::deep .at-tile {
+        min-height: 26cqh;
+        align-items: center;
+    }
+
+    .qtf ::deep .at-text {
+        flex: none;
+        font-size: 4cqw;
+    }

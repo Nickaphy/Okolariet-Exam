@@ -1007,6 +1007,205 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Template'
+              # The same list as TemplateCatalog on the server, so the Prism mock offers real templates to the editor.
+              example:
+                - type: menu-buttons
+                  displayName: 'Hovedmenu – 4 knapper i række'
+                  category: menu
+                  slots:
+                    - { key: title, label: 'Overskrift', kind: text, required: false, maxLength: 60 }
+                    - { key: intro, label: 'Undertekst', kind: text, required: false, maxLength: 160 }
+                    - { key: background, label: 'Baggrundsbillede', kind: image, required: false }
+                    - { key: button1, label: 'Knap 1', kind: button, required: false, maxLength: 30 }
+                    - { key: button2, label: 'Knap 2', kind: button, required: false, maxLength: 30 }
+                    - { key: button3, label: 'Knap 3', kind: button, required: false, maxLength: 30 }
+                    - { key: button4, label: 'Knap 4', kind: button, required: false, maxLength: 30 }
+                - type: menu-split-4
+                  displayName: 'Hovedmenu – 4 knapper ved siden af'
+                  category: menu
+                  slots:
+                    - { key: title, label: 'Overskrift', kind: text, required: false, maxLength: 60 }
+                    - { key: intro, label: 'Undertekst', kind: text, required: false, maxLength: 160 }
+                    - { key: background, label: 'Baggrundsbillede', kind: image, required: false }
+                    - { key: button1, label: 'Knap 1', kind: button, required: false, maxLength: 30 }
+                    - { key: button2, label: 'Knap 2', kind: button, required: false, maxLength: 30 }
+                    - { key: button3, label: 'Knap 3', kind: button, required: false, maxLength: 30 }
+                    - { key: button4, label: 'Knap 4', kind: button, required: false, maxLength: 30 }
+                - type: menu-three
+                  displayName: 'Hovedmenu – 3 store knapper'
+                  category: menu
+                  slots:
+                    - { key: title, label: 'Overskrift', kind: text, required: false, maxLength: 60 }
+                    - { key: intro, label: 'Undertekst', kind: text, required: false, maxLength: 160 }
+                    - { key: background, label: 'Baggrundsbillede', kind: image, required: false }
+                    - { key: button1, label: 'Knap 1', kind: button, required: false, maxLength: 30 }
+                    - { key: button2, label: 'Knap 2', kind: button, required: false, maxLength: 30 }
+                    - { key: button3, label: 'Knap 3', kind: button, required: false, maxLength: 30 }
+                - type: menu-six
+                  displayName: 'Hovedmenu – 6 knapper'
+                  category: menu
+                  slots:
+                    - { key: title, label: 'Overskrift', kind: text, required: false, maxLength: 60 }
+                    - { key: intro, label: 'Undertekst', kind: text, required: false, maxLength: 160 }
+                    - { key: background, label: 'Baggrundsbillede', kind: image, required: false }
+                    - { key: button1, label: 'Knap 1', kind: button, required: false, maxLength: 24 }
+                    - { key: button2, label: 'Knap 2', kind: button, required: false, maxLength: 24 }
+                    - { key: button3, label: 'Knap 3', kind: button, required: false, maxLength: 24 }
+                    - { key: button4, label: 'Knap 4', kind: button, required: false, maxLength: 24 }
+                    - { key: button5, label: 'Knap 5', kind: button, required: false, maxLength: 24 }
+                    - { key: button6, label: 'Knap 6', kind: button, required: false, maxLength: 24 }
+                - type: menu-eight
+                  displayName: 'Hovedmenu – 8 knapper'
+                  category: menu
+                  slots:
+                    - { key: title, label: 'Overskrift', kind: text, required: false, maxLength: 60 }
+                    - { key: intro, label: 'Undertekst', kind: text, required: false, maxLength: 160 }
+                    - { key: background, label: 'Baggrundsbillede', kind: image, required: false }
+                    - { key: button1, label: 'Knap 1', kind: button, required: false, maxLength: 20 }
+                    - { key: button2, label: 'Knap 2', kind: button, required: false, maxLength: 20 }
+                    - { key: button3, label: 'Knap 3', kind: button, required: false, maxLength: 20 }
+                    - { key: button4, label: 'Knap 4', kind: button, required: false, maxLength: 20 }
+                    - { key: button5, label: 'Knap 5', kind: button, required: false, maxLength: 20 }
+                    - { key: button6, label: 'Knap 6', kind: button, required: false, maxLength: 20 }
+                    - { key: button7, label: 'Knap 7', kind: button, required: false, maxLength: 20 }
+                    - { key: button8, label: 'Knap 8', kind: button, required: false, maxLength: 20 }
+                - type: quiz-classic
+                  displayName: 'Quiz – spørgsmål og 4 svar'
+                  category: quiz
+                  slots:
+                    - { key: title, label: 'Overskrift', kind: text, required: false, maxLength: 80 }
+                    - { key: intro, label: 'Undertekst', kind: text, required: false, maxLength: 160 }
+                    - { key: background, label: 'Baggrundsbillede', kind: image, required: false }
+                    - { key: next, label: 'Næste side', kind: button, required: false }
+                  questionRules: { maxQuestions: 10, answersPerQuestion: 4 }
+                - type: quiz-factbox
+                  displayName: 'Quiz – med faktaboks'
+                  category: quiz
+                  slots:
+                    - { key: title, label: 'Overskrift', kind: text, required: false, maxLength: 80 }
+                    - { key: intro, label: 'Undertekst', kind: text, required: false, maxLength: 160 }
+                    - { key: background, label: 'Baggrundsbillede', kind: image, required: false }
+                    - { key: factTitle, label: 'Faktaboks: overskrift', kind: text, required: false, maxLength: 40 }
+                    - { key: factText, label: 'Faktaboks: tekst', kind: text, required: false, maxLength: 300 }
+                    - { key: factImage, label: 'Faktaboks: billede', kind: image, required: false }
+                    - { key: factVideo, label: 'Faktaboks: video', kind: video, required: false }
+                    - { key: next, label: 'Næste side', kind: button, required: false }
+                  questionRules: { maxQuestions: 10, answersPerQuestion: 4 }
+                - type: quiz-image-answers
+                  displayName: 'Quiz – svar med billeder'
+                  category: quiz
+                  slots:
+                    - { key: title, label: 'Overskrift', kind: text, required: false, maxLength: 80 }
+                    - { key: intro, label: 'Undertekst', kind: text, required: false, maxLength: 160 }
+                    - { key: background, label: 'Baggrundsbillede', kind: image, required: false }
+                    - { key: next, label: 'Næste side', kind: button, required: false }
+                  questionRules: { maxQuestions: 10, answersPerQuestion: 4 }
+                - type: quiz-video
+                  displayName: 'Quiz – video og spørgsmål'
+                  category: quiz
+                  slots:
+                    - { key: title, label: 'Overskrift', kind: text, required: false, maxLength: 80 }
+                    - { key: intro, label: 'Undertekst', kind: text, required: false, maxLength: 160 }
+                    - { key: background, label: 'Baggrundsbillede', kind: image, required: false }
+                    - { key: next, label: 'Næste side', kind: button, required: false }
+                  questionRules: { maxQuestions: 10, answersPerQuestion: 4 }
+                - type: quiz-true-false
+                  displayName: 'Quiz – sandt eller falsk'
+                  category: quiz
+                  slots:
+                    - { key: title, label: 'Overskrift', kind: text, required: false, maxLength: 80 }
+                    - { key: intro, label: 'Undertekst', kind: text, required: false, maxLength: 160 }
+                    - { key: background, label: 'Baggrundsbillede', kind: image, required: false }
+                    - { key: next, label: 'Næste side', kind: button, required: false }
+                  questionRules: { maxQuestions: 10, answersPerQuestion: 2 }
+                - type: fact-image-text
+                  displayName: 'Fakta – billede og tekst'
+                  category: fact
+                  slots:
+                    - { key: title, label: 'Overskrift', kind: text, required: false, maxLength: 100 }
+                    - { key: body, label: 'Tekst', kind: text, required: false, maxLength: 400 }
+                    - { key: image, label: 'Billede', kind: image, required: false }
+                    - { key: audio, label: 'Oplæsning (lydfil)', kind: audio, required: false }
+                    - { key: next, label: 'Næste side', kind: button, required: false }
+                - type: fact-hero
+                  displayName: 'Fakta – stort billede'
+                  category: fact
+                  slots:
+                    - { key: title, label: 'Overskrift', kind: text, required: false, maxLength: 100 }
+                    - { key: body, label: 'Tekst', kind: text, required: false, maxLength: 240 }
+                    - { key: image, label: 'Stort billede', kind: image, required: false }
+                    - { key: audio, label: 'Oplæsning (lydfil)', kind: audio, required: false }
+                    - { key: next, label: 'Næste side', kind: button, required: false }
+                - type: fact-stats
+                  displayName: 'Fakta – tre tal'
+                  category: fact
+                  slots:
+                    - { key: title, label: 'Overskrift', kind: text, required: false, maxLength: 100 }
+                    - { key: audio, label: 'Oplæsning (lydfil)', kind: audio, required: false }
+                    - { key: stat1Image, label: 'Ikon 1', kind: image, required: false }
+                    - { key: stat1, label: 'Tal 1', kind: text, required: false, maxLength: 12 }
+                    - { key: stat1Text, label: 'Forklaring 1', kind: text, required: false, maxLength: 80 }
+                    - { key: stat2Image, label: 'Ikon 2', kind: image, required: false }
+                    - { key: stat2, label: 'Tal 2', kind: text, required: false, maxLength: 12 }
+                    - { key: stat2Text, label: 'Forklaring 2', kind: text, required: false, maxLength: 80 }
+                    - { key: stat3Image, label: 'Ikon 3', kind: image, required: false }
+                    - { key: stat3, label: 'Tal 3', kind: text, required: false, maxLength: 12 }
+                    - { key: stat3Text, label: 'Forklaring 3', kind: text, required: false, maxLength: 80 }
+                    - { key: next, label: 'Næste side', kind: button, required: false }
+                - type: fact-steps
+                  displayName: 'Fakta – trin for trin'
+                  category: fact
+                  slots:
+                    - { key: title, label: 'Overskrift', kind: text, required: false, maxLength: 100 }
+                    - { key: audio, label: 'Oplæsning (lydfil)', kind: audio, required: false }
+                    - { key: step1Image, label: 'Billede, trin 1', kind: image, required: false }
+                    - { key: step1, label: 'Overskrift, trin 1', kind: text, required: false, maxLength: 30 }
+                    - { key: step1Text, label: 'Tekst, trin 1', kind: text, required: false, maxLength: 90 }
+                    - { key: step2Image, label: 'Billede, trin 2', kind: image, required: false }
+                    - { key: step2, label: 'Overskrift, trin 2', kind: text, required: false, maxLength: 30 }
+                    - { key: step2Text, label: 'Tekst, trin 2', kind: text, required: false, maxLength: 90 }
+                    - { key: step3Image, label: 'Billede, trin 3', kind: image, required: false }
+                    - { key: step3, label: 'Overskrift, trin 3', kind: text, required: false, maxLength: 30 }
+                    - { key: step3Text, label: 'Tekst, trin 3', kind: text, required: false, maxLength: 90 }
+                    - { key: step4Image, label: 'Billede, trin 4', kind: image, required: false }
+                    - { key: step4, label: 'Overskrift, trin 4', kind: text, required: false, maxLength: 30 }
+                    - { key: step4Text, label: 'Tekst, trin 4', kind: text, required: false, maxLength: 90 }
+                    - { key: next, label: 'Næste side', kind: button, required: false }
+                - type: fact-two-images
+                  displayName: 'Fakta – to billeder'
+                  category: fact
+                  slots:
+                    - { key: title, label: 'Overskrift', kind: text, required: false, maxLength: 100 }
+                    - { key: audio, label: 'Oplæsning (lydfil)', kind: audio, required: false }
+                    - { key: image1, label: 'Billede 1', kind: image, required: false }
+                    - { key: caption1, label: 'Billedtekst 1', kind: text, required: false, maxLength: 80 }
+                    - { key: image2, label: 'Billede 2', kind: image, required: false }
+                    - { key: caption2, label: 'Billedtekst 2', kind: text, required: false, maxLength: 80 }
+                    - { key: next, label: 'Næste side', kind: button, required: false }
+                - type: fact-list
+                  displayName: 'Fakta – billede og punkter'
+                  category: fact
+                  slots:
+                    - { key: title, label: 'Overskrift', kind: text, required: false, maxLength: 100 }
+                    - { key: audio, label: 'Oplæsning (lydfil)', kind: audio, required: false }
+                    - { key: image, label: 'Billede', kind: image, required: false }
+                    - { key: point1, label: 'Punkt 1', kind: text, required: false, maxLength: 100 }
+                    - { key: point2, label: 'Punkt 2', kind: text, required: false, maxLength: 100 }
+                    - { key: point3, label: 'Punkt 3', kind: text, required: false, maxLength: 100 }
+                    - { key: next, label: 'Næste side', kind: button, required: false }
+                - type: fact-video
+                  displayName: 'Fakta – video med tekst'
+                  category: fact
+                  slots:
+                    - { key: video, label: 'Video', kind: video, required: false }
+                    - { key: title, label: 'Overskrift', kind: text, required: false, maxLength: 100 }
+                    - { key: next, label: 'Næste side', kind: button, required: false }
+                - type: fact-video-only
+                  displayName: 'Fakta – kun video'
+                  category: fact
+                  slots:
+                    - { key: video, label: 'Video', kind: video, required: false }
+                    - { key: next, label: 'Næste side', kind: button, required: false }
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1684,7 +1883,7 @@ components:
       in: path
       required: true
       schema: { type: string }
-      example: quiz
+      example: quiz-classic
 
     AssetKindFilter:
       name: kind
@@ -1924,7 +2123,7 @@ components:
         templateType:
           type: string
           description: Selects which Blazor template component renders this modded template
-          example: menu-ocean
+          example: menu-buttons
         title: { type: string, example: Vælg en aktivitet }
         appearance:
           $ref: '#/components/schemas/Appearance'
@@ -2093,8 +2292,8 @@ components:
       type: object
       required: [type, displayName, category, slots]
       properties:
-        type: { type: string, example: menu-ocean }
-        displayName: { type: string, example: Hovedmenu - Hav }
+        type: { type: string, example: menu-buttons }
+        displayName: { type: string, example: Hovedmenu med knapper }
         category:
           type: string
           enum: [menu, quiz, fact]
@@ -2119,6 +2318,7 @@ components:
           type: string
           description: Which asset kind an image, video or audio slot accepts
           enum: [text, image, video, audio, button]
+          example: button
         required: { type: boolean, example: true }
         maxLength: { type: integer, nullable: true, example: 40 }
     AppearanceFieldDefinition:
@@ -2157,14 +2357,14 @@ components:
         - type: object
           required: [templateType]
           properties:
-            templateType: { type: string, example: menu-ocean }
+            templateType: { type: string, example: menu-buttons }
     ModdedTemplateSummary:
       type: object
       required: [id, projectId, templateType, title]
       properties:
         id: { type: string, format: uuid, example: d96c6a5c-053f-594b-8552-329d96f1142b }
         projectId: { type: string, format: uuid, example: 5e528632-2b56-555f-8467-ed93e2a5ad60 }
-        templateType: { type: string, example: menu-ocean }
+        templateType: { type: string, example: menu-buttons }
         title: { type: string, example: Vælg en aktivitet }
         sortOrder: { type: integer, example: 1 }
         _links:
@@ -2175,7 +2375,7 @@ components:
       properties:
         id: { type: string, format: uuid, example: d96c6a5c-053f-594b-8552-329d96f1142b }
         projectId: { type: string, format: uuid, example: 5e528632-2b56-555f-8467-ed93e2a5ad60 }
-        templateType: { type: string, example: menu-ocean }
+        templateType: { type: string, example: menu-buttons }
         title: { type: string, example: Vælg en aktivitet }
         appearance:
           $ref: '#/components/schemas/Appearance'

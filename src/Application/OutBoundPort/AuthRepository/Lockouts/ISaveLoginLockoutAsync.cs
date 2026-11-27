@@ -1,4 +1,4 @@
-﻿using Domain.ValueObjects;
+﻿using Domain.Entities.AuthEntities;
 
 namespace Application.OutBoundPort.AuthRepository.Lockouts
 {

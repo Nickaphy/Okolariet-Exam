@@ -1,18 +1,22 @@
-﻿.notice {
+.notice {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    max-width: 1100px;
-    margin-bottom: 1.5rem;
-    padding: 0.9rem 1.1rem;
-    border: 2px solid;
-    border-radius: var(--radius);
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    padding: 0.7rem 0.8rem 0.7rem 1rem;
+    border: 1px solid;
+    border-left-width: 4px;
+    border-radius: var(--radius-sm);
     font-weight: 600;
+    box-shadow: var(--shadow-sm);
+}
+
+.notice-text {
+    flex: 1;
 }
 
 .notice-info {
-    border-color: var(--ink);
+    border-color: var(--line-strong);
     background: var(--surface);
 }
 
@@ -30,13 +34,14 @@
 
 .notice-close {
     flex: none;
-    width: 40px;
-    height: 40px;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
     border: 0;
     border-radius: 8px;
     background: transparent;
     color: inherit;
-    font-size: 1.5rem;
     cursor: pointer;
 }
 

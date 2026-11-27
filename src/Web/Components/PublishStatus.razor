@@ -1,0 +1,16 @@
+@* The small status label of an exhibition: "Udgivet · version 3" (green) or "Ikke udgivet endnu" (grey).
+   Used on the list of exhibitions and in the editor. *@
+
+@if (Version is { } version)
+{
+    <span class="status status-live"><span class="dot"></span>Udgivet · version @version</span>
+}
+else
+{
+    <span class="status status-draft"><span class="dot"></span>Ikke udgivet endnu</span>
+}
+
+@code {
+    // Project.LatestVersionNumber: null until the exhibition has been published once.
+    [Parameter] public int? Version { get; set; }
+}

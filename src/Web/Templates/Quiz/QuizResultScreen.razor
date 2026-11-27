@@ -1,0 +1,108 @@
+@namespace Web.Templates.Quiz
+
+@* The end of a quiz. Left: a few words, stars, "8 ud af 10 rigtige" and the points.
+   Right: first "save your highscore name" (NicknamePicker), then "Dine svar": a circle per question, and tapping one
+   shows the right answer. *@
+
+<div class="qe">
+    <section class="qe-score">
+        <h1 class="qe-title">@Praise</h1>
+        <p class="qe-stars" aria-label="@($"{Stars} af 4 stjerner")">
+            @for (var i = 1; i <= 4; i++)
+            {
+                <span aria-hidden="true">@(i <= Stars ? "★" : "☆")</span>
+            }
+        </p>
+        <p class="qe-count">@Correct ud af @History.Count rigtige</p>
+        <span class="qe-points">@(Correct * PointsPerAnswer) point</span>
+        <button type="button" class="slot-button qe-again" @onclick="OnPlayAgain">↻ Spil igen</button>
+    </section>
+
+    <section class="qe-panel">
+        @if (!nameDone)
+        {
+            <NicknamePicker Demo="Demo" Save="SaveNameAsync" OnDone="() => nameDone = true" />
+        }
+        else
+        {
+            @if (savedAs is not null)
+            {
+                <p class="qe-saved">Gemt som <strong>@savedAs</strong> ★</p>
+            }
+            <h2 class="qe-panel-title">Dine svar</h2>
+            <div class="qe-dots">
+                @for (var i = 0; i < History.Count; i++)
+                {
+                    var number = i;   // a copy for the lambda below
+                    var answered = History[i];
+                    <button type="button" class="qe-dot @(answered.IsCorrect ? "" : "qe-dot-wrong") @(selected == i ? "qe-dot-on" : "")"
+                            aria-label="@($"Spørgsmål {i + 1}, {(answered.IsCorrect ? "rigtigt" : "forkert")}")"
+                            @onclick="() => selected = number">
+                        @(i + 1) @(answered.IsCorrect ? "✓" : "✗")
+                    </button>
+                }
+            </div>
+            @if (selected is int s && s < History.Count)
+            {
+                var answered = History[s];
+                <p class="qe-question">Spørgsmål @(s + 1): @answered.Question.Text</p>
+                <p class="qe-answer">Det rigtige svar: <strong>@TextOf(answered, answered.CorrectId)</strong></p>
+                @if (!answered.IsCorrect)
+                {
+                    <p class="qe-yours">Du svarede: @TextOf(answered, answered.ChosenId)</p>
+                }
+            }
+            else
+            {
+                <p class="qe-hint">Tryk på et spørgsmål for at se det rigtige svar.</p>
+            }
+        }
+    </section>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<AnsweredQuestion> History { get; set; } = [];
+    [Parameter] public int PointsPerAnswer { get; set; }
+    [Parameter] public bool Demo { get; set; }
+    [Parameter] public Guid? SessionId { get; set; }
+    [Parameter] public EventCallback OnPlayAgain { get; set; }
+
+    [CascadingParameter] public TemplateScope Scope { get; set; } = default!;
+    [Inject] private IUserGateway UserGateway { get; set; } = default!;
+
+    private bool nameDone;
+    private string? savedAs;
+    private int? selected;
+
+    private int Correct => History.Count(h => h.IsCorrect);
+
+    // 0-4 stars, e.g. 8 of 10 right = 3 stars, all right = 4.
+    private int Stars => History.Count == 0 ? 0 : (int)Math.Floor(4.0 * Correct / History.Count);
+
+    private string Praise => Stars switch
+    {
+        4 => "Fantastisk!",
+        3 => "Flot klaret!",
+        2 => "Godt gået!",
+        _ => "Godt forsøgt!"
+    };
+
+    private static string TextOf(AnsweredQuestion answered, Guid answerId) =>
+        answered.Question.Answers.FirstOrDefault(a => a.Id == answerId)?.Text ?? "";
+
+    // Handed to NicknamePicker: saves the result under the chosen name (POST /users).
+    // The server builds the name and counts the right answers itself; we only send the guest's choice.
+    private async Task<string?> SaveNameAsync(NicknameChoice choice)
+    {
+        if (Demo || SessionId is not Guid sessionId) return "I eksemplet bliver navnet ikke gemt.";
+
+        var (user, error) = await ApiCall.Get(() => UserGateway.CreateUser(new UserCreate
+        {
+            SessionId = sessionId,
+            ModdedTemplateId = Scope.Page.Id,
+            Nickname = new NicknameInput { FirstWordId = choice.First.Id, SecondWordId = choice.Second.Id, Number = choice.Number }
+        }));
+        savedAs = user?.Nickname;
+        return error;
+    }
+}

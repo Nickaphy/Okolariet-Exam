@@ -1,4 +1,4 @@
-using Api.Helpers;
+﻿using Api.Helpers;
 using Api.Requests.AnswerRequests;
 using Api.Responses.AnswerResponses;
 using Application.Commands.AnswerCommands;
@@ -11,7 +11,6 @@ namespace Api.Controllers
     // Answers always belong to a question. Creating one goes through /questions/{id}/answers,
     // while updating and deleting use the answer's own id (/answers/{id}).
     [ApiController]
-    [Authorize(Roles = "Admin")]
     [Route("api/v1")]
     public class AnswersController(
         ICreateAnswerUseCase createAnswerUseCase,

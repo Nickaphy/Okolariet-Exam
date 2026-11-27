@@ -1,0 +1,38 @@
+.qt {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2cqw;
+}
+
+.qt-left {
+    justify-content: space-between;
+    text-align: left;
+}
+
+.qt-text {
+    margin: 0;
+    font-size: 3.6cqw;
+    font-weight: 800;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+}
+
+.qt-say {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 5cqw;
+    height: 5cqw;
+    padding: 0;
+    border: max(1px, 0.2cqw) solid currentColor;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+    .qt-say ::deep .ui-icon {
+        font-size: 2.6cqw;
+    }

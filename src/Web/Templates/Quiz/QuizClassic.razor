@@ -1,0 +1,16 @@
+@namespace Web.Templates.Quiz
+
+@* Template "quiz-classic": the question, an optional picture, and four answer tiles in a 2x2 grid (Kahoot style).
+   Slot keys: title, intro, background (the start screen). The questions are the quiz's own (Questions). *@
+
+<QuizRunner>
+    <div class="qc">
+        <QuizQuestionText />
+        <QuizMedia Class="qc-media" />
+        <AnswerTiles Columns="2" />
+    </div>
+</QuizRunner>
+
+@code {
+    public static PageContent Sample() => QuizSamples.Page("quiz-classic", QuizSamples.FourAnswers);
+}

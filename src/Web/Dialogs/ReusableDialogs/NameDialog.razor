@@ -6,10 +6,10 @@
     <ChildContent>
         <form id="@formId" @onsubmit="SubmitAsync" @onsubmit:preventDefault>
             <label for="@inputId" class="field-label">@Label</label>
-            <input id="@inputId" class="input" @ref="nameInput"
+            <input id="@inputId" class="input" @ref="nameInput" type="@InputType"
                    @bind="text" @bind:event="oninput"
                    maxlength="@MaxLength" placeholder="@Placeholder"
-                   autocomplete="off" disabled="@busy" />
+                   autocomplete="@(InputType == "password" ? "new-password" : "off")" disabled="@busy" />
             @if (Hint is not null)
             {
                 <p class="field-hint">@Hint</p>

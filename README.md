@@ -27,3 +27,17 @@ Note that to run a fresh refitter so that the files are updated after new change
 - dotnet tool restore 
 8. Run the following:
 - dotnet refitter --settings-file src\web\.refitter
+
+## Running the kiosk on the touchscreen
+
+The kiosk page blocks right-click, long-press, dragging, text selection and the usual developer-tools
+shortcuts itself (wwwroot/js/oekolariet.js, `lockKiosk`). A web page can't block everything, so on the
+real touchscreen also lock the browser:
+
+1. Start the browser straight on the kiosk address in kiosk mode (not via Start in the admin, which opens a normal pop-up window):
+- "C:\Program Files\Google\Chrome\Application\chrome.exe" --kiosk --app=http://localhost:5132/kiosk/<project id> --user-data-dir=C:\kiosk-profile
+- Edge works the same way: msedge.exe --kiosk http://localhost:5132/kiosk/<project id> --edge-kiosk-type=fullscreen
+2. Turn the developer tools off with the browser policy DeveloperToolsAvailability = 2 (Windows registry):
+- Chrome: HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome  DeveloperToolsAvailability (DWORD) = 2
+- Edge:   HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge   DeveloperToolsAvailability (DWORD) = 2
+- Check it on chrome://policy (or edge://policy). F12 and right-click → Inspect then do nothing.

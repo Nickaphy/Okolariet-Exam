@@ -1,0 +1,15 @@
+@namespace Web.Templates.Slots
+@inherits SlotBase
+
+@* A video slot. Controls are off in previews (nothing can be tapped there).
+   "#t=0.1" makes the browser show the first frame as a still picture before it plays. *@
+
+@if (Content?.AssetId is Guid id)
+{
+    <video class="slot-video @Class" data-slot="@Key" src="@(Scope.AssetUrl(id) + "#t=0.1")"
+           controls="@(!Scope.Preview)" playsinline preload="metadata"></video>
+}
+else if (Scope.Placeholders)
+{
+    <div class="slot-placeholder @Class" data-slot="@Key">@Scope.LabelOf(Key)</div>
+}

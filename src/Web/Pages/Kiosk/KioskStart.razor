@@ -1,70 +1,69 @@
 @page "/kiosk/{ProjectId:guid}"
 @layout BlankLayout
-@inject IVersionsApi VersionsApi
+@inject IVersionGateway VersionGateway
 @inject IJSRuntime JS
 
-@* Opened in its own window from Admin → Udstillinger → Start. Anonymous: uses only public endpoints.
-   Placeholder until the kiosk renderer is built; it already loads the published snapshot and
-   handles full screen, so staff don't need to know about F11. *@
+@* The kiosk: what guests see on the touch screen. Opened in its own window from Admin → Udstillinger → Start.
+   Anonymous: it only uses public endpoints (BearerTokenHandler leaves kiosk calls alone).
+   Shows the latest published version page by page. Menu buttons lead into their pages; the bar at the bottom
+   goes back, home, or on to the next page in the path ("next" slot, see PathConvention). The code is in KioskStart.razor.cs. *@
 
 <PageTitle>Økolariet</PageTitle>
 
-<main class="kiosk">
-    @if (version is not null)
+@* @oncontextmenu:preventDefault: no right-click menu, even before the JavaScript lock below has loaded. *@
+<main class="kiosk" style="@KioskStyle" @oncontextmenu:preventDefault="true">
+    @if (current is not null)
     {
-        <span class="tag">ØKOLARIET</span>
-        <h1 tabindex="-1">Udstillingen er klar</h1>
-        <p>Version @version.VersionNumber · @version.ModdedTemplates.Count sider. Selve kioskvisningen bygges i næste trin.</p>
+        <div class="screen">
+            <TemplateHost Page="current" Inherited="version?.Appearance" ProjectId="ProjectId" OnNavigate="GoTo" />
+        </div>
+
+        @* Always there (also when empty), so the screen above never jumps when the buttons appear. *@
+        <nav class="kiosk-nav" aria-label="Navigation">
+            @if (history.Count > 0)
+            {
+                <button type="button" class="kiosk-btn" @onclick="Back"><Icon Name="arrow_back" /> Tilbage</button>
+                <button type="button" class="kiosk-btn" @onclick="Home"><Icon Name="home" /> Forside</button>
+            }
+            @if (Progress is { } progress)
+            {
+                <span class="kiosk-progress" role="status" aria-label="Side @progress.Index af @progress.Total">
+                    @if (progress.Total <= 8)
+                    {
+                        @for (var i = 1; i <= progress.Total; i++)
+                        {
+                            <span class="kiosk-dot @(i == progress.Index ? "kiosk-dot-on" : null)"></span>
+                        }
+                    }
+                    <span class="kiosk-progress-text">Side @progress.Index / @progress.Total</span>
+                </span>
+            }
+            @if (NextId is Guid next)
+            {
+                <button type="button" class="kiosk-btn kiosk-btn-next" @onclick="() => GoTo(next)">
+                    Videre <Icon Name="arrow_forward" />
+                </button>
+            }
+        </nav>
     }
     else if (errorMessage is not null)
     {
-        <h1 tabindex="-1">@errorMessage</h1>
+        <div class="kiosk-message">
+            <Icon Name="error" Class="kiosk-message-icon" />
+            <h1 tabindex="-1">@errorMessage</h1>
+        </div>
     }
     else
     {
-        <p class="page-loading">Indlæser udstillingen…</p>
+        <p class="kiosk-message">Indlæser udstillingen…</p>
     }
 
     @if (!isFullscreen)
     {
         <button type="button" class="fullscreen-overlay" @onclick="EnterFullscreenAsync">
+            <Icon Name="touch_app" Class="overlay-icon" />
             <span class="overlay-title">Tryk for at starte</span>
             <span class="overlay-sub">Udstillingen fylder hele skærmen</span>
         </button>
     }
 </main>
-
-@code {
-    [Parameter] public Guid ProjectId { get; set; }
-
-    private PublishedVersion? version;
-    private string? errorMessage;
-    private bool isFullscreen;
-
-    protected override async Task OnParametersSetAsync()
-    {
-        try
-        {
-            // If-None-Match is optional; Refit leaves the header out when the value is null.
-            var response = await VersionsApi.GetLatestVersion(ProjectId, null!);
-            if (response.IsSuccessStatusCode && response.Content is not null)
-                version = response.Content;
-            else if (response.StatusCode == HttpStatusCode.NotFound)
-                errorMessage = "Udstillingen er ikke udgivet endnu.";
-            else
-                errorMessage = "Udstillingen kunne ikke hentes. Prøv at genindlæse siden.";
-        }
-        catch (HttpRequestException)
-        {
-            errorMessage = "Ingen forbindelse til serveren.";
-        }
-    }
-
-    private async Task EnterFullscreenAsync()
-    {
-        // Must run from a tap/click: browsers only allow full screen after a user gesture.
-        // If the browser refuses, the overlay is still hidden so the kiosk stays usable.
-        await JS.InvokeAsync<bool>("oekolariet.enterFullscreen");
-        isFullscreen = true;
-    }
-}

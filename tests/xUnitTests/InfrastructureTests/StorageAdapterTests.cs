@@ -1,27 +1,33 @@
-using Domain.Entities;                          // StaffMember
-using Domain.Entities.AuthEntities;             // StaffLogin, RefreshToken
+﻿using Domain.Entities;                          // StaffMember
+using Domain.Entities.AuthEntities;             // StaffLogin, RefreshToken, LoginLockout
 using Domain.Enums;                             // StaffRole
-using Domain.ValueObjects;                      // LoginLockout
+using Domain.ValueObjects;                      // Score
+using Infrastructure.Adapters.Auth;             // the auth storage adapters
 using Infrastructure.Adapters.Staff;            // GetStaffByEmailAdapter
+using Infrastructure.Adapters.Users;            // CreateUserAdapter
 using Infrastructure.Database;                  // OkolarietDbContext
-using Infrastructure.Testing;                   // InMemoryAuthStore
 using Microsoft.EntityFrameworkCore;
 
 namespace xUnitTests.InfrastructureTests
 {
-    public class InMemoryAuthStoreTests
+    // The auth storage adapters (logins, refresh tokens, lockouts) against EF Core's in-memory database.
+    public class AuthStorageAdapterTests
     {
         private static readonly CancellationToken Ct = CancellationToken.None;
         private static readonly DateTimeOffset Now = new(2026, 11, 23, 12, 0, 0, TimeSpan.Zero);
 
-        private readonly InMemoryAuthStore store = new();
+        // A fresh in-memory database per test.
+        private readonly OkolarietDbContext db = new(new DbContextOptionsBuilder<OkolarietDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options);
 
         [Fact]
         public async Task Saved_lockout_can_be_read_back_by_email()
         {
-            await store.SaveLoginLockoutAsync(new LoginLockout { Email = "anna@test.dk", FailedAttempts = 3 }, Ct);
+            await new SaveLoginLockoutAdapter(db).SaveLoginLockoutAsync(new LoginLockout { Email = "anna@test.dk", FailedAttempts = 3 }, Ct);
+            db.ChangeTracker.Clear();
 
-            var lockout = await store.GetLoginLockoutAsync("anna@test.dk", Ct);
+            var lockout = await new GetLoginLockoutAdapter(db).GetLoginLockoutAsync("anna@test.dk", Ct);
 
             Assert.Equal(3, lockout?.FailedAttempts);
         }
@@ -29,16 +35,32 @@ namespace xUnitTests.InfrastructureTests
         [Fact]
         public async Task Unknown_email_has_no_lockout()
         {
-            Assert.Null(await store.GetLoginLockoutAsync("nobody@test.dk", Ct));
+            Assert.Null(await new GetLoginLockoutAdapter(db).GetLoginLockoutAsync("nobody@test.dk", Ct));
         }
 
         [Fact]
         public async Task Saving_a_lockout_again_replaces_the_old_one()
         {
-            await store.SaveLoginLockoutAsync(new LoginLockout { Email = "anna@test.dk", FailedAttempts = 1 }, Ct);
-            await store.SaveLoginLockoutAsync(new LoginLockout { Email = "anna@test.dk", FailedAttempts = 4 }, Ct);
+            var save = new SaveLoginLockoutAdapter(db);
+            await save.SaveLoginLockoutAsync(new LoginLockout { Email = "anna@test.dk", FailedAttempts = 1 }, Ct);
+            await save.SaveLoginLockoutAsync(new LoginLockout { Email = "anna@test.dk", FailedAttempts = 4 }, Ct);
+            db.ChangeTracker.Clear();
 
-            Assert.Equal(4, (await store.GetLoginLockoutAsync("anna@test.dk", Ct))?.FailedAttempts);
+            Assert.Equal(4, (await new GetLoginLockoutAdapter(db).GetLoginLockoutAsync("anna@test.dk", Ct))?.FailedAttempts);
+            Assert.Single(db.LoginLockouts);
+        }
+
+        [Fact]
+        public async Task A_changed_lockout_from_Get_is_saved()
+        {
+            // The way LoginUseCase uses it: read, change the counter, save the same object.
+            await new SaveLoginLockoutAdapter(db).SaveLoginLockoutAsync(new LoginLockout { Email = "anna@test.dk", FailedAttempts = 1 }, Ct);
+            var lockout = (await new GetLoginLockoutAdapter(db).GetLoginLockoutAsync("anna@test.dk", Ct))!;
+            lockout.FailedAttempts++;
+            await new SaveLoginLockoutAdapter(db).SaveLoginLockoutAsync(lockout, Ct);
+            db.ChangeTracker.Clear();
+
+            Assert.Equal(2, (await new GetLoginLockoutAdapter(db).GetLoginLockoutAsync("anna@test.dk", Ct))?.FailedAttempts);
         }
 
         [Fact]
@@ -46,9 +68,24 @@ namespace xUnitTests.InfrastructureTests
         {
             var login = new StaffLogin { StaffId = Guid.NewGuid(), CreatedAt = Now, ExpiresAt = Now.AddHours(8) };
 
-            await store.AddLoginAsync(login, Ct);
+            await new AddLoginAdapter(db).AddLoginAsync(login, Ct);
+            db.ChangeTracker.Clear();
 
-            Assert.Same(login, await store.GetLoginByIdAsync(login.Id, Ct));
+            Assert.Equal(login.StaffId, (await new GetLoginByIdAdapter(db).GetLoginByIdAsync(login.Id, Ct))?.StaffId);
+        }
+
+        [Fact]
+        public async Task Revoking_a_login_is_saved()
+        {
+            var login = new StaffLogin { StaffId = Guid.NewGuid(), CreatedAt = Now, ExpiresAt = Now.AddHours(8) };
+            await new AddLoginAdapter(db).AddLoginAsync(login, Ct);
+
+            var loaded = (await new GetLoginByIdAdapter(db).GetLoginByIdAsync(login.Id, Ct))!;
+            loaded.RevokedAt = Now;
+            await new UpdateLoginAdapter(db).UpdateLoginAsync(loaded, Ct);
+            db.ChangeTracker.Clear();
+
+            Assert.Equal(Now, (await new GetLoginByIdAdapter(db).GetLoginByIdAsync(login.Id, Ct))?.RevokedAt);
         }
 
         [Fact]
@@ -59,13 +96,16 @@ namespace xUnitTests.InfrastructureTests
             var annaOld = new StaffLogin { StaffId = annaId, ExpiresAt = Now.AddHours(8), RevokedAt = Now.AddDays(-1) };
             var someoneElse = new StaffLogin { StaffId = Guid.NewGuid(), ExpiresAt = Now.AddHours(8) };
             foreach (var login in new[] { annaActive, annaOld, someoneElse })
-                await store.AddLoginAsync(login, Ct);
+                await new AddLoginAdapter(db).AddLoginAsync(login, Ct);
+            db.ChangeTracker.Clear();
 
-            await store.RevokeAllLoginsForStaffAsync(annaId, Now, Ct);
+            await new RevokeAllLoginsForStaffAdapter(db).RevokeAllLoginsForStaffAsync(annaId, Now, Ct);
+            db.ChangeTracker.Clear();
 
-            Assert.Equal(Now, annaActive.RevokedAt);
-            Assert.Equal(Now.AddDays(-1), annaOld.RevokedAt);   // keeps its original time
-            Assert.Null(someoneElse.RevokedAt);
+            var get = new GetLoginByIdAdapter(db);
+            Assert.Equal(Now, (await get.GetLoginByIdAsync(annaActive.Id, Ct))?.RevokedAt);
+            Assert.Equal(Now.AddDays(-1), (await get.GetLoginByIdAsync(annaOld.Id, Ct))?.RevokedAt);   // keeps its original time
+            Assert.Null((await get.GetLoginByIdAsync(someoneElse.Id, Ct))?.RevokedAt);
         }
 
         [Fact]
@@ -73,10 +113,69 @@ namespace xUnitTests.InfrastructureTests
         {
             var token = new RefreshToken { LoginId = Guid.NewGuid(), TokenHash = "ABC123", ExpiresAt = Now.AddHours(8) };
 
-            await store.AddRefreshTokenAsync(token, Ct);
+            await new AddRefreshTokenAdapter(db).AddRefreshTokenAsync(token, Ct);
+            db.ChangeTracker.Clear();
 
-            Assert.Same(token, await store.GetRefreshTokenByHashAsync("ABC123", Ct));
-            Assert.Null(await store.GetRefreshTokenByHashAsync("OTHER", Ct));
+            var get = new GetRefreshTokenByHashAdapter(db);
+            Assert.Equal(token.Id, (await get.GetRefreshTokenByHashAsync("ABC123", Ct))?.Id);
+            Assert.Null(await get.GetRefreshTokenByHashAsync("OTHER", Ct));
+        }
+
+        [Fact]
+        public async Task Marking_a_refresh_token_used_is_saved()
+        {
+            var token = new RefreshToken { LoginId = Guid.NewGuid(), TokenHash = "ABC123", ExpiresAt = Now.AddHours(8) };
+            await new AddRefreshTokenAdapter(db).AddRefreshTokenAsync(token, Ct);
+
+            var loaded = (await new GetRefreshTokenByHashAdapter(db).GetRefreshTokenByHashAsync("ABC123", Ct))!;
+            loaded.UsedAt = Now;
+            await new UpdateRefreshTokenAdapter(db).UpdateRefreshTokenAsync(loaded, Ct);
+            db.ChangeTracker.Clear();
+
+            Assert.Equal(Now, (await new GetRefreshTokenByHashAdapter(db).GetRefreshTokenByHashAsync("ABC123", Ct))?.UsedAt);
+        }
+    }
+
+    // Saving a highscore (POST /users). One saved score per session and quiz.
+    public class CreateUserAdapterTests
+    {
+        private static readonly CancellationToken Ct = CancellationToken.None;
+
+        private readonly OkolarietDbContext db = new(new DbContextOptionsBuilder<OkolarietDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options);
+
+        [Fact]
+        public async Task First_save_for_a_session_and_quiz_is_stored()
+        {
+            var user = User.Create("ModigRæv42", Guid.NewGuid(), Guid.NewGuid(), new Score(7, 10));
+
+            Assert.True(await new CreateUserAdapter(db).CreateUserAsync(user, Ct));
+            Assert.Single(db.Users);
+        }
+
+        [Fact]
+        public async Task Second_save_for_the_same_session_and_quiz_returns_false()
+        {
+            var quizId = Guid.NewGuid();
+            var sessionId = Guid.NewGuid();
+            var adapter = new CreateUserAdapter(db);
+            await adapter.CreateUserAsync(User.Create("ModigRæv42", quizId, sessionId, new Score(7, 10)), Ct);
+
+            var again = await adapter.CreateUserAsync(User.Create("GladRegnorm7", quizId, sessionId, new Score(9, 10)), Ct);
+
+            Assert.False(again);
+            Assert.Single(db.Users);
+        }
+
+        [Fact]
+        public async Task The_same_session_may_save_a_score_for_another_quiz()
+        {
+            var sessionId = Guid.NewGuid();
+            var adapter = new CreateUserAdapter(db);
+            await adapter.CreateUserAsync(User.Create("ModigRæv42", Guid.NewGuid(), sessionId, new Score(7, 10)), Ct);
+
+            Assert.True(await adapter.CreateUserAsync(User.Create("ModigRæv42", Guid.NewGuid(), sessionId, new Score(5, 10)), Ct));
         }
     }
 

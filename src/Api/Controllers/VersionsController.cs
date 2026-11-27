@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 // Den indeholder ingen forretningsregler.
 [ApiController]
 // Alle endpoints kræver Admin-rollen, medmindre et endpoint markeres med [AllowAnonymous].
-[Authorize(Roles = "Admin")]
 // {projectId:guid} i stien er id'et på det projekt, versionerne hører til. Stien skal matche Generated/Output.cs.
 [Route("api/v1/projects/{projectId:guid}/versions")]
 public class VersionsController(

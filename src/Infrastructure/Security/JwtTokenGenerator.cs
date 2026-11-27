@@ -20,7 +20,7 @@ namespace Infrastructure.Security
             {
             new Claim("sub",   staff.Id.ToString()),
             new Claim("email", staff.Email),
-            new Claim("role",  staff.Role.ToString()),   // "Admin"
+            new Claim("role",  staff.Role.ToString()),   // "Admin" = AuthRoles.Admin, checked by the Api's fallback policy
             new Claim("sid",   loginId.ToString()),
             new Claim("jti",   Guid.NewGuid().ToString()),
         };

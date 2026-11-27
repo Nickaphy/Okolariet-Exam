@@ -1,0 +1,10 @@
+@namespace Web.Templates.Menus.MenuTemplates
+@using Web.Templates.Menus
+
+@* Template "menu-buttons": heading on top, up to four buttons in one row. *@
+
+<MenuFrame Buttons="4" Columns="4" Size="MenuButtonSize.Large" />
+
+@code {
+    public static PageContent Sample() => MenuFrame.Sample("menu-buttons", 3);
+}

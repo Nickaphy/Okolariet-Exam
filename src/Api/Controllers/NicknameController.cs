@@ -24,7 +24,6 @@ public class NicknameSuggestionsController(IGetSuggestionsAsync useCase) : Contr
 }
 
 [ApiController]
-[Authorize(Roles = "Admin")]
 [Route("api/v1/nickname-words")]
 public class NicknameWordsController(IListWordsAsync listWordsUseCase, IAddWordAsync addWordUseCase, IDeleteWordAsync deleteWordUseCase) : ControllerBase
 {

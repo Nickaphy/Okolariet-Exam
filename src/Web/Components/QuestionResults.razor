@@ -1,0 +1,75 @@
+@inject IStatisticsGateway StatisticsGateway
+
+@* One quiz question on the Highscores page, with a "Vis svar" button.
+   The first time it is opened, it fetches how guests answered (GET /questions/{id}/statistics) and draws a bar per answer.
+   It keeps that to itself, so the Highscores page doesn't have to track which questions are open or loaded.
+   "Nulstil svar" is only reported (OnReset); the page opens the confirm dialog. *@
+
+<li class="question">
+    <div class="question-head">
+        <span class="question-text">@Question.Text</span>
+        <button type="button" class="btn btn-secondary btn-sm" aria-expanded="@(open ? "true" : "false")" @onclick="ToggleAsync">
+            <Icon Name="@(open ? "expand_less" : "bar_chart")" /> @(open ? "Skjul svar" : "Vis svar")
+        </button>
+    </div>
+
+    @if (open)
+    {
+        if (error is not null)
+        {
+            <p class="form-error" role="alert">@error</p>
+        }
+        else if (stats is null)
+        {
+            <p class="muted">Henter…</p>
+        }
+        else
+        {
+            <p class="q-summary">@stats.TotalAnswers svar · @Display.Percent(stats.CorrectPercentage) rigtige</p>
+            <ul class="bars">
+                @foreach (var answer in stats.Answers)
+                {
+                    // The statistics only have the answer's id; its text and "is it correct" come from the question.
+                    var definition = Question.Answers?.FirstOrDefault(a => a.Id == answer.AnswerId);
+                    var isCorrect = definition?.IsCorrect == true;
+                    <li class="bar-row">
+                        <span class="bar-label">
+                            @(definition?.Text ?? "Slettet svar")
+                            @if (isCorrect)
+                            {
+                                <span class="tick">✓ rigtigt</span>
+                            }
+                        </span>
+                        <span class="bar" role="img" aria-label="@Display.Percent(answer.Percentage)">
+                            <span class="bar-fill @(isCorrect ? "bar-fill-correct" : "")" style="width:@Display.CssWidth(answer.Percentage)"></span>
+                        </span>
+                        <span class="bar-value">@answer.Count · @Display.Percent(answer.Percentage)</span>
+                    </li>
+                }
+            </ul>
+            <button type="button" class="btn btn-danger-ghost btn-sm" @onclick="() => OnReset.InvokeAsync(Question)">
+                <Icon Name="restart_alt" /> Nulstil svar
+            </button>
+        }
+    }
+</li>
+
+@code {
+    [Parameter, EditorRequired] public Question Question { get; set; } = default!;
+    [Parameter] public EventCallback<Question> OnReset { get; set; }
+
+    private bool open;
+    private QuestionStatistics? stats;
+    private string? error;
+
+    private async Task ToggleAsync()
+    {
+        open = !open;
+
+        // Only fetch once. (After a reset the page reloads everything, and this component starts over.)
+        if (!open || stats is not null) return;
+
+        error = null;
+        (stats, error) = await ApiCall.Get(() => StatisticsGateway.GetQuestionStatistics(Question.Id));
+    }
+}

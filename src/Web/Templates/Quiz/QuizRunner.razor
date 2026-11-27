@@ -1,0 +1,87 @@
+@namespace Web.Templates.Quiz
+@using Web.Templates.Slots
+
+@* The quiz game that every quiz template shares. A quiz template only lays out ONE question screen
+   (between the <QuizRunner> tags); this component does everything around it:
+
+     Start     the quiz's title, intro and background, and "Start quiz"
+     Question  progress and points at the top, the template's question screen, then the feedback card
+     Finished  stars and score, save a highscore name, see your answers (QuizResultScreen)
+
+   The code (rules, talking to the server) is in QuizRunner.razor.cs. *@
+
+<div class="qr">
+    @switch (phase)
+    {
+        case Phase.Start:
+            <div class="qr-start">
+                <SlotImage Key="background" Class="qr-bg" ShowPlaceholder="false" />
+                @if (Scope.HasAny("background"))
+                {
+                    <div class="qr-shade" aria-hidden="true"></div>
+                }
+                <div class="qr-start-content">
+                    <SlotText Key="title" Class="qr-title" Heading="true" />
+                    <SlotText Key="intro" Class="qr-intro" />
+                    <p class="qr-count">@QuestionCountText</p>
+                    @if (Questions.Count > 0)
+                    {
+                        <button type="button" class="slot-button qr-start-button" disabled="@busy" @onclick="StartAsync">
+                            @(busy ? "Starter…" : "Start quiz")
+                        </button>
+                    }
+                    @if (error is not null)
+                    {
+                        <p class="qr-error" role="alert">@error</p>
+                    }
+                </div>
+            </div>
+            break;
+
+        case Phase.Question:
+            <header class="qr-head">
+                <span class="qr-progress-text">Spørgsmål @(index + 1) / @Questions.Count</span>
+                <span class="qr-progress" aria-hidden="true">
+                    <span class="qr-progress-fill" style="width:@Display.CssWidth(100.0 * (index + 1) / Questions.Count)"></span>
+                </span>
+                <span class="qr-points">Point: @Points</span>
+            </header>
+
+            <div class="qr-body">
+                <CascadingValue Value="Turn">
+                    @ChildContent
+                </CascadingValue>
+            </div>
+
+            @if (Turn.Answered)
+            {
+                <div class="qr-overlay">
+                    <div class="qr-card" role="status">
+                        <h2 class="qr-card-title">@(lastWasCorrect ? "Rigtigt! 🎉" : "Ikke helt…")</h2>
+                        @if (lastWasCorrect)
+                        {
+                            <span class="qr-card-points">+@PointsPerAnswer point</span>
+                        }
+                        else
+                        {
+                            <p class="qr-card-text">Det rigtige svar er: <strong>@CorrectAnswerText</strong></p>
+                        }
+                        <button type="button" class="slot-button qr-card-button" @onclick="Next">
+                            @(IsLastQuestion ? "Se dit resultat →" : "Næste spørgsmål →")
+                        </button>
+                    </div>
+                </div>
+            }
+
+            @if (error is not null)
+            {
+                <p class="qr-error qr-error-floating" role="alert">@error</p>
+            }
+            break;
+
+        case Phase.Finished:
+            <QuizResultScreen History="history" PointsPerAnswer="PointsPerAnswer" Demo="Demo"
+                              SessionId="sessionId" OnPlayAgain="Restart" />
+            break;
+    }
+</div>

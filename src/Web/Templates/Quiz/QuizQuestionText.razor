@@ -1,0 +1,20 @@
+@namespace Web.Templates.Quiz
+
+@* The question as a heading, with a "read aloud" button.
+   Read aloud uses the browser's own speech (Web Speech API), so no sound file is needed for every question.
+   The text goes in a data- attribute, which Blazor encodes safely, and one line of JavaScript reads it out in Danish. *@
+
+<div class="qt @(Left ? "qt-left" : null)">
+    <h1 class="qt-text">@Turn.Question.Text</h1>
+    <button type="button" class="qt-say" aria-label="Læs spørgsmålet højt" data-say="@Turn.Question.Text"
+            onclick="speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(this.dataset.say); u.lang = 'da-DK'; speechSynthesis.speak(u);">
+        <Icon Name="volume_up" />
+    </button>
+</div>
+
+@code {
+    [CascadingParameter] public QuizTurn Turn { get; set; } = default!;
+
+    // Left-aligned (for layouts with something beside the question) instead of centred.
+    [Parameter] public bool Left { get; set; }
+}
