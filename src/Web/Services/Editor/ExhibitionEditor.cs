@@ -59,6 +59,18 @@ namespace Web.Services.Editor
             }
         }
 
+        // ---- texts on a page ----
+
+        // Writes one text slot (e.g. the main menu's heading). An empty text clears the slot.
+        public Task<string?> SaveTextAsync(Guid pageId, string slotKey, string text) => Guard(async () =>
+        {
+            var value = text.Trim();
+            if (value.Length == 0)
+                return Fail(await items.ClearItem(pageId, slotKey), ignoreNotFound: true);
+
+            return Fail(await items.SetItem(pageId, slotKey, new ModdedTemplateItemInput { Text = value }));
+        });
+
         // ---- menu buttons and their paths ----
 
         // Works for the buttons of the main menu and of sub-menus: the button knows which menu it sits on.

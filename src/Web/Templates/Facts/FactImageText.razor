@@ -1,0 +1,22 @@
+﻿@namespace Web.Templates.Facts
+@using Web.Templates.Slots
+
+@* Template "fact-image-text": image on the left, heading (with read-aloud) and text on the right.
+   Slot keys (must match TemplateCatalog): title, body, image, audio. *@
+
+<div class="fit">
+    <SlotImage Key="image" Class="fit-image" />
+    <div class="fit-text">
+        <FactHead Left="true" />
+        <SlotText Key="body" Class="fit-body" />
+    </div>
+</div>
+
+@code {
+    public static PageContent Sample() => new(Guid.Empty, "fact-image-text", "Fakta", null,
+        new Dictionary<string, SlotContent>
+        {
+            ["title"] = new("Hvor kommer plastikken fra?"),
+            ["body"] = new("Det meste plastik i havet kommer fra land. Det blæser væk fra lossepladser, skylles ud med regnvand og tabes fra både og skibe."),
+        });
+}

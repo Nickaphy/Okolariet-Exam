@@ -1,0 +1,51 @@
+@namespace Web.Templates.Menus
+@using Web.Templates.Slots
+
+@* Template "menu-buttons": a heading, a line of text and up to four big buttons, on an optional background image.
+   The slot keys here must match TemplateCatalog on the server: title, intro, background, button1-button4.
+   This file only decides WHERE things go. Colours and font come from the Appearance (see Theme). *@
+
+<div class="mb">
+    <SlotImage Key="background" Class="mb-bg" ShowPlaceholder="false" />
+    @if (HasBackground)
+    {
+        <div class="mb-shade" aria-hidden="true"></div>
+    }
+
+    <div class="mb-head">
+        <SlotText Key="title" Class="mb-title" Heading="true" />
+        <SlotText Key="intro" Class="mb-intro" />
+    </div>
+
+    <nav class="mb-buttons" style="--count:@ButtonCount" aria-label="Vælg">
+        @foreach (var key in ButtonKeys)
+        {
+            <SlotButton @key="key" Key="@key" Class="mb-button" />
+        }
+    </nav>
+</div>
+
+@code {
+    [CascadingParameter] public TemplateScope Scope { get; set; } = default!;
+
+    private static readonly string[] ButtonKeys = ["button1", "button2", "button3", "button4"];
+
+    private bool HasBackground => Scope.Slot("background")?.AssetId is not null;
+
+    // The buttons share the width between them, so 2 buttons are bigger than 4.
+    private int ButtonCount => Scope.Placeholders
+        ? ButtonKeys.Length
+        : Math.Max(1, ButtonKeys.Count(Scope.HasText));
+
+    // Example content for the template gallery.
+    public static PageContent Sample() => new(
+        Guid.Empty, "menu-buttons", "Hovedmenu", null,
+        new Dictionary<string, SlotContent>
+        {
+            ["title"] = new("Velkommen til Økolariet"),
+            ["intro"] = new("Tryk på en knap for at gå på opdagelse"),
+            ["button1"] = new("Quiz", TargetId: Guid.NewGuid()),
+            ["button2"] = new("Fakta om affald", TargetId: Guid.NewGuid()),
+            ["button3"] = new("Sorteringsspil", TargetId: Guid.NewGuid()),
+        });
+}

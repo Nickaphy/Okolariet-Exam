@@ -1,0 +1,38 @@
+﻿@namespace Web.Templates.Facts
+@using Web.Templates.Slots
+
+@* Template "fact-list": heading and up to three short points with check marks on the left, an image on the right.
+   Slot keys: title, audio, image, point1, point2, point3. *@
+
+<div class="fl">
+    <div class="fl-text">
+        <FactHead Left="true" Small="true" />
+        <ul class="fl-points">
+            @foreach (var n in Used)
+            {
+                <li @key="n">
+                    <Icon Name="check_circle" Class="fl-check" />
+                    <SlotText Key="@($"point{n}")" Class="fl-point" />
+                </li>
+            }
+        </ul>
+    </div>
+    <SlotImage Key="image" Class="fl-image" />
+</div>
+
+@code {
+    [CascadingParameter] public TemplateScope Scope { get; set; } = default!;
+
+    private static readonly int[] Numbers = [1, 2, 3];
+
+    private IEnumerable<int> Used => Numbers.Where(n => Scope.Placeholders || Scope.HasText($"point{n}"));
+
+    public static PageContent Sample() => new(Guid.Empty, "fact-list", "Fakta", null,
+        new Dictionary<string, SlotContent>
+        {
+            ["title"] = new("Sådan hjælper du havet"),
+            ["point1"] = new("Sortér dit affald, også når du er på stranden"),
+            ["point2"] = new("Brug flergangsposer i stedet for plastikposer"),
+            ["point3"] = new("Saml skrald op, når du ser det"),
+        });
+}

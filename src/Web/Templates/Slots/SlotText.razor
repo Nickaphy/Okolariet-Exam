@@ -1,0 +1,26 @@
+@namespace Web.Templates.Slots
+
+@* A text slot. Heading=true draws it as the page's <h1>. Renders nothing when empty (or a placeholder in previews). *@
+
+@if (Scope.Slot(Key)?.Text is { Length: > 0 } text)
+{
+    if (Heading)
+    {
+        <h1 class="slot-text @Class" data-slot="@Key">@text</h1>
+    }
+    else
+    {
+        <p class="slot-text @Class" data-slot="@Key">@text</p>
+    }
+}
+else if (Scope.Placeholders)
+{
+    <div class="slot-placeholder @Class" data-slot="@Key">@Scope.LabelOf(Key)</div>
+}
+
+@code {
+    [CascadingParameter] public TemplateScope Scope { get; set; } = default!;
+    [Parameter, EditorRequired] public string Key { get; set; } = string.Empty;
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public bool Heading { get; set; }
+}

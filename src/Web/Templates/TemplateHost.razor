@@ -1,0 +1,45 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Config
+
+@* Draws one page with the right template component, on a 16:9 stage that scales to any width.
+   Used by the kiosk, the editor's preview and the template gallery. Colours come from the page's
+   Appearance, else the project's (Inherited), else the neutral default (Theme). *@
+
+<div class="stage @(Preview ? "stage-preview" : "")" style="@Theme.Style(Page.Appearance, Inherited)">
+    <CascadingValue Value="scope">
+        @if (entry is not null)
+        {
+            <DynamicComponent Type="entry.Component" />
+        }
+        else
+        {
+            <div class="unknown">
+                <strong>Skabelonen kan ikke vises</strong>
+                <span>«@Page.TemplateType» findes ikke i denne version af appen.</span>
+            </div>
+        }
+    </CascadingValue>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public PageContent Page { get; set; } = default!;
+
+    // The project's look. Used for every colour the page itself hasn't set.
+    [Parameter] public Appearance? Inherited { get; set; }
+
+    // The template's definition from the server (for placeholder labels). Optional.
+    [Parameter] public Template? Definition { get; set; }
+
+    [Parameter] public bool Preview { get; set; }
+    [Parameter] public bool Placeholders { get; set; }
+    [Parameter] public EventCallback<Guid> OnNavigate { get; set; }
+
+    private TemplateScope scope = default!;
+    private TemplateEntry? entry;
+
+    protected override void OnParametersSet()
+    {
+        entry = TemplateRegistry.Find(Page.TemplateType);
+        var assetBase = (Config["Api:BaseUrl"] ?? string.Empty).TrimEnd('/');
+        scope = new TemplateScope(Page, Definition, Preview, Placeholders, assetBase, OnNavigate);
+    }
+}

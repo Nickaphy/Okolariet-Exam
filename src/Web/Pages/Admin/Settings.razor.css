@@ -27,8 +27,9 @@
     gap: 1rem;
     padding: 0.8rem 1.1rem;
     background: var(--surface);
-    border: 2px solid var(--ink);
+    border: 1px solid var(--line);
     border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
 }
 
 .row-info {
@@ -71,7 +72,7 @@
     gap: 0.35rem;
     padding: 0.25rem 0.35rem 0.25rem 1rem;
     background: var(--colour-accent-soft);
-    border: 2px solid var(--line-strong);
+    border: 1px solid var(--colour-accent-strong);
     border-radius: 999px;
     font-weight: 600;
 }

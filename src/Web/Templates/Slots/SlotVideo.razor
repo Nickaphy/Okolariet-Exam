@@ -1,0 +1,19 @@
+﻿@namespace Web.Templates.Slots
+
+@* A video slot. Controls are off in previews (nothing can be tapped there). The #t=0.1 shows the first frame as a thumbnail. *@
+
+@if (Scope.Slot(Key)?.AssetId is Guid id)
+{
+    <video class="slot-video @Class" data-slot="@Key" src="@(Scope.AssetUrl(id) + "#t=0.1")"
+           controls="@(!Scope.Preview)" playsinline preload="metadata"></video>
+}
+else if (Scope.Placeholders)
+{
+    <div class="slot-placeholder @Class" data-slot="@Key">@Scope.LabelOf(Key)</div>
+}
+
+@code {
+    [CascadingParameter] public TemplateScope Scope { get; set; } = default!;
+    [Parameter, EditorRequired] public string Key { get; set; } = string.Empty;
+    [Parameter] public string? Class { get; set; }
+}

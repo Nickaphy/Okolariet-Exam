@@ -6,26 +6,26 @@
 
 <PageTitle>@(model?.Project.Name ?? "Rediger") · Økolariet</PageTitle>
 
-<p class="back"><a href="admin/projects">← Alle udstillinger</a></p>
+<a class="back" href="admin/projects"><Icon Name="arrow_back" /> Alle udstillinger</a>
 
 @if (model is null)
 {
     if (loadError is null)
     {
-        <p class="page-loading" aria-busy="true">Indlæser udstillingen…</p>
+        <p class="page-loading" aria-busy="true"><Icon Name="hourglass_top" /> Indlæser udstillingen…</p>
     }
     else
     {
         <div class="empty-state" role="alert">
             <h1 tabindex="-1">Udstillingen kunne ikke hentes</h1>
             <p>@loadError</p>
-            <button type="button" class="btn btn-secondary" @onclick="ReloadAsync">Prøv igen</button>
+            <button type="button" class="btn btn-secondary" @onclick="ReloadAsync"><Icon Name="refresh" /> Prøv igen</button>
         </div>
     }
 }
 else
 {
-    <header class="edit-head">
+    <header class="page-head">
         <div class="title-block">
             <h1 tabindex="-1">@model.Project.Name</h1>
             <div class="title-meta">
@@ -37,13 +37,15 @@ else
                 {
                     <span class="status status-draft"><span class="dot"></span>Ikke udgivet endnu</span>
                 }
-                <button type="button" class="link-button" @onclick="() => Open(DialogKind.Rename)">Skift navn</button>
+                <button type="button" class="link-button" @onclick="() => Open(DialogKind.Rename)">
+                    <Icon Name="edit" /> Skift navn
+                </button>
             </div>
         </div>
 
         <button type="button" class="btn btn-primary btn-lg" disabled="@(model.Menu is null)"
                 @onclick="() => Open(DialogKind.Publish)">
-            Udgiv
+            <Icon Name="publish" /> Udgiv
         </button>
     </header>
 
@@ -54,8 +56,13 @@ else
 
     @if (model.Menu is null)
     {
-        <section class="section" aria-labelledby="menu-heading">
-            <h2 id="menu-heading">Hovedmenu</h2>
+        <section class="panel section" aria-labelledby="menu-heading">
+            <div class="panel-head">
+                <div>
+                    <h2 id="menu-heading"><span class="head-icon"><Icon Name="home" /></span> Vælg hovedmenu</h2>
+                    <p>Alle udstillinger starter med en hovedmenu. Vælg, hvordan den skal se ud.</p>
+                </div>
+            </div>
 
             @if (MenuTemplates.Count == 0)
             {
@@ -63,54 +70,93 @@ else
             }
             else
             {
-                <p class="section-lead">
-                    Alle udstillinger starter med en hovedmenu. Vælg, hvordan den skal se ud.
-                </p>
-
                 <TemplateCards Templates="MenuTemplates" Selected="SelectedMenuType" SelectedChanged="SelectMenuType"
                                Legend="Vælg menu" ShowGroupHeadings="false" />
 
                 <button type="button" class="btn btn-primary create-menu" disabled="@busy" @onclick="CreateMenuAsync">
-                    @(busy ? "Opretter…" : "Opret hovedmenu")
+                    <Icon Name="add" /> @(busy ? "Opretter…" : "Opret hovedmenu")
                 </button>
             }
         </section>
     }
     else
     {
-        <section class="section" aria-labelledby="menu-heading">
-            <h2 id="menu-heading">Hovedmenu</h2>
-            <p class="section-lead">
-                Det er det første, gæsterne ser. Hver knap fører ind i et forløb af sider, der vises efter hinanden.
-                Et forløb kan også ende i en undermenu med knapper og forløb af sin egen.
-            </p>
+        <div class="editor-grid">
+            <section class="panel" aria-labelledby="menu-heading">
+                <div class="panel-head">
+                    <div>
+                        <h2 id="menu-heading"><span class="head-icon"><Icon Name="home" /></span> Hovedmenu</h2>
+                        <p>
+                            Det første, gæsterne ser. Hver knap fører ind i et forløb af sider, der vises efter hinanden.
+                            Et forløb kan også ende i en undermenu med sine egne knapper.
+                        </p>
+                    </div>
+                    <span class="template-tag"><Icon Name="dashboard" /> @model.DisplayNameOf(model.Menu.TemplateType)</span>
+                </div>
 
-            @if (model.Buttons.Count == 0)
-            {
-                <p class="section-lead">Den valgte menu har ingen knapper.</p>
-            }
+                @if (MenuTextSlots.Count > 0)
+                {
+                    <div class="menu-texts">
+                        @foreach (var slot in MenuTextSlots)
+                        {
+                            <div @key="slot.Key">
+                                <label for="@($"text-{slot.Key}")" class="field-label">@slot.Label</label>
+                                <input id="@($"text-{slot.Key}")" class="input" value="@MenuText(slot.Key)"
+                                       maxlength="@(slot.MaxLength ?? 500)" autocomplete="off" disabled="@busy"
+                                       @onchange="e => SaveMenuTextAsync(slot, e.Value?.ToString() ?? string.Empty)" />
+                            </div>
+                        }
+                    </div>
+                }
 
-            @RenderButtons(model.Buttons)
-        </section>
+                <h3 class="sub-heading">Knapper og forløb</h3>
+
+                @if (model.Buttons.Count == 0)
+                {
+                    <p class="section-lead">Den valgte menu har ingen knapper.</p>
+                }
+
+                @RenderButtons(model.Buttons)
+            </section>
+
+            <aside class="panel preview-panel" aria-labelledby="preview-heading">
+                <div class="panel-head">
+                    <div>
+                        <h2 id="preview-heading"><span class="head-icon"><Icon Name="visibility" /></span> Forhåndsvisning</h2>
+                        <p>Sådan ser hovedmenuen ud på skærmen. Tomme felter vises med stiplet kant.</p>
+                    </div>
+                </div>
+                <div class="preview-stage">
+                    <TemplateHost Page="PageContent.From(model.Menu)" Inherited="model.Project.Appearance"
+                                  Definition="model.MenuTemplate" Preview="true" Placeholders="true" />
+                </div>
+            </aside>
+        </div>
     }
 
-    <section class="section" aria-labelledby="look-heading">
-        <h2 id="look-heading">Udseende</h2>
-        <p class="section-lead">
-            Farver og skrifttype for hele udstillingen. Vælg et færdigt tema, eller sæt farverne sammen selv.
-        </p>
+    <section class="panel section" aria-labelledby="look-heading">
+        <div class="panel-head">
+            <div>
+                <h2 id="look-heading"><span class="head-icon"><Icon Name="palette" /></span> Udseende</h2>
+                <p>Farver og skrifttype for hele udstillingen. Vælg et færdigt tema, eller sæt farverne sammen selv.</p>
+            </div>
+        </div>
         <AppearanceEditor Value="model.Project.Appearance"
+                          PreviewPage="@(model.Menu is null ? null : PageContent.From(model.Menu))"
+                          PreviewDefinition="model.MenuTemplate"
                           Save="appearance => Editing.SaveAppearanceAsync(model!, appearance)"
                           OnSaved="OnAppearanceSaved" />
     </section>
 
     @if (model.Orphans.Count > 0)
     {
-        <section class="section" aria-labelledby="orphans-heading">
-            <h2 id="orphans-heading">Sider uden knap</h2>
-            <p class="section-lead">
-                Disse sider er ikke koblet til nogen knap, så gæsterne kan ikke nå dem. Slet dem, hvis de ikke skal bruges.
-            </p>
+        <section class="panel section" aria-labelledby="orphans-heading">
+            <div class="panel-head">
+                <div>
+                    <h2 id="orphans-heading"><span class="head-icon"><Icon Name="link_off" /></span> Sider uden knap</h2>
+                    <p>Disse sider er ikke koblet til nogen knap, så gæsterne kan ikke nå dem. Slet dem, hvis de ikke skal bruges.</p>
+                </div>
+            </div>
             <ul class="steps">
                 @foreach (var moddedTemplate in model.Orphans)
                 {
@@ -121,7 +167,7 @@ else
                         </div>
                         <button type="button" class="btn btn-danger-ghost btn-sm"
                                 aria-label="@($"Slet {moddedTemplate.Title}")" @onclick="() => AskDeleteOrphan(moddedTemplate)">
-                            Slet
+                            <Icon Name="delete" /> Slet
                         </button>
                     </li>
                 }
@@ -207,10 +253,11 @@ else
         {
             <li class="button-card" @key="button.Slot.Key">
                 <div class="button-top">
-                    <span class="button-badge">@button.Slot.Label</span>
-                    <div>
-                        <label for="@LabelId(button)" class="field-label">Tekst på knappen</label>
+                    <span class="button-badge"><Icon Name="smart_button" /> @button.Slot.Label</span>
+                    <div class="button-label">
+                        <label for="@LabelId(button)" class="visually-hidden">Tekst på @button.Slot.Label</label>
                         <input id="@LabelId(button)" class="input" value="@button.Label"
+                               placeholder="Tekst på knappen, fx Quiz"
                                maxlength="@(button.Slot.MaxLength ?? 500)"
                                autocomplete="off" disabled="@busy"
                                @onchange="e => SaveLabelAsync(button, e.Value?.ToString() ?? string.Empty)" />
@@ -220,7 +267,7 @@ else
                 <div class="path">
                     @if (button.Pages.Count == 0)
                     {
-                        <p class="path-empty">Knappen fører ikke nogen steder hen endnu.</p>
+                        <p class="path-empty"><Icon Name="info" /> Knappen fører ikke nogen steder hen endnu.</p>
                     }
                     else
                     {
@@ -239,19 +286,19 @@ else
                                         @* Editing the contents of a page is the next step. *@
                                         <button type="button" class="btn btn-secondary btn-sm" disabled
                                                 title="Kommer i næste trin">
-                                            Indhold <small>snart</small>
+                                            <Icon Name="edit_note" /> Indhold
                                         </button>
                                         <button type="button" class="btn btn-danger-ghost btn-sm"
                                                 aria-label="@($"Fjern {node.Page.Title}")"
                                                 @onclick="() => AskRemove(button, index)">
-                                            Fjern
+                                            <Icon Name="delete" /> Fjern
                                         </button>
                                     </div>
 
                                     @if (node.IsMenu)
                                     {
                                         <div class="sub-menu">
-                                            <p class="sub-menu-lead">Knapper på «@node.Page.Title»</p>
+                                            <p class="sub-menu-lead"><Icon Name="subdirectory_arrow_right" /> Knapper på «@node.Page.Title»</p>
                                             @RenderButtons(node.Buttons)
                                         </div>
                                     }
@@ -262,13 +309,13 @@ else
 
                     @if (button.EndsInMenu)
                     {
-                        <p class="path-empty">Forløbet slutter i en undermenu. Tilføj flere sider på undermenuens knapper.</p>
+                        <p class="path-empty"><Icon Name="info" /> Forløbet slutter i en undermenu. Tilføj flere sider på undermenuens knapper.</p>
                     }
                     else
                     {
-                        <button type="button" class="btn btn-secondary" disabled="@busy"
+                        <button type="button" class="btn btn-secondary btn-sm add-page" disabled="@busy"
                                 @onclick="() => AskAdd(button)">
-                            + Tilføj side
+                            <Icon Name="add" /> Tilføj side
                         </button>
                     }
                 </div>

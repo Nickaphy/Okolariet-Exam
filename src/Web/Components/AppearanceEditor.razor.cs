@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 using Web.Api;
 using Web.Api.Contracts;
+using Web.Templates;
 using Web.Theming;
 
 namespace Web.Components
@@ -13,13 +14,12 @@ namespace Web.Components
         // What applies when a value here is left empty (the project's look, when editing a page). Null = the neutral default.
         [Parameter] public Appearance? Inherited { get; set; }
 
+        // The page shown in the preview (e.g. the main menu). Without one, the first template's example content is used.
+        [Parameter] public PageContent? PreviewPage { get; set; }
+        [Parameter] public Template? PreviewDefinition { get; set; }
+
         [Parameter, EditorRequired] public Func<Appearance?, Task<string?>> Save { get; set; } = default!;
         [Parameter] public EventCallback OnSaved { get; set; }
-
-        private readonly string idBg = $"ap-{Guid.NewGuid():N}";
-        private readonly string idButton = $"ap-{Guid.NewGuid():N}";
-        private readonly string idText = $"ap-{Guid.NewGuid():N}";
-        private readonly string idFont = $"ap-{Guid.NewGuid():N}";
 
         private string? bg, button, text, font;
         private string? loadedKey;
@@ -29,6 +29,10 @@ namespace Web.Components
         // What the pickers show: the chosen value, else what would apply.
         private Appearance resolved => Theme.Resolve(Current(), Inherited);
 
+        // The preview page with the colours being edited (not yet saved).
+        private PageContent PreviewWithLook =>
+            (PreviewPage ?? TemplateRegistry.All[0].Sample()) with { Appearance = resolved };
+
         protected override void OnParametersSet()
         {
             // Start over from the saved value when a different one arrives (after a save and reload).
@@ -37,10 +41,16 @@ namespace Web.Components
             if (key == loadedKey) return;
 
             loadedKey = key;
+            Revert();
+        }
+
+        private void Revert()
+        {
             bg = Empty(Value?.BackgroundColor);
             button = Empty(Value?.ButtonColor);
             text = Empty(Value?.TextColor);
             font = Empty(Value?.FontFamily);
+            error = null;
         }
 
         private Appearance? Current() =>
@@ -63,8 +73,6 @@ namespace Web.Components
             text = Empty(p.Appearance.TextColor);
             font = Empty(p.Appearance.FontFamily);
         }
-
-        private static string? Colour(ChangeEventArgs e) => Theme.IsColour(e.Value?.ToString()) ? e.Value!.ToString() : null;
 
         private static string? Empty(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
 

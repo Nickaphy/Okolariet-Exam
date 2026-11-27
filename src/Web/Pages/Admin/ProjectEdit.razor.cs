@@ -2,6 +2,7 @@
 using Web.Api;
 using Web.Api.Contracts;
 using Web.Services.Editor;
+using Web.Templates;
 
 namespace Web.Pages.Admin
 {
@@ -173,6 +174,27 @@ namespace Web.Pages.Admin
             var error = await Editing.CreateMenuAsync(model!, type);
             if (error is null) notice = new Notice("success", "Hovedmenuen er oprettet.");
             else notice = new Notice("error", error);
+            await ReloadAsync();
+            busy = false;
+        }
+
+        // ---- texts on the main menu (heading, intro …): one field per text slot of the menu template ----
+
+        private IReadOnlyList<SlotDefinition> MenuTextSlots =>
+            model?.MenuTemplate?.Slots?.Where(s => s.Kind == SlotDefinitionKind.Text).ToList() ?? [];
+
+        private string MenuText(string slotKey) =>
+            model?.Menu?.Items?.FirstOrDefault(i => i.SlotKey == slotKey)?.Text ?? string.Empty;
+
+        private async Task SaveMenuTextAsync(SlotDefinition slot, string text)
+        {
+            if (model?.Menu is null || text.Trim() == MenuText(slot.Key)) return;
+
+            busy = true;
+            notice = null;
+            var error = await Editing.SaveTextAsync(model.Menu.Id, slot.Key, text);
+            if (error is not null) notice = new Notice("error", error);
+
             await ReloadAsync();
             busy = false;
         }

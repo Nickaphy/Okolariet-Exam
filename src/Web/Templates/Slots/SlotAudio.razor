@@ -1,0 +1,26 @@
+﻿@namespace Web.Templates.Slots
+
+@* An audio slot: a round "read aloud" button that plays or pauses the sound file.
+   Nothing when empty (a dashed box in placeholder mode). *@
+
+@if (Scope.Slot(Key)?.AssetId is Guid id)
+{
+    <span class="slot-audio @Class" data-slot="@Key">
+        <button type="button" class="slot-audio-button" aria-label="Afspil oplæsning"
+                tabindex="@(Scope.Preview ? "-1" : null)"
+                onclick="var a = this.nextElementSibling; if (a.paused) { a.play(); } else { a.pause(); }">
+            <Icon Name="volume_up" />
+        </button>
+        <audio preload="none" src="@Scope.AssetUrl(id)"></audio>
+    </span>
+}
+else if (Scope.Placeholders)
+{
+    <div class="slot-placeholder @Class" data-slot="@Key">@Scope.LabelOf(Key)</div>
+}
+
+@code {
+    [CascadingParameter] public TemplateScope Scope { get; set; } = default!;
+    [Parameter, EditorRequired] public string Key { get; set; } = string.Empty;
+    [Parameter] public string? Class { get; set; }
+}

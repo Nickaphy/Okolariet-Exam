@@ -1,11 +1,12 @@
-﻿
+
 @* Coloured message strip at the top of a page, that relays status information -> ("Slettet", "Udgivet", errors). Kind: "info" | "success" | "error". *@
 
 <div class="notice notice-@Kind" role="@(Kind == "error" ? "alert" : "status")">
-    <span>@Text</span>
+    <Icon Name="@IconName" Class="notice-icon" />
+    <span class="notice-text">@Text</span>
     @if (OnClose.HasDelegate)
     {
-        <button type="button" class="notice-close" aria-label="Luk beskeden" @onclick="OnClose">×</button>
+        <button type="button" class="notice-close" aria-label="Luk beskeden" @onclick="OnClose"><Icon Name="close" /></button>
     }
 </div>
 
@@ -13,4 +14,11 @@
     [Parameter] public string Kind { get; set; } = "info";
     [Parameter, EditorRequired] public string Text { get; set; } = string.Empty;
     [Parameter] public EventCallback OnClose { get; set; }
+
+    private string IconName => Kind switch
+    {
+        "success" => "check_circle",
+        "error" => "error",
+        _ => "info"
+    };
 }

@@ -14,7 +14,7 @@
 
     @* The real file input sits inside the label, so the whole button opens the file picker. *@
     <label class="btn btn-primary btn-lg upload-button @(uploading ? "is-disabled" : "")">
-        + Upload filer
+        <Icon Name="upload" /> Upload filer
         <InputFile @key="inputKey" class="file-input" OnChange="OnFilesSelectedAsync"
                    multiple accept="@AcceptTypes" disabled="@uploading" />
     </label>
@@ -68,7 +68,7 @@ else if (state == LoadState.Failed)
     <div class="empty-state" role="alert">
         <h2>Filerne kunne ikke hentes</h2>
         <p>@loadError</p>
-        <button type="button" class="btn btn-secondary" @onclick="LoadAsync">Prøv igen</button>
+        <button type="button" class="btn btn-secondary" @onclick="LoadAsync"><Icon Name="refresh" /> Prøv igen</button>
     </div>
 }
 else if (assets.Count == 0)
@@ -94,7 +94,7 @@ else
                             <video src="@UrlOf(asset)" controls preload="metadata"></video>
                             break;
                         default:
-                            <span class="audio-icon" aria-hidden="true">♪</span>
+                            <Icon Name="music_note" Class="audio-icon" />
                             <audio src="@UrlOf(asset)" controls preload="none"></audio>
                             break;
                     }
@@ -107,7 +107,7 @@ else
 
                 <button type="button" class="btn btn-danger-ghost btn-sm"
                         aria-label="@($"Slet {asset.OriginalName}")" @onclick="() => assetToDelete = asset">
-                    Slet
+                    <Icon Name="delete" /> Slet
                 </button>
             </li>
         }

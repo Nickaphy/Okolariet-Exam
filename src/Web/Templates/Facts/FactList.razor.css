@@ -1,0 +1,49 @@
+﻿.fl {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    gap: 4cqw;
+    padding: 6cqh 5cqw;
+}
+
+.fl-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4cqh;
+    text-align: left;
+}
+
+.fl-points {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2.6cqh;
+}
+
+    .fl-points li {
+        display: flex;
+        align-items: flex-start;
+        gap: 1.4cqw;
+    }
+
+    .fl-points ::deep .fl-check {
+        flex: none;
+        font-size: 3cqw;
+        color: var(--tpl-button);
+    }
+
+    .fl-points ::deep .fl-point {
+        font-size: 2.4cqw;
+        line-height: 1.3;
+    }
+
+.fl ::deep .fl-image {
+    flex: 0 0 38cqw;
+    height: 100%;
+    border-radius: 1.6cqw;
+}

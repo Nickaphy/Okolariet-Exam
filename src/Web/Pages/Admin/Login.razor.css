@@ -3,74 +3,80 @@
     display: grid;
     place-items: center;
     padding: 2rem 1rem;
-    background: var(--bg);
+    background:
+        radial-gradient(circle at 15% 20%, var(--colour-accent-soft) 0, transparent 45%),
+        radial-gradient(circle at 85% 80%, color-mix(in srgb, var(--colour-accent) 45%, transparent) 0, transparent 40%),
+        var(--bg);
 }
 
 .login-card {
-    width: min(100%, 560px);
-    padding: 3rem 3.5rem;
+    width: min(100%, 480px);
+    padding: 2.5rem 2.75rem;
     background: var(--surface);
-    border: 2px solid var(--ink);
+    border: 1px solid var(--line);
     border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
 }
 
 h1 {
-    margin: 1.75rem 0 1.5rem;
-    font-size: 2.5rem;
+    margin: 1.25rem 0 1.5rem;
+    font-size: 2rem;
     font-weight: 800;
 }
 
 .field {
-    margin-bottom: 1.4rem;
+    margin-bottom: 1.2rem;
 }
 
 label {
     display: block;
-    margin-bottom: 0.45rem;
-    font-weight: 700;
-    color: var(--ink-soft);
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+    font-size: 0.95rem;
 }
 
 .password-wrap {
     position: relative;
 }
 
-.password-wrap ::deep .input {
-    padding-right: 5rem;
-}
+    .password-wrap ::deep .input {
+        padding-right: 5rem;
+    }
 
 .reveal {
     position: absolute;
     top: 50%;
-    right: 0.5rem;
+    right: 0.35rem;
     transform: translateY(-50%);
-    min-height: 40px;
-    padding: 0 0.85rem;
+    min-height: 34px;
+    padding: 0 0.75rem;
     border: 0;
-    border-radius: 8px;
+    border-radius: 6px;
     background: transparent;
     color: var(--ink-soft);
     font: inherit;
+    font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
 }
 
-.reveal:hover {
-    background: var(--surface-sunk);
-}
+    .reveal:hover {
+        background: var(--surface-sunk);
+    }
 
 .form-alert {
-    margin-bottom: 1.4rem;
-    padding: 0.9rem 1.1rem;
-    border: 2px solid var(--danger);
-    border-radius: var(--radius);
+    margin-bottom: 1.2rem;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--danger);
+    border-left-width: 4px;
+    border-radius: var(--radius-sm);
     background: var(--danger-bg);
     color: var(--danger);
     font-weight: 600;
 }
 
 .btn-block {
-    margin-top: 0.5rem;
+    margin-top: 0.75rem;
 }
 
 @media (max-width: 520px) {

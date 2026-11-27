@@ -92,7 +92,7 @@ else
                     </div>
                     <button type="button" class="btn btn-danger-ghost btn-sm" disabled="@(board.Players == 0)"
                             @onclick="() => AskClear(board.Quiz)">
-                        Ryd highscores
+                        <Icon Name="delete_sweep" /> Ryd highscores
                     </button>
                 </header>
 
@@ -137,7 +137,7 @@ else
                                             <button type="button" class="btn btn-secondary btn-sm"
                                                     aria-expanded="@(isOpen ? "true" : "false")"
                                                     @onclick="() => ToggleQuestionAsync(question)">
-                                                @(isOpen ? "Skjul svar" : "Vis svar")
+                                                <Icon Name="@(isOpen ? "expand_less" : "bar_chart")" /> @(isOpen ? "Skjul svar" : "Vis svar")
                                             </button>
                                         </div>
 
@@ -173,7 +173,7 @@ else
                                                 </ul>
                                                 <button type="button" class="btn btn-danger-ghost btn-sm"
                                                         @onclick="() => AskReset(question)">
-                                                    Nulstil svar
+                                                    <Icon Name="restart_alt" /> Nulstil svar
                                                 </button>
                                             }
                                             else
@@ -199,7 +199,7 @@ else
                 bliver sat op på ny.
             </p>
             <button type="button" class="btn btn-danger-ghost" @onclick="AskDeleteResults">
-                Slet alle resultater
+                <Icon Name="delete_forever" /> Slet alle resultater
             </button>
         </section>
     }

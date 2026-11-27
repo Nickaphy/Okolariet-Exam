@@ -21,7 +21,7 @@ namespace Api.Controllers
             return result.IsFailed ? this.ToProblem(result) : Ok(result.Value.Select(TemplateResponse.From));
         }
 
-        [HttpGet("{templateType}")]   // No :guid here, because the key is text like "menu-ocean"
+        [HttpGet("{templateType}")]   // No :guid here, because the key is text like "menu-buttons"
         public async Task<ActionResult<TemplateResponse>> Get(string templateType, CancellationToken ct)
         {
             var result = await getTemplateUseCase.GetAsync(templateType, ct);

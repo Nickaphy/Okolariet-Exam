@@ -13,7 +13,7 @@
         <p class="lead">Start en udstilling på skærmen, ret i den, eller slet den.</p>
     </div>
     <button type="button" class="btn btn-primary btn-lg" @onclick="() => showNewDialog = true">
-        + Ny udstilling
+        <Icon Name="add" /> Ny udstilling
     </button>
 </header>
 
@@ -37,7 +37,7 @@
         <div class="empty-state" role="alert">
             <h2>Udstillingerne kunne ikke hentes</h2>
             <p>@loadError</p>
-            <button type="button" class="btn btn-secondary" @onclick="LoadAsync">Prøv igen</button>
+            <button type="button" class="btn btn-secondary" @onclick="LoadAsync"><Icon Name="refresh" /> Prøv igen</button>
         </div>
         break;
 
@@ -48,7 +48,7 @@
                 <h2>Der er ingen udstillinger endnu</h2>
                 <p>Opret den første, så kan du starte den herfra.</p>
                 <button type="button" class="btn btn-primary" @onclick="() => showNewDialog = true">
-                    + Ny udstilling
+                    <Icon Name="add" /> Ny udstilling
                 </button>
             </div>
         }
@@ -59,7 +59,7 @@
                 {
                     var isPublished = project.LatestVersionNumber is not null;
                     <li class="project-row" @key="project.Id">
-                        <span class="swatch" style="@SwatchStyle(project)" aria-hidden="true"></span>
+                        <span class="swatch" style="@SwatchStyle(project)" aria-hidden="true"><Icon Name="slideshow" /></span>
 
                         <div class="project-info">
                             <h2 class="project-name">@project.Name</h2>
@@ -77,15 +77,15 @@
                         <div class="project-actions">
                             <button type="button" class="btn btn-primary" disabled="@(!isPublished)"
                                     aria-label="@($"Start {project.Name}")" @onclick="() => StartAsync(project)">
-                                <span aria-hidden="true">▶</span> Start
+                                <Icon Name="play_arrow" /> Start
                             </button>
                             <button type="button" class="btn btn-secondary"
                                     aria-label="@($"Rediger {project.Name}")" @onclick="() => Edit(project)">
-                                Rediger
+                                <Icon Name="edit" /> Rediger
                             </button>
                             <button type="button" class="btn btn-danger-ghost"
                                     aria-label="@($"Slet {project.Name}")" @onclick="() => projectToDelete = project">
-                                Slet
+                                <Icon Name="delete" /> Slet
                             </button>
                         </div>
                     </li>

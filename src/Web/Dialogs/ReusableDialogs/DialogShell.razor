@@ -1,5 +1,6 @@
-﻿
-@* The frame every dialog shares: dark backdrop, title, body, button row, Escape to close. Specific dialogs (ConfirmDialog, NameDialog) put their content inside this one,
+
+@* The frame every dialog shares: dark backdrop, title, close button, body, button row, Escape to close.
+   Specific dialogs (ConfirmDialog, NameDialog, TemplatePickerDialog) put their content inside this one,
    so the look and the keyboard behaviour only exist in one place. *@
 
 <div class="backdrop">
@@ -11,9 +12,12 @@
         <div class="dialog-head">
             @if (Tone != DialogTone.Normal)
             {
-                <span class="tone-icon" aria-hidden="true">!</span>
+                <span class="tone-icon"><Icon Name="@(Tone == DialogTone.Danger ? "delete_forever" : "warning")" /></span>
             }
             <h2 id="@titleId">@Title</h2>
+            <button type="button" class="dialog-close" aria-label="Luk" disabled="@Busy" @onclick="OnClose">
+                <Icon Name="close" />
+            </button>
         </div>
 
         <div class="dialog-body">@ChildContent</div>

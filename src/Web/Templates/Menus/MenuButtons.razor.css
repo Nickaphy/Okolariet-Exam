@@ -1,0 +1,64 @@
+/* All sizes in cqw/cqh (percent of the stage), so the layout is the same on every screen size. */
+.mb {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8cqh;
+    padding: 8cqh 8cqw;
+}
+
+    .mb ::deep .mb-bg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+/* Tints a background image with the background colour, so the text stays readable on any photo. */
+.mb-shade {
+    position: absolute;
+    inset: 0;
+    background: color-mix(in srgb, var(--tpl-bg) 60%, transparent);
+}
+
+.mb-head,
+.mb-buttons {
+    position: relative;   /* above the background image */
+}
+
+.mb-head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2.5cqh;
+    max-width: 84cqw;
+}
+
+    .mb-head ::deep .mb-title {
+        font-size: 6.2cqw;
+        font-weight: 800;
+        line-height: 1.05;
+        letter-spacing: -0.01em;
+    }
+
+    .mb-head ::deep .mb-intro {
+        font-size: 2.4cqw;
+        opacity: 0.9;
+    }
+
+.mb-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2.5cqw;
+    width: 100%;
+}
+
+    .mb-buttons ::deep .mb-button {
+        width: min(32cqw, calc((84cqw - (var(--count) - 1) * 2.5cqw) / var(--count)));
+        min-height: 24cqh;
+        font-size: 2.7cqw;
+    }

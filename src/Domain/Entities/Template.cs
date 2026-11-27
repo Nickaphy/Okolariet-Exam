@@ -13,6 +13,8 @@ namespace Domain.Entities
         public IReadOnlyList<SlotDefinition> Slots { get; }
         public IReadOnlyList<AppearanceFieldDefinition> AppearanceFields { get; }
         public QuestionRules? QuestionRules { get; }
+        // Used to decide what order a template needs to come when it's a part of multiple templates. Such as a Quiz' 2nd question
+        public const string NextSlotKey = "next";
 
         private Template(string type, string displayName, TemplateCategory category,
                          IReadOnlyList<SlotDefinition> slots,
@@ -41,6 +43,10 @@ namespace Domain.Entities
                 throw new ArgumentException("Slot keys must be unique within a template.", nameof(slots));
             if (category == TemplateCategory.Quiz && questionRules is null)
                 throw new ArgumentException("A quiz template must have question rules.", nameof(questionRules));
+
+            // Every page except a menu can lead on to a next page. Added here once, so no template has to list it.
+            if (category != TemplateCategory.Menu && slots.All(s => s.Key != NextSlotKey))
+                slots = [.. slots, new SlotDefinition(NextSlotKey, "Næste side", SlotKind.Button)];
 
             return new Template(type, displayName, category, slots, appearanceFields ?? [], questionRules);
         }

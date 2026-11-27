@@ -1,0 +1,81 @@
+@page "/admin/templates"
+@layout AdminLayout
+@attribute [Authorize]
+
+@* Every template the app can draw, with example content. Lets you test a template and the themes
+   without a backend or a published exhibition. *@
+
+<PageTitle>Skabeloner · Økolariet</PageTitle>
+
+<header class="page-head">
+    <div>
+        <h1 tabindex="-1">Skabeloner</h1>
+        <p class="lead">Sådan ser skabelonerne ud med eksempeltekst. Prøv temaerne, og se hvor felterne sidder.</p>
+    </div>
+</header>
+
+@if (notice is not null)
+{
+    <NoticeBar Kind="info" Text="@notice" OnClose="() => notice = null" />
+}
+
+<div class="gallery-tools panel">
+    <div class="tool">
+        <span class="field-label">Tema</span>
+        <div class="chip-row">
+            @foreach (var preset in AppearancePresets.All)
+            {
+                <button type="button" class="chip" aria-pressed="@(preset.Key == presetKey ? "true" : "false")"
+                        @onclick="() => presetKey = preset.Key">
+                    <span class="chip-dot" style="background:@(Theme.Resolve(preset.Appearance).BackgroundColor)"></span>
+                    @preset.Name
+                </button>
+            }
+        </div>
+    </div>
+    <div class="tool">
+        <span class="field-label">Indhold</span>
+        <div class="chip-row">
+            <button type="button" class="chip" aria-pressed="@(!empty ? "true" : "false")" @onclick="() => empty = false">
+                <Icon Name="article" /> Eksempeltekst
+            </button>
+            <button type="button" class="chip" aria-pressed="@(empty ? "true" : "false")" @onclick="() => empty = true">
+                <Icon Name="crop_free" /> Tomme felter
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="gallery">
+    @foreach (var entry in TemplateRegistry.All)
+    {
+        <section class="panel gallery-item" @key="entry.Type" aria-label="@entry.Name">
+            <div class="gallery-head">
+                <div>
+                    <h2>@entry.Name</h2>
+                    <code class="type-code">@entry.Type</code>
+                </div>
+            </div>
+            <div class="gallery-stage">
+                <TemplateHost Page="PageFor(entry)" Placeholders="empty"
+                              OnNavigate="@(_ => ShowTap(entry))" />
+            </div>
+        </section>
+    }
+</div>
+
+@code {
+    private string presetKey = AppearancePresets.All[0].Key;
+    private bool empty;
+    private string? notice;
+
+    private void ShowTap(TemplateEntry entry) =>
+        notice = $"Knappen i «{entry.Name}» virker. I kiosken fører den videre til næste side.";
+
+    private PageContent PageFor(TemplateEntry entry)
+    {
+        var page = empty ? PageContent.Empty(entry.Type) : entry.Sample();
+        var preset = AppearancePresets.All.First(p => p.Key == presetKey);
+        return page with { Appearance = preset.Appearance };
+    }
+}

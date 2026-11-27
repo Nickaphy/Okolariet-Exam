@@ -1924,7 +1924,7 @@ components:
         templateType:
           type: string
           description: Selects which Blazor template component renders this modded template
-          example: menu-ocean
+          example: menu-buttons
         title: { type: string, example: Vælg en aktivitet }
         appearance:
           $ref: '#/components/schemas/Appearance'
@@ -2093,8 +2093,8 @@ components:
       type: object
       required: [type, displayName, category, slots]
       properties:
-        type: { type: string, example: menu-ocean }
-        displayName: { type: string, example: Hovedmenu - Hav }
+        type: { type: string, example: menu-buttons }
+        displayName: { type: string, example: Hovedmenu med knapper }
         category:
           type: string
           enum: [menu, quiz, fact]
@@ -2119,6 +2119,7 @@ components:
           type: string
           description: Which asset kind an image, video or audio slot accepts
           enum: [text, image, video, audio, button]
+          example: button
         required: { type: boolean, example: true }
         maxLength: { type: integer, nullable: true, example: 40 }
     AppearanceFieldDefinition:
@@ -2157,14 +2158,14 @@ components:
         - type: object
           required: [templateType]
           properties:
-            templateType: { type: string, example: menu-ocean }
+            templateType: { type: string, example: menu-buttons }
     ModdedTemplateSummary:
       type: object
       required: [id, projectId, templateType, title]
       properties:
         id: { type: string, format: uuid, example: d96c6a5c-053f-594b-8552-329d96f1142b }
         projectId: { type: string, format: uuid, example: 5e528632-2b56-555f-8467-ed93e2a5ad60 }
-        templateType: { type: string, example: menu-ocean }
+        templateType: { type: string, example: menu-buttons }
         title: { type: string, example: Vælg en aktivitet }
         sortOrder: { type: integer, example: 1 }
         _links:
@@ -2175,7 +2176,7 @@ components:
       properties:
         id: { type: string, format: uuid, example: d96c6a5c-053f-594b-8552-329d96f1142b }
         projectId: { type: string, format: uuid, example: 5e528632-2b56-555f-8467-ed93e2a5ad60 }
-        templateType: { type: string, example: menu-ocean }
+        templateType: { type: string, example: menu-buttons }
         title: { type: string, example: Vælg en aktivitet }
         appearance:
           $ref: '#/components/schemas/Appearance'

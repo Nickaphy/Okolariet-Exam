@@ -1,0 +1,44 @@
+﻿@namespace Web.Templates.Facts
+@using Web.Templates.Slots
+
+@* Template "fact-stats": heading and up to three cards, each with a small picture, a big number and a short explanation.
+   Slot keys: title, audio, and for n = 1-3: stat{n}Image, stat{n}, stat{n}Text. *@
+
+<div class="fst">
+    <FactHead />
+    <div class="fst-cards">
+        @foreach (var n in Used)
+        {
+            <article class="fst-card" @key="n">
+                <SlotImage Key="@($"stat{n}Image")" Class="fst-icon" />
+                <SlotText Key="@($"stat{n}")" Class="fst-value" />
+                <SlotText Key="@($"stat{n}Text")" Class="fst-label" />
+            </article>
+        }
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] public TemplateScope Scope { get; set; } = default!;
+
+    private static readonly int[] Numbers = [1, 2, 3];
+
+    // A card is drawn when something in it is filled in (all of them in placeholder mode).
+    // The cards left share the width, so two cards are wider than three.
+    private IEnumerable<int> Used => Numbers.Where(n => Scope.Placeholders || Filled(n));
+
+    private bool Filled(int n) =>
+        Scope.HasText($"stat{n}") || Scope.HasText($"stat{n}Text") || Scope.Slot($"stat{n}Image")?.AssetId is not null;
+
+    public static PageContent Sample() => new(Guid.Empty, "fact-stats", "Fakta", null,
+        new Dictionary<string, SlotContent>
+        {
+            ["title"] = new("Plastik i tal"),
+            ["stat1"] = new("450 år"),
+            ["stat1Text"] = new("Så længe tager det en plastflaske at nedbrydes"),
+            ["stat2"] = new("1 ud af 3"),
+            ["stat2Text"] = new("Sådan en andel af havets fisk har plastik i maven"),
+            ["stat3"] = new("8 mio. ton"),
+            ["stat3Text"] = new("Så meget plastik ender i havet hvert år"),
+        });
+}

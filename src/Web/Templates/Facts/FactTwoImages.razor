@@ -1,0 +1,35 @@
+﻿@namespace Web.Templates.Facts
+@using Web.Templates.Slots
+
+@* Template "fact-two-images": heading, then two images side by side, each with a caption (before/after, A/B).
+   Slot keys: title, audio, image1, caption1, image2, caption2. *@
+
+<div class="fti">
+    <FactHead />
+    <div class="fti-cols">
+        @foreach (var n in Used)
+        {
+            <figure class="fti-col" @key="n">
+                <SlotImage Key="@($"image{n}")" Class="fti-image" />
+                <SlotText Key="@($"caption{n}")" Class="fti-caption" />
+            </figure>
+        }
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] public TemplateScope Scope { get; set; } = default!;
+
+    private static readonly int[] Numbers = [1, 2];
+
+    private IEnumerable<int> Used => Numbers.Where(n => Scope.Placeholders
+        || Scope.HasText($"caption{n}") || Scope.Slot($"image{n}")?.AssetId is not null);
+
+    public static PageContent Sample() => new(Guid.Empty, "fact-two-images", "Fakta", null,
+        new Dictionary<string, SlotContent>
+        {
+            ["title"] = new("Før og efter oprydningen"),
+            ["caption1"] = new("Stranden før"),
+            ["caption2"] = new("Stranden efter"),
+        });
+}

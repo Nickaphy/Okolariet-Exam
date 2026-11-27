@@ -1,0 +1,12 @@
+@using Radzen.Blazor
+
+@* One icon from Radzen's Material Symbols set. Name = the symbol's name, e.g. "add", "delete", "home".
+   All icons in the app go through here, so Radzen is only referenced in one place for icons
+   (and its namespace never clashes with our own Template/Appearance/Theme types). *@
+
+<RadzenIcon Icon="@Name" class="@($"ui-icon {Class}".TrimEnd())" aria-hidden="true" />
+
+@code {
+    [Parameter, EditorRequired] public string Name { get; set; } = string.Empty;
+    [Parameter] public string? Class { get; set; }
+}

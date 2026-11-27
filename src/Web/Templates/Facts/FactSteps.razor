@@ -1,0 +1,51 @@
+﻿@namespace Web.Templates.Facts
+@using Web.Templates.Slots
+
+@* Template "fact-steps": heading and up to four steps in a row with arrows between them.
+   The step numbers follow the steps that are shown (fill in 1, 2 and 4: they show as 1, 2, 3).
+   Slot keys: title, audio, and for n = 1-4: step{n}Image, step{n} (heading), step{n}Text. *@
+
+<div class="fss">
+    <FactHead />
+    <div class="fss-steps">
+        @foreach (var (n, position) in Used)
+        {
+            @if (position > 1)
+            {
+                <Icon Name="arrow_forward" Class="fss-arrow" />
+            }
+            <article class="fss-step" @key="n">
+                <span class="fss-num" aria-hidden="true">@position</span>
+                <SlotImage Key="@($"step{n}Image")" Class="fss-image" />
+                <SlotText Key="@($"step{n}")" Class="fss-label" />
+                <SlotText Key="@($"step{n}Text")" Class="fss-text" />
+            </article>
+        }
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] public TemplateScope Scope { get; set; } = default!;
+
+    private static readonly int[] Numbers = [1, 2, 3, 4];
+
+    private IEnumerable<(int Slot, int Position)> Used =>
+        Numbers.Where(n => Scope.Placeholders || Filled(n)).Select((n, i) => (n, i + 1));
+
+    private bool Filled(int n) =>
+        Scope.HasText($"step{n}") || Scope.HasText($"step{n}Text") || Scope.Slot($"step{n}Image")?.AssetId is not null;
+
+    public static PageContent Sample() => new(Guid.Empty, "fact-steps", "Fakta", null,
+        new Dictionary<string, SlotContent>
+        {
+            ["title"] = new("Sådan bliver en flaske til en ny"),
+            ["step1"] = new("Du sorterer"),
+            ["step1Text"] = new("Flasken kommer i plastbeholderen"),
+            ["step2"] = new("Skraldebilen henter"),
+            ["step2Text"] = new("Plasten køres til genbrugsanlægget"),
+            ["step3"] = new("Den bliver smeltet"),
+            ["step3Text"] = new("Plasten bliver til nye korn"),
+            ["step4"] = new("En ny flaske!"),
+            ["step4Text"] = new("Kornene formes til en ny flaske"),
+        });
+}

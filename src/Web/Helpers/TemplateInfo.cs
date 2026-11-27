@@ -16,7 +16,17 @@ namespace Web.Helpers
 
         // Hand-written text for a template that deserves a nicer description. Key = template type.
         // A template that is not listed here still gets a description, made from its slots.
-        private static readonly Dictionary<string, string> Overrides = new();
+        private static readonly Dictionary<string, string> Overrides = new()
+        {
+            ["fact-image-text"] = "Overskrift og tekst ved siden af et billede. Kan læses højt.", //These are not CSS items, they are the templates' names located in Web/Templates/Facts
+            ["fact-hero"] = "Ét stort billede med en tekstboks nederst.",
+            ["fact-stats"] = "Op til tre kort med et stort tal og en kort forklaring.",
+            ["fact-steps"] = "Op til fire trin efter hinanden, hver med billede og tekst.",
+            ["fact-two-images"] = "To billeder side om side, fx før og efter.",
+            ["fact-list"] = "Op til tre korte punkter ved siden af et billede.",
+            ["fact-video"] = "En stor video med en tekst under.",
+            ["fact-video-only"] = "Kun en video, så stor som skærmen tillader.",
+        };
 
         public static string Describe(Template template)
         {

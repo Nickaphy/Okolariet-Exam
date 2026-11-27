@@ -1,0 +1,39 @@
+﻿.fti {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4cqh;
+    padding: 6cqh 5cqw;
+}
+
+.fti-cols {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    gap: 3cqw;
+}
+
+.fti-col {
+    flex: 1 1 0;
+    min-width: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.8cqh;
+}
+
+    .fti-col ::deep .fti-image {
+        flex: 1 1 0;
+        min-height: 0;
+        width: 100%;
+        border-radius: 1.6cqw;
+    }
+
+    .fti-col ::deep .fti-caption {
+        font-size: 2.3cqw;
+        font-weight: 700;
+        line-height: 1.2;
+    }

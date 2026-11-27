@@ -1,73 +1,76 @@
-﻿@* Colours and font for the whole exhibition (later also for a single page): ready-made themes, own colours, and a live preview.
+@* Colours and font for the whole exhibition (later also for a single page): ready-made themes, own colours, and a live preview.
    Save gets null when nothing is chosen (= the neutral default) and returns null on success or an error message,
    like the dialogs. What is saved is plain colours, so a theme is only a shortcut for filling them in. *@
 
 <div class="ap">
-    <div>
-        <fieldset class="presets">
-            <legend class="field-label">Færdige temaer</legend>
-            <div class="preset-row">
+    <div class="ap-controls">
+        <fieldset class="ap-group">
+            <legend class="ap-legend">Færdige temaer</legend>
+            <div class="presets">
                 @foreach (var preset in AppearancePresets.All)
                 {
-                    <button type="button" class="preset" aria-pressed="@(IsPreset(preset) ? "true" : "false")" disabled="@busy"
+                    var look = Theme.Resolve(preset.Appearance);
+                    var chosen = IsPreset(preset);
+                    <button type="button" class="preset @(chosen ? "preset-on" : "")"
+                            aria-pressed="@(chosen ? "true" : "false")" disabled="@busy"
                             @onclick="() => Apply(preset)">
-                        <span class="dots" aria-hidden="true">
-                            <i style="background:@(Theme.Resolve(preset.Appearance).BackgroundColor)"></i>
-                            <i style="background:@(Theme.Resolve(preset.Appearance).ButtonColor)"></i>
-                            <i style="background:@(Theme.Resolve(preset.Appearance).TextColor)"></i>
+                        <span class="preset-swatch" style="background:@look.BackgroundColor; color:@look.TextColor">
+                            <span class="preset-aa">Aa</span>
+                            <span class="preset-pill" style="background:@look.ButtonColor"></span>
                         </span>
-                        @preset.Name
+                        <span class="preset-name">
+                            @preset.Name
+                            @if (chosen)
+                            {
+                                <Icon Name="check_circle" Class="preset-check" />
+                            }
+                        </span>
                     </button>
                 }
             </div>
         </fieldset>
 
-        <p class="field-label">Eller vælg selv</p>
-        <div class="fields">
-            <div>
-                <label for="@idBg" class="field-label">Baggrund</label>
-                <input id="@idBg" type="color" class="colour-input" disabled="@busy"
-                       value="@resolved.BackgroundColor" @oninput="e => bg = Colour(e)" />
+        <fieldset class="ap-group">
+            <legend class="ap-legend">Egne farver</legend>
+            <div class="fields">
+                <ColourField Label="Baggrund" Value="@bg" ValueChanged="v => bg = v"
+                             Fallback="@resolved.BackgroundColor" Disabled="@busy" />
+                <ColourField Label="Knapper" Value="@button" ValueChanged="v => button = v"
+                             Fallback="@resolved.ButtonColor" Disabled="@busy" />
+                <ColourField Label="Tekst" Value="@text" ValueChanged="v => text = v"
+                             Fallback="@resolved.TextColor" Disabled="@busy" />
+                <FontField Label="Skrifttype" Value="@font" ValueChanged="v => font = v" Disabled="@busy" />
             </div>
-            <div>
-                <label for="@idButton" class="field-label">Knapper</label>
-                <input id="@idButton" type="color" class="colour-input" disabled="@busy"
-                       value="@resolved.ButtonColor" @oninput="e => button = Colour(e)" />
-            </div>
-            <div>
-                <label for="@idText" class="field-label">Tekst</label>
-                <input id="@idText" type="color" class="colour-input" disabled="@busy"
-                       value="@resolved.TextColor" @oninput="e => text = Colour(e)" />
-            </div>
-            <div>
-                <label for="@idFont" class="field-label">Skrifttype</label>
-                <select id="@idFont" class="input" disabled="@busy" @onchange="e => font = Empty(e.Value?.ToString())">
-                    @foreach (var (value, label) in Theme.Fonts)
-                    {
-                        <option value="@value" selected="@((font ?? string.Empty) == value)">@label</option>
-                    }
-                </select>
-            </div>
-        </div>
 
-        @if (Theme.Contrast(resolved.TextColor!, resolved.BackgroundColor!) < 4.5)
-        {
-            <p class="field-hint hint-warn">Teksten og baggrunden ligner hinanden meget, så teksten kan være svær at læse.</p>
-        }
+            @if (Theme.Contrast(resolved.TextColor!, resolved.BackgroundColor!) < 4.5)
+            {
+                <p class="ap-warn"><Icon Name="warning" /> Teksten og baggrunden ligner hinanden meget, så teksten kan være svær at læse.</p>
+            }
+        </fieldset>
 
         @if (error is not null)
         {
             <p class="form-error" role="alert">@error</p>
         }
 
-        <button type="button" class="btn btn-primary save" disabled="@(busy || !Dirty)" @onclick="SaveAsync">
-            @(busy ? "Gemmer…" : "Gem udseende")
-        </button>
+        <div class="ap-actions">
+            <button type="button" class="btn btn-primary" disabled="@(busy || !Dirty)" @onclick="SaveAsync">
+                <Icon Name="save" /> @(busy ? "Gemmer…" : "Gem udseende")
+            </button>
+            @if (Dirty && !busy)
+            {
+                <button type="button" class="btn btn-ghost" @onclick="Revert">
+                    <Icon Name="undo" /> Fortryd ændringer
+                </button>
+            }
+        </div>
     </div>
 
-    <div class="ap-preview" style="@Theme.Style(Current(), Inherited)" aria-hidden="true">
-        <strong>Overskrift</strong>
-        <span>Sådan ser teksten ud.</span>
-        <span class="ap-button">Knap</span>
+    <div class="ap-preview">
+        <span class="ap-legend">Forhåndsvisning</span>
+        <div class="ap-stage">
+            <TemplateHost Page="PreviewWithLook" Definition="PreviewDefinition" Preview="true" />
+        </div>
+        <p class="field-hint">Ændringerne ses her med det samme. De gemmes først, når du trykker «Gem udseende».</p>
     </div>
 </div>

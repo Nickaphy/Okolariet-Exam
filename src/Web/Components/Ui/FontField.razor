@@ -1,0 +1,26 @@
+@using Radzen.Blazor
+
+@* Font choice with Radzen's drop-down. null = the app's normal font. *@
+
+<div class="font-field">
+    <span class="font-label" id="@labelId">@Label</span>
+    <RadzenDropDown TValue="string" Data="@Web.Theming.Theme.Fonts"
+                    TextProperty="Label" ValueProperty="Value"
+                    @bind-Value="current" @bind-Value:after="OnChangedAsync"
+                    Disabled="@Disabled" Style="width: 100%;" aria-labelledby="@labelId" />
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = "Skrifttype";
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+
+    private readonly string labelId = $"font-{Guid.NewGuid():N}";
+    private string current = string.Empty;
+
+    protected override void OnParametersSet() => current = Value ?? string.Empty;
+
+    private Task OnChangedAsync() =>
+        ValueChanged.InvokeAsync(string.IsNullOrWhiteSpace(current) ? null : current);
+}

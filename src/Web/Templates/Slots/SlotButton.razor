@@ -1,0 +1,28 @@
+@namespace Web.Templates.Slots
+
+@* A button slot: its text, and the page it leads to. Tapping does nothing in previews. *@
+
+@if (Scope.Slot(Key) is { Text: { Length: > 0 } text } slot)
+{
+    <button type="button" class="slot-button @(slot.TargetId is null ? "slot-button-dead" : "") @Class"
+            data-slot="@Key" tabindex="@(Scope.Preview ? "-1" : null)"
+            @onclick="() => TapAsync(slot)">
+        @text
+    </button>
+}
+else if (Scope.Placeholders)
+{
+    <div class="slot-placeholder @Class" data-slot="@Key">@Scope.LabelOf(Key)</div>
+}
+
+@code {
+    [CascadingParameter] public TemplateScope Scope { get; set; } = default!;
+    [Parameter, EditorRequired] public string Key { get; set; } = string.Empty;
+    [Parameter] public string? Class { get; set; }
+
+    private async Task TapAsync(SlotContent slot)
+    {
+        if (!Scope.Preview && slot.TargetId is Guid target)
+            await Scope.Navigate.InvokeAsync(target);
+    }
+}

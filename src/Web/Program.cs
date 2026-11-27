@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Radzen;
 using Refit;
 using Web;
 using Web.Adapters.Answers;
@@ -95,6 +96,9 @@ builder.Services.AddScoped<IItemGateway, ItemGateway>();
 AddApi<ISessionsApi>();
 AddApi<IUsersApi>();
 AddApi<IStatisticsApi>();
+
+// Radzen UI components (colour picker, drop-downs, icons).
+builder.Services.AddRadzenComponents();
 
 // Register UI Services
 builder.Services.AddScoped<ExhibitionLoader>();

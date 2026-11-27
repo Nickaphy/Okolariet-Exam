@@ -1,0 +1,26 @@
+﻿@namespace Web.Templates.Menus
+@using Web.Templates.Slots
+
+@* The shared frame of the main menus: optional background image, heading, intro text and a grid of buttons.
+   A menu template only chooses the button keys and the layout. Slot keys: title, intro, background, button.
+   Colours and font come from the Appearance selected in ModdedTemplateItem (see Theme). *@
+
+<div class="mf @(Split ? "mf-split" : null) @(Compact ? "mf-compact" : null)">
+    <SlotImage Key="background" Class="mf-bg" ShowPlaceholder="false" />
+    @if (HasBackground)
+    {
+        <div class="mf-shade" aria-hidden="true"></div>
+    }
+
+    <div class="mf-head">
+        <SlotText Key="title" Class="mf-title" Heading="true" />
+        <SlotText Key="intro" Class="mf-intro" />
+    </div>
+
+    <nav class="mf-buttons @SizeClass" style="--cols:@Cols" aria-label="Vælg">
+        @foreach (var key in Keys)
+        {
+            <SlotButton @key="key" Key="@key" Class="mf-button" />
+        }
+    </nav>
+</div>

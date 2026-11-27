@@ -1,0 +1,12 @@
+﻿@namespace Web.Templates.Facts
+@using Web.Templates.Slots
+
+@* Template "fact-video-only": nothing but the video, as large as the screen allows. Slot key: video. *@
+
+<div class="fvo">
+    <SlotVideo Key="video" Class="fvo-video" />
+</div>
+
+@code {
+    public static PageContent Sample() => PageContent.Empty("fact-video-only");
+}

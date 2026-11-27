@@ -43,7 +43,7 @@ else
             </div>
             <div class="row-actions">
                 <button type="button" class="btn btn-secondary btn-sm" disabled="@(me is null)" @onclick="AskOwnPassword">
-                    Skift adgangskode
+                    <Icon Name="key" /> Skift adgangskode
                 </button>
             </div>
         </div>
@@ -55,7 +55,7 @@ else
                 <h2 id="staff-heading">Medarbejdere</h2>
                 <p class="section-lead">Dem, der kan logge ind og lave udstillinger.</p>
             </div>
-            <button type="button" class="btn btn-primary" @onclick="AskNewStaff">+ Ny medarbejder</button>
+            <button type="button" class="btn btn-primary" @onclick="AskNewStaff"><Icon Name="person_add" /> Ny medarbejder</button>
         </div>
 
         <ul class="rows">
@@ -79,12 +79,12 @@ else
                             <button type="button" class="btn btn-secondary btn-sm"
                                     aria-label="@($"Ny adgangskode til {member.Email}")"
                                     @onclick="() => AskStaffPassword(member)">
-                                Ny adgangskode
+                                <Icon Name="key" /> Ny adgangskode
                             </button>
                             <button type="button" class="btn btn-danger-ghost btn-sm"
                                     aria-label="@($"Slet {member.Email}")"
                                     @onclick="() => AskDeleteStaff(member)">
-                                Slet
+                                <Icon Name="delete" /> Slet
                             </button>
                         </div>
                     }
@@ -101,7 +101,7 @@ else
                     Gæsterne laver et kaldenavn af to af disse ord. Der skal være mindst 10 ord (nu @words.Count).
                 </p>
             </div>
-            <button type="button" class="btn btn-primary" @onclick="AskNewWord">+ Nyt ord</button>
+            <button type="button" class="btn btn-primary" @onclick="AskNewWord"><Icon Name="add" /> Nyt ord</button>
         </div>
 
         @if (words.Count == 0)
@@ -117,7 +117,7 @@ else
                         <span>@word.Text</span>
                         <button type="button" class="word-remove"
                                 aria-label="@($"Fjern ordet {word.Text}")" @onclick="() => AskDeleteWord(word)">
-                            ×
+                            <Icon Name="close" />
                         </button>
                     </li>
                 }

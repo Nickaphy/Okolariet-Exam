@@ -1,0 +1,11 @@
+.font-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 0;
+}
+
+.font-label {
+    font-weight: 600;
+    font-size: 0.95rem;
+}

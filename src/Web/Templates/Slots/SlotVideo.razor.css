@@ -1,0 +1,6 @@
+﻿.slot-video {
+    display: block;
+    object-fit: contain;
+    background: #000;
+    border-radius: 1.6cqw;
+}
