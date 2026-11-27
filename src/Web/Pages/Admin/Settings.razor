@@ -1,4 +1,4 @@
-@page "/admin/settings"
+﻿@page "/admin/settings"
 @layout AdminLayout
 @attribute [Authorize]
 @inject IStaffGateway StaffGateway
@@ -35,7 +35,7 @@ else
         <div class="row">
             <div class="row-info">
                 <strong>@(me?.Email ?? "Ukendt")</strong>
-                <small>Du er logget ind som administrator</small>
+                <small>Det er dig, der er logget ind</small>
             </div>
             <div class="row-actions">
                 <button type="button" class="btn btn-secondary btn-sm" disabled="@(me is null)" @onclick="AskOwnPassword">
@@ -62,11 +62,8 @@ else
                     <div class="row-info">
                         <strong>@member.Email</strong>
                         <small>
-                            @RoleName(member.Role)
-                            @if (isMe)
-                            {
-                                <span class="you">· Dig</span>
-                            }
+                            @* Every staff member has the same role (Admin), so it isn't shown. *@
+                            @(isMe ? "Dig" : "Kan logge ind og lave udstillinger")
                         </small>
                     </div>
                     @if (!isMe)

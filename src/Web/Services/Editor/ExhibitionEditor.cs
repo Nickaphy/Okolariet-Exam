@@ -13,8 +13,8 @@ namespace Web.Services.Editor
 
     // Every change the editor page can make to an exhibition.
     //
-    // Every method returns null when it worked, or a Danish error message. That is exactly what
-    // NameDialog.Submit and ConfirmDialog.Run expect, so the page can hand these methods straight to a dialog.
+    // Every method returns null when it worked, or a Danish error message if it failed.
+    // That is what the dialogs expect, so the page can hand these methods straight to a dialog.
     // After a change the page reloads the whole ExhibitionModel, so this class keeps no state of its own.
     //
     // The rules of an exhibition live here and nowhere else:

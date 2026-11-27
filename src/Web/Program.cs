@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
@@ -7,6 +7,7 @@ using Radzen;
 using Refit;
 using Web;
 using Web.Adapters.Answers;
+using Web.Adapters.Auth;
 using Web.Adapters.Assets;
 using Web.Adapters.Items;
 using Web.Adapters.ModdedTemplates;
@@ -23,6 +24,7 @@ using Web.Api;
 using Web.Auth;
 using Web.Helpers;
 using Web.Ports.Answers;
+using Web.Ports.Auth;
 using Web.Ports.Assets;
 using Web.Ports.Items;
 using Web.Ports.ModdedTemplates;
@@ -64,11 +66,14 @@ builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredServ
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
 
-// IAuthApi must not use BearerTokenHandler: that handler depends on AuthService, which uses IAuthApi.
-// (See the auth plan: AuthService still talks to Refit directly; it gets a gateway when auth is reworked.)
+// The auth gateway is the one exception to AddGateway below: its Refit client must NOT use BearerTokenHandler,
+// because that handler refreshes through AuthService, which uses this gateway (that would go in a circle).
+// It gets AttachAccessTokenHandler instead, which only adds the stored token (needed for log out).
+// Transient, like the Refit client behind it; AuthService (a singleton) keeps the one it gets.
 builder.Services.AddRefitClient<IAuthApi>(refitSettings)
     .ConfigureHttpClient(c => c.BaseAddress = apiBaseUrl)
     .AddHttpMessageHandler<AttachAccessTokenHandler>();
+builder.Services.AddTransient<IAuthGateway, AuthGateway>();
 
 // ---- Gateways: the ONLY way pages and services reach the API (hexagonal architecture).
 // Each line registers the generated Refit client (the HTTP part) and the gateway on top of it:

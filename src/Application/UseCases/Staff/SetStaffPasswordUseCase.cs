@@ -2,6 +2,7 @@
 using Application.Commands.StaffCommands;
 using Application.ErrorMessages;
 using Application.InBoundPort.IStaffUseCases;
+using Application.OutBoundPort.AuthRepository.Logins;
 using Application.OutBoundPort.IPasswordHash;
 using Application.OutBoundPort.IStaffRepository;
 using Domain.Services;
@@ -9,19 +10,27 @@ using FluentResults;
 
 namespace Application.UseCases.Staff
 {
+    // Sets a new password. Changing your own needs the current password; an admin resetting someone else's doesn't.
+    // Afterwards every login of that staff member is revoked (all devices, also the one that made the change),
+    // so a stolen or shared login can't keep refreshing with the old session.
     public class SetStaffPasswordUseCase : ISetStaffPasswordUseCase
     {
         private readonly IGetByIdAsync getById;
         private readonly IUpdateAsync update;
         private readonly IHash hasher;
         private readonly IVerify verifyPassword;
+        private readonly IRevokeAllLoginsForStaffAsync revokeAllLogins;
+        private readonly TimeProvider time;
         private readonly IPasswordValidatorService _passwordValidator;
-        public SetStaffPasswordUseCase(IGetByIdAsync getById, IUpdateAsync update, IHash hasher, IVerify verifyPassword)
+        public SetStaffPasswordUseCase(IGetByIdAsync getById, IUpdateAsync update, IHash hasher, IVerify verifyPassword,
+                                       IRevokeAllLoginsForStaffAsync revokeAllLogins, TimeProvider time)
         {
             this.getById = getById;
             this.update = update;
             this.hasher = hasher;
             this.verifyPassword = verifyPassword;
+            this.revokeAllLogins = revokeAllLogins;
+            this.time = time;
             this._passwordValidator = new PasswordValidatorService();
         }
         public async Task<Result> SetPasswordAsync(SetStaffPasswordCommand cmd, CancellationToken ct)
@@ -43,7 +52,9 @@ namespace Application.UseCases.Staff
                 member.PasswordHash = hasher.Hash(cmd.NewPassword);
                 await update.UpdateAsync(member, ct);
 
-                // TODO (Auth slice): revoke all logins of this staff member, as the spec requires.
+                // The spec: all existing logins end. Their access tokens still work for at most 15 minutes (stateless JWT),
+                // but they can no longer be refreshed.
+                await revokeAllLogins.RevokeAllLoginsForStaffAsync(member.Id, time.GetUtcNow(), ct);
                 return Result.Ok();
             }
             catch(Exception ex) //Only log EX

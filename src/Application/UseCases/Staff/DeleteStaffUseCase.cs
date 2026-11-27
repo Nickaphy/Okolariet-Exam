@@ -36,6 +36,9 @@ namespace Application.UseCases.Staff
                 if (member.Role == StaffRole.Admin && await countAdmins.CountAdminsAsync(ct) <= 1)
                     return Result.Fail(new BusinessRuleError("You cannot delete the last admin."));   // 422
 
+                // The database deletes the member's logins and refresh tokens with them (cascade, see
+                // StaffLoginConfiguration), so a deleted member can't refresh. An access token they already
+                // have works for at most 15 more minutes.
                 await delete.DeleteAsync(member, ct);
                 return Result.Ok();
             }

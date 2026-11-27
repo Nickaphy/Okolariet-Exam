@@ -12,14 +12,18 @@ namespace Web.Helpers
         public static T Unwrap<T>(this IApiResponse<T> response)
         {
             if (!response.IsSuccessStatusCode || response.Content is null)
-                throw new GatewayException(response.StatusCode);
+                throw Failure(response);
             return response.Content;
         }
 
         public static void EnsureSuccess(this IApiResponse response)
         {
             if (!response.IsSuccessStatusCode)
-                throw new GatewayException(response.StatusCode);
+                throw Failure(response);
         }
+
+        // The status code, and the Retry-After header if the server sent one (e.g. "wait 15 minutes" after 5 wrong passwords).
+        private static GatewayException Failure(IApiResponse response) =>
+            new(response.StatusCode, response.Headers?.RetryAfter?.Delta);
     }
 }

@@ -1,4 +1,4 @@
-using Api.Helpers;                                       // .ToProblem()
+﻿using Api.Helpers;                                       // .ToProblem()
 using Api.Requests.ModdedTemplateRequests;               // CreateModdedTemplateRequest, UpdateModdedTemplateRequest
 using Api.Responses.ModdedTemplateResponses;             // ModdedTemplateResponse, ModdedTemplateSummaryResponse
 using Application.Commands.ModdedTemplateCommands;       // the commands
@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Mvc;                          // ControllerBase, [Htt
 namespace Api.Controllers
 {
     [ApiController]
-    [Authorize(Roles = "Admin")]
     [Route("api/v1")]
     public class ModdedTemplatesController(
         IListModdedTemplatesUseCase listModdedTemplatesUseCase,

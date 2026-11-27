@@ -1,12 +1,13 @@
-using Application.Auth;                                   // JwtSettings
+﻿using Application.Auth;                                   // JwtSettings
 using Application.OutBoundPort.AuthRepository.Lockouts;
 using Application.OutBoundPort.AuthRepository.Logins;
 using Application.OutBoundPort.AuthRepository.RefreshToken;
 using Application.OutBoundPort.AuthRepository.Tokens;
 using Application.OutBoundPort.IPasswordHash;
 using Application.OutBoundPort.IStaffRepository;
+using Application.OutBoundPort.IUserRepository;
 using Infrastructure;                                     // AddInfrastructure
-using Infrastructure.Testing;                             // InMemoryAuthStore
+using Infrastructure.Adapters.Auth;                       // the auth storage adapters
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -66,6 +67,7 @@ namespace xUnitTests.InfrastructureTests
         [InlineData(typeof(NicknamePorts.IGetAsync))]
         [InlineData(typeof(NicknamePorts.IRemoveAsync))]
         [InlineData(typeof(NicknamePorts.ICountActiveAsync))]
+        [InlineData(typeof(ICreateUserAsync))]   // saving a highscore (POST /users)
         public void Port_has_an_adapter(Type port)
         {
             using var provider = Build();
@@ -75,18 +77,19 @@ namespace xUnitTests.InfrastructureTests
         }
 
         [Fact]
-        public void All_auth_storage_ports_share_one_in_memory_store()
+        public void Auth_storage_is_in_the_database_not_in_memory()
         {
-            // If they didn't, a refresh token saved at login would be invisible to the refresh use case.
+            // Logins, refresh tokens and lockouts must survive a restart of the Host, so they are EF adapters
+            // (scoped, like the DbContext they use), one per port.
             using var provider = Build();
-            var store = provider.GetRequiredService<InMemoryAuthStore>();
+            using var scope = provider.CreateScope();
 
-            Assert.Same(store, provider.GetRequiredService<IAddRefreshTokenAsync>());
-            Assert.Same(store, provider.GetRequiredService<IGetRefreshTokenByHashAsync>());
-            Assert.Same(store, provider.GetRequiredService<IAddLoginAsync>());
-            Assert.Same(store, provider.GetRequiredService<IGetLoginByIdAsync>());
-            Assert.Same(store, provider.GetRequiredService<ISaveLoginLockoutAsync>());
-            Assert.Same(store, provider.GetRequiredService<IGetLoginLockoutAsync>());
+            Assert.IsType<AddLoginAdapter>(scope.ServiceProvider.GetRequiredService<IAddLoginAsync>());
+            Assert.IsType<GetLoginByIdAdapter>(scope.ServiceProvider.GetRequiredService<IGetLoginByIdAsync>());
+            Assert.IsType<RevokeAllLoginsForStaffAdapter>(scope.ServiceProvider.GetRequiredService<IRevokeAllLoginsForStaffAsync>());
+            Assert.IsType<AddRefreshTokenAdapter>(scope.ServiceProvider.GetRequiredService<IAddRefreshTokenAsync>());
+            Assert.IsType<GetRefreshTokenByHashAdapter>(scope.ServiceProvider.GetRequiredService<IGetRefreshTokenByHashAsync>());
+            Assert.IsType<SaveLoginLockoutAdapter>(scope.ServiceProvider.GetRequiredService<ISaveLoginLockoutAsync>());
         }
 
         [Fact]

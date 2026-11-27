@@ -1,31 +1,41 @@
-@host = https://localhost:7001
+@host = https://localhost:7001/api/v1
 
-### 1. Login -> 200
+### 1. Login -> 201 with accessToken, expiresAt, refreshToken, refreshExpiresAt
 # @name login
 POST {{host}}/auth/tokens
 Content-Type: application/json
 
-{ "email": "admin@okolariet.dk", "password": "YourSeedPassword1!" }
+{ "grantType": "password", "email": "admin@okolariet.dk", "password": "YourSeedPassword1!" }
 
 ### 2. Protected endpoint with the token -> 200 (without the header -> 401)
 GET {{host}}/staff
 Authorization: Bearer {{login.response.body.$.accessToken}}
 
-### 3. Refresh -> 200, new pair
+### 3. Refresh -> 201, new pair
 # @name refresh
-POST {{host}}/auth/tokens/refresh
+POST {{host}}/auth/tokens
 Content-Type: application/json
 
-{ "refreshToken": "{{login.response.body.$.refreshToken}}" }
+{ "grantType": "refresh_token", "refreshToken": "{{login.response.body.$.refreshToken}}" }
 
 ### 4. Reuse the FIRST refresh token -> 401, and the login is now revoked
-POST {{host}}/auth/tokens/refresh
+POST {{host}}/auth/tokens
 Content-Type: application/json
 
-{ "refreshToken": "{{login.response.body.$.refreshToken}}" }
+{ "grantType": "refresh_token", "refreshToken": "{{login.response.body.$.refreshToken}}" }
 
 ### 5. The new token from step 3 now also fails -> 401
-POST {{host}}/auth/tokens/refresh
+POST {{host}}/auth/tokens
 Content-Type: application/json
 
-{ "refreshToken": "{{refresh.response.body.$.refreshToken}}" }
+{ "grantType": "refresh_token", "refreshToken": "{{refresh.response.body.$.refreshToken}}" }
+
+### 6. Missing field for the grant type -> 400
+POST {{host}}/auth/tokens
+Content-Type: application/json
+
+{ "grantType": "password", "email": "admin@okolariet.dk" }
+
+### 7. Log out (log in again first, steps 4-5 revoked the login) -> 204
+DELETE {{host}}/auth/tokens/current
+Authorization: Bearer {{login.response.body.$.accessToken}}

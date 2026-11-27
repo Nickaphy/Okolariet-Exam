@@ -1,4 +1,4 @@
-using Api.Helpers;                                // .ToProblem()
+﻿using Api.Helpers;                                // .ToProblem()
 using Api.Responses.TemplateResponses;            // TemplateResponse
 using Application.InBoundPort.ITemplateUseCases;  // IListTemplatesUseCase, IGetTemplateUseCase
 using Microsoft.AspNetCore.Authorization;         // [Authorize]
@@ -8,7 +8,6 @@ namespace Api.Controllers
 {
     // Read-only: the editor fetches the template definitions and builds its forms from them.
     [ApiController]
-    [Authorize(Roles = "Admin")]
     [Route("api/v1/templates")]
     public class TemplatesController(
         IListTemplatesUseCase listTemplatesUseCase,

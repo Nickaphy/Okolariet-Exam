@@ -1,4 +1,4 @@
-using Api.Helpers;
+﻿using Api.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Application.InBoundPort.IUserUsecases;
@@ -76,7 +76,6 @@ public class UserController(ICreateUserUseCase createUserUseCase, IGetUserUseCas
     }
    
    // DELETE /api/v1/users/{userId}
-   [Authorize(Roles = "Admin")] // Only admins can delete an entry
    [HttpDelete("{userId:guid}")]
    public async Task<IActionResult> Delete(Guid userId, CancellationToken ct)
     {
@@ -90,7 +89,6 @@ public class UserController(ICreateUserUseCase createUserUseCase, IGetUserUseCas
     }
 
 
-    [Authorize(Roles = "Admin")]
     [HttpDelete("~/api/v1/modded-templates/{moddedTemplateId:guid}/users")]
     public async Task<IActionResult> ClearLeaderboard(
     Guid moddedTemplateId,

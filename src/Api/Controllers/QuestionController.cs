@@ -1,4 +1,4 @@
-using Api.Helpers;
+﻿using Api.Helpers;
 using Api.Requests.QuestionRequests;
 using Api.Responses.QuestionResponses;
 using Application.Commands.QuestionCommands;
@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
-[Authorize(Roles = "Admin")]
 [Route("api/v1")]
 public class QuestionsController(
     IListQuestionsUseCase listQuestionsUseCase,

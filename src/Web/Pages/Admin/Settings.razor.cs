@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Components;
 using Web.Api;
@@ -31,12 +31,6 @@ namespace Web.Pages.Admin
         // The password fields live here (not in the dialog) because the dialogs only have one name field.
         private string newPassword = string.Empty;
         private string repeatPassword = string.Empty;
-
-        private static string RoleName(StaffRole role) => role switch
-        {
-            StaffRole.Admin => "Administrator",
-            _ => role.ToString()
-        };
 
         protected override Task OnInitializedAsync() => LoadAsync();
 
@@ -139,7 +133,9 @@ namespace Web.Pages.Admin
 
             var myId = me.Id;
             var change = new PasswordChange { CurrentPassword = currentPassword, NewPassword = newPassword };
+            // The server answers 422 when the current password is wrong or the new one breaks the password rules.
             return await ApiCall.Run(() => StaffGateway.SetStaffPassword(myId, change), false,
+                (HttpStatusCode.UnprocessableEntity, "Den nuværende adgangskode er forkert, eller den nye opfylder ikke kravene."),
                 (HttpStatusCode.BadRequest, "Den nuværende adgangskode er forkert, eller den nye er for kort."));
         }
 
@@ -158,6 +154,7 @@ namespace Web.Pages.Admin
         {
             if (!email.Contains('@')) return "Skriv en gyldig e-mail.";
 
+            // The API still asks for a role. There is only one (see Application/Auth/AuthRoles on the server).
             var newStaff = new StaffCreate { Email = email, Password = newPassword, Role = StaffRole.Admin };
             return await ApiCall.Run(() => StaffGateway.CreateStaff(newStaff), false,
                 (HttpStatusCode.Conflict, "Der findes allerede en medarbejder med den e-mail."),

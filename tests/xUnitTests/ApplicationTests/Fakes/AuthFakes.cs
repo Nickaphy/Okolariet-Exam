@@ -1,4 +1,4 @@
-using Application.Auth;
+﻿using Application.Auth;
 using Application.Helpers.Interfaces;
 using Application.OutBoundPort.AuthRepository.Lockouts;
 using Application.OutBoundPort.AuthRepository.Logins;
@@ -8,14 +8,16 @@ using Application.OutBoundPort.IPasswordHash;
 using Application.OutBoundPort.IStaffRepository;
 using Domain.Entities;
 using Domain.Entities.AuthEntities;
-using Domain.ValueObjects;
 
 namespace xUnitTests.ApplicationTests.Fakes
 {
     // Staff table as a list.
-    public class FakeStaffRepository : IGetByEmailAsync, IGetByIdAsync
+    public class FakeStaffRepository : IGetByEmailAsync, IGetByIdAsync, IUpdateAsync
     {
         public List<StaffMember> Staff { get; } = new();
+        public int Updates { get; private set; }
+
+        public Task UpdateAsync(StaffMember staff, CancellationToken ct) { Updates++; return Task.CompletedTask; }
 
         public Task<StaffMember?> GetByEmailAsync(string normalizedEmail, CancellationToken ct)
             => Task.FromResult(Staff.FirstOrDefault(s => s.Email == normalizedEmail));
@@ -25,9 +27,11 @@ namespace xUnitTests.ApplicationTests.Fakes
     }
 
     // "Hashing" is just a prefix, so a test can write PasswordHash = "hashed-secret" and log in with "secret".
-    public class FakePasswordHasher : IVerify, IVerifyDummy
+    public class FakePasswordHasher : IVerify, IVerifyDummy, IHash
     {
         public bool DummyWasCalled { get; private set; }
+
+        public string Hash(string password) => "hashed-" + password;
 
         public bool Verify(string passwordHash, string password) => passwordHash == "hashed-" + password;
 
@@ -37,7 +41,7 @@ namespace xUnitTests.ApplicationTests.Fakes
     // Logins, refresh tokens and lockouts as lists.
     public class FakeAuthStore :
         IGetLoginLockoutAsync, ISaveLoginLockoutAsync,
-        IAddLoginAsync, IGetLoginByIdAsync, IUpdateLoginAsync,
+        IAddLoginAsync, IGetLoginByIdAsync, IUpdateLoginAsync, IRevokeAllLoginsForStaffAsync,
         IAddRefreshTokenAsync, IGetRefreshTokenByHashAsync, IUpdateRefreshTokenAsync
     {
         public List<LoginLockout> Lockouts { get; } = new();
@@ -60,6 +64,13 @@ namespace xUnitTests.ApplicationTests.Fakes
             => Task.FromResult(Logins.FirstOrDefault(l => l.Id == id));
 
         public Task UpdateLoginAsync(StaffLogin login, CancellationToken ct = default) { LoginUpdates++; return Task.CompletedTask; }
+
+        public Task RevokeAllLoginsForStaffAsync(Guid staffId, DateTimeOffset revokedAt, CancellationToken ct = default)
+        {
+            foreach (var login in Logins.Where(l => l.StaffId == staffId && l.RevokedAt is null))
+                login.RevokedAt = revokedAt;
+            return Task.CompletedTask;
+        }
 
         public Task AddRefreshTokenAsync(RefreshToken token, CancellationToken ct = default) { RefreshTokens.Add(token); return Task.CompletedTask; }
 

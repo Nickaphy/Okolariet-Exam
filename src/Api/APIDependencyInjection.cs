@@ -73,10 +73,13 @@ public static class ApiDependencyInjection
                 };
             });
 
-        // ---- Authorization: everything is Admin-only unless [AllowAnonymous] or [Authorize] says otherwise ----
+        // ---- Authorization: THE one place the role is enforced (see Application/Auth/AuthRoles).
+        // Every endpoint needs a logged-in Admin, unless it says otherwise:
+        //   [AllowAnonymous] = the kiosk's public endpoints;   [Authorize] = any logged-in staff member (log out).
+        // Controllers don't repeat [Authorize(Roles = "Admin")]: the fallback policy already covers them.
         services.AddAuthorization(o => o.FallbackPolicy = new AuthorizationPolicyBuilder()
             .RequireAuthenticatedUser()
-            .RequireRole("Admin")
+            .RequireRole(AuthRoles.Admin)
             .Build());
 
         // ---- Rate limit on login/refresh, per client IP ----

@@ -22,6 +22,10 @@ namespace Api.Helpers
                 _ => (StatusCodes.Status500InternalServerError, "Internal Server Error")
             };
 
+            // 429: tell the client how long to wait (the login page shows "Prøv igen om 15 minutter").
+            if (error is TooManyRequestsError tooMany)
+                controller.Response.Headers.RetryAfter = tooMany.RetryAfterSeconds.ToString();
+
             // never leak internal error text for unexpected failures
             var detail = status == 500 ? "An unexpected error occurred." : error?.Message;
             return controller.Problem(detail: detail, statusCode: status, title: title);
