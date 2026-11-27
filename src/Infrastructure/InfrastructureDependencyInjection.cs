@@ -84,6 +84,7 @@ namespace Infrastructure
             services.AddScoped<IDeleteUserAsync, DeleteUserAdapter>();
             services.AddScoped<IGetUserByIdAsync, GetUserByIdAdapter>();
             services.AddScoped<IListUsersAsync, ListUsersAdapter>();
+            services.AddScoped<ICreateUserAsync, CreateUserAdapter>();
 
             // QuizResult DI
             services.AddScoped<ITryAddQuizResultAsync, TryQuizResultAdapter>();

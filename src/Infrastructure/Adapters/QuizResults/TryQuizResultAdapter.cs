@@ -12,19 +12,22 @@ namespace Infrastructure.Adapters.QuizResults
         // in the same session, including concurrent submits. The port reports that as false.
         public async Task<bool> TryAddAsync(QuizResult quizResult, CancellationToken ct)
         {
-            db.QuizResults.Add(quizResult);
+            db.QuizResults.Add(quizResult); // add the quiz result to the database
             try
             {
-                await db.SaveChangesAsync(ct);
-                return true;
+                await db.SaveChangesAsync(ct); // save the changes to the database
+                return true; // return true if the quiz result was added successfully
             }
-            catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+            catch (DbUpdateException ex) when (IsUniqueViolation(ex)) // if the quiz result is a unique violation
             {
-                return false;
+                return false; // return false if the quiz result is a unique violation
             }
         }
 
-        private static bool IsUniqueViolation(DbUpdateException ex) =>
-            ex.InnerException is SqlException sql && (sql.Number is 2601 or 2627);
-    }
+        // Dupelicate protection, if the quiz result is a unique violation, return false
+        private static bool IsUniqueViolation(DbUpdateException ex)
+        {
+            return ex.InnerException is SqlException sql && (sql.Number is 2601 or 2627);
+        }
+    } 
 }

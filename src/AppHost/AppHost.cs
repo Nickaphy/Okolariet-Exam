@@ -11,8 +11,11 @@ var database = sqlServer.AddDatabase("okolariet");
 
 // Start the existing API host as a normal
 // Supply the connection string and wait until the database is ready.
-builder.AddDotnetProject("api", "../../Host/Host.csproj")
+var api = builder.AddDotnetProject("api", "../../Host/Host.csproj")
     .WithReference(database)
     .WaitFor(database);
+
+builder.AddDotnetProject("web", "../Web/Web.csproj")
+    .WaitFor(api);
 
 builder.Build().Run();
