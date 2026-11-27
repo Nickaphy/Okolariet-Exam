@@ -1,6 +1,7 @@
 using Application.Commands.StaffCommands;           // SetStaffPasswordCommand
 using Application.ErrorMessages;                    // NotFoundError, BusinessRuleError
 using Application.OutBoundPort.IPasswordHash;       // IHash, IVerify
+using Application.OutBoundPort.AuthRepository.Logins;
 using Application.OutBoundPort.IStaffRepository;    // IGetByIdAsync, IUpdateAsync
 using Application.UseCases.Staff;                   // SetStaffPasswordUseCase
 using Domain.Entities;                              // StaffMember
@@ -21,6 +22,7 @@ namespace MoqTests.UseCases.Staff
         private readonly Mock<IUpdateAsync> update = new();
         private readonly Mock<IHash> hasher = new();
         private readonly Mock<IVerify> verifyPassword = new();
+        private readonly Mock<IRevokeAllLoginsForStaffAsync> revokeAllLogins = new();
 
         private readonly StaffMember member = new() { Id = Guid.NewGuid(), Email = "anna@okolariet.dk", PasswordHash = "old-hash", Role = StaffRole.Admin };
         private readonly Guid otherAdmin = Guid.NewGuid();
@@ -32,7 +34,8 @@ namespace MoqTests.UseCases.Staff
             verifyPassword.Setup(v => v.Verify("old-hash", CurrentPassword)).Returns(true);
         }
 
-        private SetStaffPasswordUseCase CreateUseCase() => new(getById.Object, update.Object, hasher.Object, verifyPassword.Object);
+        private SetStaffPasswordUseCase CreateUseCase() =>
+            new(getById.Object, update.Object, hasher.Object, verifyPassword.Object, revokeAllLogins.Object, TimeProvider.System);
 
         private void AssertPasswordNotChanged()
         {
